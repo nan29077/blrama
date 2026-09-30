@@ -125,6 +125,47 @@ body { background: #100b13; }
 .bellama-my-page .order-kind.episode { color: #f2bfda; }
 .bellama-settings-page .account-settings,
 .bellama-settings-page .settings-card { border-color: #61455a; }
+.bellama-settings-page > .back-link { color: #d7a8c1; }
+.bellama-settings-page .settings-card {
+  background: linear-gradient(145deg, #2b1e30, #211923);
+  box-shadow: inset 3px 0 #9f6385;
+}
+.bellama-settings-page .settings-card:nth-child(even) { box-shadow: inset 3px 0 #8977a2; }
+.bellama-settings-page .settings-card h2 { font-family: 'Noto Serif KR Variable', serif; }
+.bellama-settings-page .assigned-avatar { background: #38273b; border-color: #61465c; }
+.membership-page {
+  background: radial-gradient(circle at 50% 8%, #96516b36, transparent 360px);
+}
+.membership-page > h1 { font-family: 'Noto Serif KR Variable', serif; }
+.membership-page > p,
+.membership-page .price span,
+.membership-page .plan-card ul,
+.membership-page .plan-card > small,
+.membership-page .faq details > p { color: #d2b7c5; }
+.membership-page .plan-card {
+  background: linear-gradient(145deg, #483047, #281f31);
+  border-color: #aa7397;
+  box-shadow: 0 22px 42px #0c061038, inset 0 0 0 1px #f1bbd20d;
+}
+.membership-page .plan-ribbon { color: #31182a; border-radius: 3px 9px 9px 3px; }
+.membership-page .faq details { border-color: #674b5e; }
+.login-page { background: radial-gradient(circle at 50% 0%, #834b6840, transparent 270px); }
+.login-page > h1 { font-family: 'Noto Serif KR Variable', serif; }
+.login-page > p,
+.login-page .or-divider,
+.login-page .switch-auth { color: #c8aebe; }
+.login-page .or-divider::before,
+.login-page .or-divider::after { background: #62465a; }
+.login-page .test-login { border-color: #a36b8e; background: #3b263c55; }
+.pings-page .wallet-card {
+  background: radial-gradient(circle at 92% 0%, #e6a5c931, transparent 55%), #332238;
+  border-color: #a87495;
+  box-shadow: 0 15px 35px #0c061037;
+}
+.pings-page .wallet-card > div span,
+.pings-page .wallet-card p { color: #d7b9cb; }
+.channel-card { border-color: #604358; background: #281d2d; }
+.channel-card:hover { border-color: #c28aa9; }
 
 /* 운영 화면: 시청 화면보다 더 정돈된 와인빛 콘솔. */
 .management-layout > .app-shell {
