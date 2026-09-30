@@ -214,7 +214,7 @@ test('settlement revenue converts to lama with the same withholding as payouts',
     const created = await request('/studio/dramas', {
       method: 'POST',
       cookie: seller.cookie,
-      body: { title: '전환 검수 작품', tagline: '정산을 라마로', synopsis: '정산 수익을 라마로 바꾸는 흐름을 확인합니다.', genre: '로맨스', free_episodes: 1, episode_pings: 100, image: '/images/bellama-midnight.webp', rights_confirmed: true },
+      body: { title: '전환 검수 작품', tagline: '정산을 라마로', synopsis: '정산 수익을 라마로 바꾸는 흐름을 확인합니다.', genre: '로맨스', free_episodes: 1, episode_pings: 100, image: '/images/bellama-midnight.webp', rights_confirmed: true, bl_confirmed: true },
     });
     for (const n of [1, 2])
       await request(`/studio/dramas/${created.data.id}/episodes`, { method: 'POST', cookie: seller.cookie, body: { number: n, title: n + '화', duration: 12, video: '/demo/preview.mp4' } });
@@ -527,7 +527,7 @@ test('AI tools for uploaded videos: automatic subtitles and poster candidates', 
   const d = await request('/studio/dramas', {
     method: 'POST',
     cookie: seller.cookie,
-    body: { title: '도구 검수', tagline: '업로드 영상 AI 도구', synopsis: '업로드한 영상에 자동 자막과 포스터를 만듭니다.', genre: '청춘', free_episodes: 1, image: '/images/bellama-midnight.webp', rights_confirmed: true },
+    body: { title: '도구 검수', tagline: '업로드 영상 AI 도구', synopsis: '업로드한 영상에 자동 자막과 포스터를 만듭니다.', genre: '청춘', free_episodes: 1, image: '/images/bellama-midnight.webp', rights_confirmed: true, bl_confirmed: true },
   });
   // 샘플 영상에는 소리가 없어 자막을 만들 수 없다.
   await request(`/studio/dramas/${d.data.id}/episodes`, { method: 'POST', cookie: seller.cookie, body: { number: 1, title: '1화', duration: 12, video: '/demo/preview.mp4' } });

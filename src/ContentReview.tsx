@@ -245,7 +245,8 @@ export default function ContentReview({
                   <span>
                     <ShieldCheck size={14} /> 권리 · 초상권
                   </span>
-                  <strong className={Number(detail.rights_confirmed) ? '' : 'danger'}>
+                  <strong className={Number(detail.rights_confirmed) && Number(detail.bl_confirmed) ? '' : 'danger'}>
+                    {Number(detail.bl_confirmed) ? 'BL 장르 확인' : 'BL 장르 미확인'} ·{' '}
                     {Number(detail.rights_confirmed) ? '권리 확인' : '권리 미확인'} ·{' '}
                     {Number(detail.likeness_confirmed) ? '초상권 동의' : '초상권 미확인'}
                   </strong>

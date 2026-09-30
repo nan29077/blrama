@@ -1054,17 +1054,19 @@ const dramaSchema = z.object({
   image: z.string().regex(/^\/(images\/[a-z0-9-]+\.webp|uploads\/[a-f0-9-]+\.(jpg|png|webp))$/),
   // 권리·AI 자가 신고(외부 제작 영상). 보내지 않으면 기존 값을 유지합니다.
   rights_confirmed: z.boolean().optional(),
+  bl_confirmed: z.boolean().optional(),
   likeness_confirmed: z.boolean().optional(),
   ai_usage: z.enum(['none', 'partial', 'full']).optional(),
 });
 async function saveDeclaration(id, b) {
-  if (b.rights_confirmed === undefined && b.likeness_confirmed === undefined && b.ai_usage === undefined)
+  if (b.rights_confirmed === undefined && b.bl_confirmed === undefined && b.likeness_confirmed === undefined && b.ai_usage === undefined)
     return;
-  const d = await db.get('SELECT rights_confirmed,likeness_confirmed,ai_usage FROM dramas WHERE id=?', [id]);
+  const d = await db.get('SELECT rights_confirmed,bl_confirmed,likeness_confirmed,ai_usage FROM dramas WHERE id=?', [id]);
   await db.run(
-    'UPDATE dramas SET rights_confirmed=?,likeness_confirmed=?,ai_usage=?,declared_at=? WHERE id=?',
+    'UPDATE dramas SET rights_confirmed=?,bl_confirmed=?,likeness_confirmed=?,ai_usage=?,declared_at=? WHERE id=?',
     [
       (b.rights_confirmed ?? Number(d.rights_confirmed) === 1) ? 1 : 0,
+      (b.bl_confirmed ?? Number(d.bl_confirmed) === 1) ? 1 : 0,
       (b.likeness_confirmed ?? Number(d.likeness_confirmed) === 1) ? 1 : 0,
       b.ai_usage ?? d.ai_usage,
       now(),
@@ -1212,6 +1214,8 @@ app.post('/api/studio/dramas/:id/submit', roles('pd', 'admin'), async (req, res)
     const d = await owned(req, true);
     if (!['draft', 'rejected'].includes(d.status)) fail(409, '현재 상태에서는 제출할 수 없습니다.');
     const { issues } = await contentIssues(d);
+    if (!Number(d.bl_confirmed))
+      issues.push('B엘라마는 BL 장르 전문 서비스예요. 작품 정보에서 BL 장르 작품 확인에 동의해 주세요.');
     if (!Number(d.rights_confirmed))
       issues.push('작품 정보에서 권리 보유 확인에 동의해 주세요.');
     if (issues.length) fail(400, issues.join(' '));

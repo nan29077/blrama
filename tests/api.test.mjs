@@ -338,7 +338,7 @@ test('PD creates private draft; empty draft cannot be submitted', async () => {
       genre: '스릴러',
       free_episodes: 1,
       image: '/images/bellama-shadow.webp',
-      rights_confirmed: true,
+      rights_confirmed: true, bl_confirmed: true,
     },
   });
   assert.equal(r.status, 200);
@@ -348,6 +348,25 @@ test('PD creates private draft; empty draft cannot be submitted', async () => {
     (await request('/studio/dramas/' + created + '/submit', { method: 'POST', cookie: pd })).status,
     400,
   );
+});
+test('BL 장르 확인 없이는 심사 요청할 수 없어요(B엘라마는 BL 전문)', async () => {
+  const r = await request('/studio/dramas', {
+    method: 'POST',
+    cookie: pd,
+    body: {
+      title: 'BL 확인 검증 작품',
+      tagline: 'BL 확인이 필요해요',
+      synopsis: 'BL 장르 확인 없이 심사 요청하면 막히는지 확인합니다.',
+      genre: '오피스',
+      free_episodes: 1,
+      image: '/images/bellama-office.webp',
+      rights_confirmed: true,
+    },
+  });
+  assert.equal(r.status, 200);
+  const sub = await request('/studio/dramas/' + r.data.id + '/submit', { method: 'POST', cookie: pd });
+  assert.equal(sub.status, 400);
+  assert.match(sub.data.error, /BL 장르 작품 확인/);
 });
 test('upload checks file signature and protects videos from public direct access', async () => {
   const bad = new FormData();
@@ -594,7 +613,7 @@ const draftBody = {
   genre: '로맨스',
   free_episodes: 1,
   image: '/images/bellama-midnight.webp',
-  rights_confirmed: true,
+  rights_confirmed: true, bl_confirmed: true,
 };
 const makeDraft = async () => {
   const r = await request('/studio/dramas', { method: 'POST', cookie: pd, body: draftBody });
@@ -2391,7 +2410,7 @@ test('chunked resumable upload, prechecks, poster frames, subtitles and rights d
       await request('/studio/dramas/' + drama + '/declaration', {
         method: 'PUT',
         cookie: pd,
-        body: { rights_confirmed: true, likeness_confirmed: true, ai_usage: 'partial' },
+        body: { rights_confirmed: true, bl_confirmed: true, likeness_confirmed: true, ai_usage: 'partial' },
       })
     ).status,
     200,

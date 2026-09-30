@@ -364,6 +364,7 @@ export function uploadRoutes({
     const b = z
       .object({
         rights_confirmed: z.boolean(),
+        bl_confirmed: z.boolean().optional(),
         likeness_confirmed: z.boolean(),
         ai_usage: z.enum(['none', 'partial', 'full']),
       })
@@ -373,8 +374,8 @@ export function uploadRoutes({
       if (!['draft', 'rejected'].includes(d.status))
         fail(409, '임시저장 또는 반려된 작품만 수정할 수 있어요.');
       await db.run(
-        'UPDATE dramas SET rights_confirmed=?,likeness_confirmed=?,ai_usage=?,declared_at=? WHERE id=?',
-        [b.rights_confirmed ? 1 : 0, b.likeness_confirmed ? 1 : 0, b.ai_usage, now(), d.id],
+        'UPDATE dramas SET rights_confirmed=?,bl_confirmed=?,likeness_confirmed=?,ai_usage=?,declared_at=? WHERE id=?',
+        [b.rights_confirmed ? 1 : 0, (b.bl_confirmed ?? Number(d.bl_confirmed) === 1) ? 1 : 0, b.likeness_confirmed ? 1 : 0, b.ai_usage, now(), d.id],
       );
     });
     res.json({ ok: true });

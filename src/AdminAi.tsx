@@ -1183,7 +1183,7 @@ const tryPrompt = (c: string) =>
       ? '비 오는 밤 도시, 잔잔하고 쓸쓸한 피아노 배경음악'
       : c === 'sfx'
         ? '젖은 아스팔트 위를 뛰어가는 구두 발소리'
-        : 'A rainy neon street at night, a woman in a trench coat looks back';
+        : 'A rainy neon street at night, a young man in a trench coat looks back at another man';
 const mediaLink = (url: string) =>
   url.startsWith('/uploads/') && !/\.(mp4|mp3|wav)$/.test(url)
     ? url

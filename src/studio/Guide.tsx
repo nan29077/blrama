@@ -62,7 +62,7 @@ export const lessons = [
     ],
     tip: '마음에 드는 결과는 버전 목록에서 다시 선택할 수 있어요.',
     sample:
-      'Korean woman in her late twenties, short black bob, cream trench coat, calm expression, soft natural light, consistent facial features',
+      'Adult Korean man in his late twenties, soft black two-block haircut, cream trench coat, calm expression, soft natural light, consistent facial features',
     destination: 'ai',
     action: '캐릭터 만들러 가기',
   },

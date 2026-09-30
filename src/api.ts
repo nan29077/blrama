@@ -118,6 +118,7 @@ export type Drama = {
   review_note: string;
   created_at: string;
   rights_confirmed?: number;
+  bl_confirmed?: number;
   likeness_confirmed?: number;
   ai_usage?: 'none' | 'partial' | 'full';
   studio_episodes?: number;

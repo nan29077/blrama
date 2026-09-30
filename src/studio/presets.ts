@@ -1,4 +1,4 @@
-// B엘라마 스튜디오 빠른 시작: 장르 템플릿, 영상 스타일, 목소리 예시, 컷 고치기 요청 예시
+// B엘라마 스튜디오 빠른 시작(모두 두 성인 남성 주인공의 BL 이야기): 장르 템플릿, 영상 스타일, 목소리 예시, 컷 고치기 요청 예시
 export type Template = {
   id: string;
   name: string;
@@ -56,11 +56,10 @@ export const STYLES = [
 export const TEMPLATES: Template[] = [
   {
     id: 'contract',
-    name: '계약 로맨스',
+    name: '계약 연애',
     hint: '재벌·계약연애·설렘',
     title: '1년짜리 계약 연인',
-    logline:
-      '가업을 지키려는 젊은 대표와 1년짜리 계약 연애를 시작한 비서. 계약서에 없는 진심이 생겨 버렸다',
+    logline: '가업을 지키려는 젊은 대표와 1년짜리 계약 연애를 시작한 남자 비서. 계약서에 없는 진심이 생겨 버렸다',
     genre: '현대 로맨스',
     tone: '설렘, 밀당, 달달함',
     episode_count: 10,
@@ -72,9 +71,8 @@ export const TEMPLATES: Template[] = [
     name: '복수극',
     hint: '배신·귀환·통쾌함',
     title: '돌아온 너',
-    logline:
-      '모든 것을 빼앗긴 남자가 10년 만에 돌아온다. 복수의 대상과 가까워질수록 계획에 없던 마음이 흔들린다',
-    genre: '미스터리',
+    logline: '모든 것을 빼앗긴 남자가 10년 만에 돌아온다. 복수의 대상인 그 남자와 가까워질수록 계획에 없던 마음이 흔들린다',
+    genre: '복수',
     tone: '긴장감, 통쾌함',
     episode_count: 12,
     episode_seconds: 60,
@@ -82,37 +80,35 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'regression',
-    name: '회귀 판타지',
-    hint: '회귀·황궁·운명',
+    name: '회귀 사극',
+    hint: '회귀·궁궐·운명',
     title: '다시 피는 약속',
-    logline:
-      '운명을 잃은 왕자가 과거로 돌아온다. 그를 기억하는 호위무사와 함께 비극의 진실을 바꾼다',
-    genre: '판타지',
-    tone: '웅장함, 통쾌함',
+    logline: '운명을 잃은 왕자가 과거로 돌아온다. 그를 기억하는 단 한 사람, 호위무사와 함께 비극의 진실을 바꾼다',
+    genre: '회귀·환생',
+    tone: '웅장함, 애틋함',
     episode_count: 10,
     episode_seconds: 60,
     style: STYLES[3].text,
   },
   {
     id: 'office',
-    name: '오피스 코미디',
+    name: '오피스 로맨틱 코미디',
     hint: '회사·실수·웃음',
     title: '단톡방 대참사',
-    logline: '신입사원이 팀장에게 잘못 보낸 고백 메시지. 오해를 풀려 할수록 두 사람은 더 가까워진다',
-    genre: '현대 로맨스',
+    logline: '신입사원이 남자 팀장에게 잘못 보낸 고백 메시지. 오해를 풀려 할수록 두 남자는 더 가까워진다',
+    genre: '오피스',
     tone: '유쾌함, 민망함',
     episode_count: 8,
     episode_seconds: 45,
     style: STYLES[0].text,
   },
   {
-    id: 'school',
-    name: '학원 청춘',
-    hint: '전학·비밀·첫사랑',
+    id: 'campus',
+    name: '캠퍼스 청춘',
+    hint: '대학·비밀·첫사랑',
     title: '옆자리의 비밀',
-    logline:
-      '전학 온 첫날, 옆자리 학생이 밤마다 옥상에서 자신을 기다린다는 걸 알게 된다',
-    genre: '청춘',
+    logline: '편입 첫날, 강의실 옆자리 선배가 밤마다 동아리방 옥상에서 자신을 기다린다는 걸 알게 된다',
+    genre: '캠퍼스',
     tone: '풋풋함, 설렘',
     episode_count: 8,
     episode_seconds: 60,
@@ -123,7 +119,7 @@ export const TEMPLATES: Template[] = [
     name: '미스터리',
     hint: '미스터리·반전·오싹',
     title: '밤 11시 11분',
-    logline: '매일 밤 11시 11분, 사라진 연인에게서 전화가 걸려 온다',
+    logline: '매일 밤 11시 11분, 사라진 연인인 그에게서 전화가 걸려 온다. 목소리의 주인은 정말 그일까',
     genre: '미스터리',
     tone: '오싹함, 긴박함',
     episode_count: 6,
@@ -135,8 +131,7 @@ export const TEMPLATES: Template[] = [
     name: '재회 로맨스',
     hint: '첫사랑·재회·엇갈림',
     title: '다시, 같은 정류장',
-    logline:
-      '헤어진 지 7년 만에 같은 버스 정류장에서 만난 두 사람. 서로에게 보내지 못한 편지가 같은 날 도착한다.',
+    logline: '헤어진 지 7년 만에 같은 버스 정류장에서 마주친 두 남자. 서로에게 보내지 못한 편지가 같은 날 도착한다.',
     genre: '현대 로맨스',
     tone: '아련함, 따뜻함',
     episode_count: 6,
@@ -148,9 +143,8 @@ export const TEMPLATES: Template[] = [
     name: '궁중 로맨스',
     hint: '궁궐·신분·비밀 약속',
     title: '달빛 아래 약속',
-    logline:
-      '서고를 지키는 기록관은 밤마다 찾아오는 청년이 왕세자라는 사실을 모른 채 금지된 책을 함께 읽는다.',
-    genre: '현대 로맨스',
+    logline: '서고를 지키는 젊은 기록관은 밤마다 찾아오는 청년이 왕세자라는 사실을 모른 채 금지된 책을 함께 읽는다.',
+    genre: '사극',
     tone: '서정적, 애틋함',
     episode_count: 8,
     episode_seconds: 60,
@@ -161,9 +155,8 @@ export const TEMPLATES: Template[] = [
     name: '추리 수사극',
     hint: '단서·공조·반전',
     title: '마지막 알리바이',
-    logline:
-      '소리만 듣고 장소를 기억하는 청년이 형사와 함께 사라진 연인의 마지막 동선을 추적한다.',
-    genre: '미스터리',
+    logline: '소리만 듣고 장소를 기억하는 청년이 무뚝뚝한 형사와 공조하며 사라진 사람의 마지막 동선을 쫓는다. 사건보다 서로가 더 궁금해진다.',
+    genre: '스릴러',
     tone: '긴장감, 치밀함',
     episode_count: 6,
     episode_seconds: 60,
@@ -174,35 +167,32 @@ export const TEMPLATES: Template[] = [
     name: '타임루프',
     hint: '반복되는 하루·선택',
     title: '8시 59분의 선택',
-    logline:
-      '면접에 떨어질 때마다 같은 아침으로 돌아가는 취업 준비생. 반복을 끝낼 열쇠는 낯선 사람에게 건네는 한마디다.',
+    logline: '같은 아침을 반복하는 남자. 루프를 끝낼 열쇠는 매일 엘리베이터에서 마주치는 낯선 남자에게 건네는 한마디다.',
     genre: '판타지',
-    tone: '신비로움, 희망',
+    tone: '신비로움, 설렘',
     episode_count: 5,
     episode_seconds: 45,
     style: STYLES[0].text,
   },
   {
-    id: 'medieval',
-    name: '중세 모험',
-    hint: '기사·마법·동료',
-    title: '견습 기사의 지도',
-    logline:
-      '검을 못 쓰는 견습 기사가 말하는 지도를 발견하고, 추방된 마법사와 함께 사라진 왕국의 길을 찾는다.',
-    genre: '판타지',
-    tone: '모험, 유쾌함',
+    id: 'omegaverse',
+    name: '오메가버스',
+    hint: '운명·페로몬·계약',
+    title: '향기로 남은 이름',
+    logline: '우성 알파 검사와 발현을 숨겨 온 오메가 변호사. 같은 사건의 반대편에 선 두 사람의 운명이 향기로 먼저 들킨다.',
+    genre: '오메가버스',
+    tone: '긴장감, 끌림',
     episode_count: 8,
     episode_seconds: 60,
-    style: STYLES[6].text,
+    style: STYLES[2].text,
   },
   {
     id: 'scifi',
     name: '근미래 SF',
     hint: '인공지능·기억·선택',
     title: '내일의 음성메모',
-    logline:
-      '미래의 자신이 보낸 음성메모를 받는 수리공. 마지막 메모에는 절대로 고쳐서는 안 되는 로봇의 이름이 담겨 있다.',
-    genre: '판타지',
+    logline: '미래의 자신이 보낸 음성메모를 받는 수리공. 마지막 메모에는 절대로 사랑해서는 안 되는 남자의 이름이 담겨 있다.',
+    genre: 'SF',
     tone: '신비로움, 긴장감',
     episode_count: 6,
     episode_seconds: 60,
@@ -213,9 +203,8 @@ export const TEMPLATES: Template[] = [
     name: '힐링 일상',
     hint: '동네·작은 위로·성장',
     title: '오늘도 문을 엽니다',
-    logline:
-      '폐점을 앞둔 작은 카페에 매일 같은 시간 찾아오는 손님들이 저마다의 하루를 한 문장씩 남기기 시작한다.',
-    genre: '청춘',
+    logline: '폐점을 앞둔 작은 카페 사장과 매일 같은 시간 찾아오는 단골 남자. 영수증 뒤에 남기는 한 문장이 두 사람의 하루를 바꾼다.',
+    genre: '힐링',
     tone: '포근함, 담백함',
     episode_count: 4,
     episode_seconds: 30,
@@ -223,11 +212,10 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'music',
-    name: '음악 청춘',
-    hint: '밴드·꿈·우정',
+    name: '밴드 청춘',
+    hint: '밴드·꿈·진심',
     title: '우리의 마지막 합주',
-    logline:
-      '해체를 앞둔 대학 밴드의 두 멤버가 마지막 공연을 준비하며, 완성하지 못한 노래에 서로의 진심을 담는다.',
+    logline: '해체를 앞둔 인디 밴드의 보컬과 기타리스트가 마지막 공연을 준비하며, 완성하지 못한 노래에 서로의 진심을 담는다.',
     genre: '청춘',
     tone: '열정, 뭉클함',
     episode_count: 6,
@@ -236,11 +224,10 @@ export const TEMPLATES: Template[] = [
   },
   {
     id: 'sports',
-    name: '스포츠 성장',
-    hint: '도전·팀워크·역전',
+    name: '스포츠 라이벌',
+    hint: '라이벌·팀워크·역전',
     title: '벤치에서 시작된 봄',
-    logline:
-      '늘 벤치에 앉던 선수가 부상당한 주장을 대신해 동네 대회에 출전하고, 자신만의 방식으로 팀을 하나로 모은다.',
+    logline: '만년 후보 선수와 팀의 에이스. 부상으로 자리를 바꾼 두 남자는 라이벌에서 서로의 유일한 편이 되어 간다.',
     genre: '청춘',
     tone: '희망, 열정',
     episode_count: 6,
@@ -252,9 +239,8 @@ export const TEMPLATES: Template[] = [
     name: '동거 시트콤',
     hint: '룸메이트·오해·소동',
     title: '우리 집 사용 설명서',
-    logline:
-      '생활 습관이 정반대인 두 남자가 한집에 살게 된다. 냉장고에 붙인 단 하나의 규칙이 매일 새로운 소동을 만든다.',
-    genre: '현대 로맨스',
+    logline: '생활 습관이 정반대인 두 남자가 한집에 살게 된다. 냉장고에 붙인 단 하나의 규칙이 매일 새로운 소동을 만든다.',
+    genre: '로맨틱 코미디',
     tone: '경쾌함, 따뜻함',
     episode_count: 6,
     episode_seconds: 30,
@@ -265,9 +251,8 @@ export const TEMPLATES: Template[] = [
     name: '반려동물 코미디',
     hint: '산책·이웃·뜻밖의 인연',
     title: '산책은 핑계일 뿐',
-    logline:
-      '매일 같은 강아지에게 끌려가는 두 이웃은 서로의 이름도 모른 채 동네의 사소한 사건들을 함께 해결한다.',
-    genre: '현대 로맨스',
+    logline: '매일 같은 강아지에게 끌려가는 두 남자 이웃은 서로의 이름도 모른 채 동네의 사소한 사건들을 함께 해결한다.',
+    genre: '로맨틱 코미디',
     tone: '귀여움, 유쾌함',
     episode_count: 4,
     episode_seconds: 30,
@@ -278,8 +263,7 @@ export const TEMPLATES: Template[] = [
     name: '30초 반전극',
     hint: '짧은 호흡·단서·반전',
     title: '문 앞의 쪽지',
-    logline:
-      '퇴근할 때마다 문 앞에 놓인 익명의 쪽지. 마지막 한 줄을 읽는 순간, 주인공이 알고 있던 하루의 의미가 바뀐다.',
+    logline: '퇴근할 때마다 문 앞에 놓인 익명의 쪽지. 마지막 한 줄을 읽는 순간, 옆집 남자가 알고 있던 나의 하루가 드러난다.',
     genre: '미스터리',
     tone: '궁금증, 반전',
     episode_count: 1,
@@ -291,15 +275,15 @@ export const TEMPLATES: Template[] = [
 export function voiceSuggestions(provider = '', label = ''): string[] {
   const key = `${provider} ${label}`.toLowerCase();
   if (key.includes('openai'))
-    return ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer'];
+    return ['ash', 'echo', 'onyx', 'ballad', 'fable', 'alloy', 'sage', 'coral', 'nova', 'shimmer'];
   if (key.includes('gemini') || key.includes('google'))
-    return ['Kore', 'Puck', 'Charon', 'Fenrir', 'Aoede', 'Leda', 'Zephyr'];
+    return ['Puck', 'Charon', 'Fenrir', 'Kore', 'Aoede', 'Leda', 'Zephyr'];
   if (key.includes('minimax') || key.includes('hailuo'))
     return [
-      'Korean_SweetGirl',
-      'Korean_CalmLady',
       'Korean_CheerfulBoyfriend',
       'Korean_IntellectualSenior',
+      'Korean_SweetGirl',
+      'Korean_CalmLady',
     ];
   return [];
 }

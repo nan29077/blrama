@@ -24,6 +24,8 @@ import {
   parseJson,
   planPrompt,
   planSchema,
+  maleLeads,
+  BL_VISUAL,
   posterPrompt,
   rangePrompt,
   rangeSchema,
@@ -155,6 +157,7 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
   const planHandler = {
     async onSuccess({ job, result }) {
       const plan = parseJson(result.text, planSchema);
+      plan.characters = maleLeads(plan.characters);
       const p = await db.get('SELECT * FROM studio_projects WHERE id=?', [job.project_id]);
       if (!p) return { skipped: true };
       await db.run('UPDATE studio_projects SET title=?,logline=?,synopsis=?,style=?,updated_at=? WHERE id=?', [
@@ -549,6 +552,8 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
       // 인물: 이미 있는 이름은 그대로 두고(비어 있는 외모만 채움) 새 인물만 추가
       const old = await charactersOf(p.id);
       let order = old.length;
+      // 처음 인물을 만드는 경우 첫 두 명(주인공 커플)은 성인 남성으로 보정해요(BL 전문).
+      if (!old.length) out.characters = maleLeads(out.characters);
       for (const c of out.characters) {
         const same = old.find((o) => o.name.trim() === c.name.trim());
         const lookEn = c.look_en || (/[가-힣]/.test(c.look) ? '' : c.look);
@@ -2379,14 +2384,14 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
       if (!drama) {
         const id = randomUUID();
         await db.run(
-          "INSERT INTO dramas (id,owner_id,title,tagline,synopsis,genre,image,free,episode_pings,free_episodes,created_at,channel_id,rights_confirmed,likeness_confirmed,ai_usage,declared_at,hashtags,trailer,subtitle_style) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,1,'full',?,?,?,?)",
+          "INSERT INTO dramas (id,owner_id,title,tagline,synopsis,genre,image,free,episode_pings,free_episodes,created_at,channel_id,rights_confirmed,bl_confirmed,likeness_confirmed,ai_usage,declared_at,hashtags,trailer,subtitle_style) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,1,1,'full',?,?,?,?)",
           [id, p.owner_id, title, b.tagline, synopsis, p.genre, image, b.free ? 1 : 0, b.episode_pings, b.free_episodes, now(), channel?.id || null, now(), hashtags, trailer, p.subtitle_style || ''],
         );
         drama = await db.get('SELECT * FROM dramas WHERE id=?', [id]);
         await db.run('UPDATE studio_projects SET drama_id=? WHERE id=?', [id, p.id]);
       } else if (!serial) {
         await db.run(
-          "UPDATE dramas SET title=?,tagline=?,synopsis=?,genre=?,image=?,free=?,episode_pings=?,free_episodes=?,rights_confirmed=1,likeness_confirmed=1,ai_usage=CASE WHEN ai_usage='none' THEN 'partial' ELSE ai_usage END,declared_at=?,hashtags=?,trailer=?,subtitle_style=? WHERE id=?",
+          "UPDATE dramas SET title=?,tagline=?,synopsis=?,genre=?,image=?,free=?,episode_pings=?,free_episodes=?,rights_confirmed=1,bl_confirmed=1,likeness_confirmed=1,ai_usage=CASE WHEN ai_usage='none' THEN 'partial' ELSE ai_usage END,declared_at=?,hashtags=?,trailer=?,subtitle_style=? WHERE id=?",
           [title, b.tagline, synopsis, p.genre, image, b.free ? 1 : 0, b.episode_pings, b.free_episodes, now(), hashtags, trailer, p.subtitle_style || '', drama.id],
         );
       } else {
@@ -2884,7 +2889,7 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
     seed: z.number().int().min(0).max(1000000).optional(),
   });
   const firstShotPrompt = (b) =>
-    `Korean short-form drama key frame, vertical 9:16, genre: ${b.genre}. ${b.logline}. ${b.tone ? `Mood: ${b.tone}. ` : ''}${b.style || 'Cinematic realistic look.'} One striking moment that sells the story, cinematic lighting and composition, no text, no captions, no watermark.`;
+    `Korean short-form BL drama key frame, vertical 9:16, genre: ${b.genre}. ${b.logline}. ${BL_VISUAL}; if two people appear they are the two male leads. ${b.tone ? `Mood: ${b.tone}. ` : ''}${b.style || 'Cinematic realistic look.'} One striking moment that sells the story, cinematic lighting and composition, no text, no captions, no watermark.`;
   const firstShotInput = (b) => ({ prompt: firstShotPrompt(b), aspect: '9:16', userText: [b.logline, b.tone].filter(Boolean).join(' '), ...(b.seed !== undefined ? { seed: b.seed } : {}) });
   app.post('/api/studio/ai/tools/first-shot/estimate', roles('pd', 'admin'), async (req, res) => {
     await requireTerms(req);

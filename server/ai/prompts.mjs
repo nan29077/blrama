@@ -6,7 +6,10 @@ export { CAMERA_MOVES };
 // 숏폼 드라마 제작용 프롬프트와 결과 검증. 모델이 달라도 같은 JSON 형태를 받도록 합니다.
 // 시각 묘사(visual·look)는 영상·이미지 모델이 잘 알아듣는 영어로, 대사와 장면 설명은 한국어로 받습니다.
 const SYSTEM = `당신은 한국 모바일 숏폼 드라마(세로 9:16, 회당 1~2분) 전문 작가이자 연출가입니다.
-- B엘라마는 BL 장르 전문 서비스입니다. 기획과 대본의 중심에 두 남성 주인공의 관계와 감정선을 놓습니다.
+- B엘라마는 BL 장르 전문 서비스입니다. 모든 작품은 BL 드라마이며, 기획과 대본의 중심에 두 남성 주인공의 관계와 감정선을 놓습니다.
+- 주인공 커플은 반드시 성인 남성 두 명(만 20세 이상)입니다. 로맨스·설렘·스킨십은 두 남성 주인공 사이에만 두고, 여성 인물은 가족·동료 같은 조연으로만 씁니다.
+- PD의 아이디어가 남녀 관계이거나 성별이 정해지지 않았으면 두 성인 남성 주인공의 이야기로 바꿔 씁니다.
+- 미성년자를 연애 대상으로 그리지 않습니다. 학교가 배경이면 대학교(캠퍼스)로 하거나 성인이 된 뒤의 재회로 씁니다.
 - 첫 3초 안에 갈등이나 궁금증을 던지고, 매 회차 끝은 다음 화가 궁금한 반전·클리프행어로 끝냅니다.
 - 실존 인물, 실제 브랜드, 기존 작품의 캐릭터·설정을 쓰지 않습니다. 선정적·폭력적 묘사는 15세 관람가 수준으로 제한합니다.
 - 반드시 요청한 JSON 형식만 출력합니다. 설명 문장이나 마크다운을 붙이지 않습니다.`;
@@ -78,7 +81,8 @@ JSON 형식:
 {"title":"제목","logline":"한 줄 소개","synopsis":"전체 줄거리(5~8문장)","style":"영상 스타일을 영어로 한 문장(예: cinematic Korean drama, soft warm lighting, 35mm)",
  "characters":[{"name":"이름","role":"주인공/조연 등","description":"성격과 목표(한국어)","look":"외모를 한국어로 구체적으로(나이대, 머리, 옷, 특징)","look_en":"같은 외모를 영어로"}],
  "episodes":[{"number":1,"title":"회차 제목","summary":"회차 줄거리 2~3문장과 마지막 반전"}]}
-episodes는 정확히 ${p.episode_count}개, characters는 2~5명.`,
+episodes는 정확히 ${p.episode_count}개, characters는 2~5명.
+characters의 첫 두 명은 BL 주인공 커플인 성인 남성 두 명입니다. look은 '20대 후반 남성, …'처럼 성별·나이로 시작하고, look_en은 'adult Korean man in his late 20s, …'처럼 시작합니다.`,
   };
 }
 const bibleText = (bible) => {
@@ -169,6 +173,24 @@ export function rewriteShotPrompt({ project, characters, shot, speaker, instruct
 JSON 형식: {"scene":"","visual":"","visual_en":"","dialogue":"","speaker":"","camera":"","camera_move":"","emotion":"","seconds":5}`,
   };
 }
+// BL 전문 서비스: 이미지·영상 지시문에 붙이는 공통 조건(주인공은 성인 남성 두 명, 미성년자 없음)
+export const BL_VISUAL = 'Korean BL (boys love) drama; the romantic leads are two adult Korean men in their 20s-30s; every person shown is an adult';
+const MALE_KO = /(남성|남자|청년|아저씨|왕자|왕세자|세자|도령|형사|기사)/;
+const MALE_EN = /\b(man|men|male|guy|prince|gentleman)\b/i;
+// 기획 결과의 첫 두 인물(주인공 커플)이 성인 남성으로 적혀 있게 보정합니다.
+export function maleLeads(characters = []) {
+  return characters.map((c, i) => {
+    if (i > 1) return c;
+    c = {
+      ...c,
+      look: String(c.look || '').replace(/여성|여자/g, '남성'),
+      look_en: String(c.look_en || '').replace(/\bwoman\b/gi, 'man').replace(/\bwomen\b/gi, 'men').replace(/\bfemale\b/gi, 'male').replace(/\bgirl\b/gi, 'man'),
+    };
+    const look = c.look && !MALE_KO.test(c.look) ? `성인 남성, ${c.look}` : c.look || '20대 후반 성인 남성';
+    const look_en = c.look_en && !MALE_EN.test(c.look_en) ? `adult Korean man, ${c.look_en}` : c.look_en || '';
+    return { ...c, look, look_en };
+  });
+}
 // 캐릭터 기준 이미지(얼굴·의상 고정용)
 export const characterImagePrompt = (project, c) =>
   `Character reference sheet, single person, front-facing portrait, neutral background, vertical 9:16. ${c.look_en && c.look_en_src === c.look ? c.look_en : c.look}. ${project.style}. Photorealistic, consistent face, no text, no watermark.`;
@@ -188,7 +210,7 @@ export const propLockText = (x) => `${x.name} (${lookOf(x)}${Number(x.locked) ? 
 export const shotImagePrompt = (project, shot, cast, place, { states = {}, props = [], styleLock = false } = {}) =>
   `${visualOf(shot)}. ${cast.map((c) => castLockText(c, states[c.id])).join('; ')}${placeLockText(place)}${
     props.length ? `. Props in frame: ${props.map(propLockText).join(', ')}` : ''
-  }${framingText(shot) ? `. Framing: ${framingText(shot)}` : ''}${lightText(shot) ? `. Lighting and mood: ${lightText(shot)}` : ''}. ${project.style}. Vertical 9:16 frame, cinematic still, keep the same faces and outfits as the reference images${styleLock ? ', match the color grading and art style of the style reference image' : ''}, no text, no watermark.`;
+  }${framingText(shot) ? `. Framing: ${framingText(shot)}` : ''}${lightText(shot) ? `. Lighting and mood: ${lightText(shot)}` : ''}. ${project.style}. ${BL_VISUAL}. Vertical 9:16 frame, cinematic still, keep the same faces and outfits as the reference images${styleLock ? ', match the color grading and art style of the style reference image' : ''}, no text, no watermark.`;
 export const propPrompt = (project, x) => `Prop reference, a single object on a plain neutral background, no people. ${lookOf(x)}. ${project.style}. Vertical 9:16, sharp detail, no text, no watermark.`;
 // 인물 관계(JSON 배열 [{a,b,kind,note}]) → 프롬프트 한 줄
 export function relationsText(raw, characters = []) {
@@ -217,7 +239,7 @@ export const posterPrompt = (project, cast) =>
   `Korean short drama poster, vertical 9:16, dramatic key art for "${project.title}" (${project.genre}). ${project.logline}. ${cast
     .slice(0, 2)
     .map((c) => lookOf(c))
-    .join(' and ')}. ${project.style}. Leave empty space at top for the title, no text.`;
+    .join(' and ')}. ${BL_VISUAL}; the two leads share the frame with romantic tension. ${project.style}. Leave empty space at top for the title, no text.`;
 
 // ── 작품 설정집 · 시즌 설계 · 진단 · 각색 · 메타데이터 · 번역 ─────────────
 export const bibleSchema = z.object({
@@ -299,6 +321,7 @@ export function adaptPrompt({ project, source }) {
     context: { ...project, source: String(source).slice(0, 200) },
     prompt: `아래 원작(PD가 직접 쓴 시놉시스·원고)을 ${project.episode_count}화, 회당 약 ${project.episode_seconds}초 숏폼 드라마로 각색해 주세요.
 원작의 인물·사건을 살리되 회차마다 반전과 클리프행어가 있도록 나눕니다.
+B엘라마는 BL 전문 서비스이므로 원작이 남녀 로맨스이거나 성별이 없으면 두 성인 남성 주인공의 BL 관계로 각색합니다. characters의 첫 두 명은 성인 남성 주인공이고 look은 '20대 후반 남성, …'처럼 시작합니다.
 원작:
 """
 ${String(source).slice(0, 30000)}

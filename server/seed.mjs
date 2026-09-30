@@ -95,6 +95,7 @@ export async function seed(db) {
         now,
       ],
     );
+    await db.run('UPDATE dramas SET bl_confirmed=1,rights_confirmed=1 WHERE id=?', [id]);
     for (let n = 1; n <= 12; n++)
       await db.run(
         'INSERT INTO episodes (id,drama_id,number,title,video,duration) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING',

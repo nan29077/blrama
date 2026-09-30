@@ -129,6 +129,7 @@ const initialForm = {
   free_episodes: 3,
   image: '/images/bellama-midnight.webp',
   rights_confirmed: false,
+  bl_confirmed: false,
   likeness_confirmed: false,
   ai_usage: 'none' as 'none' | 'partial' | 'full',
 };
@@ -923,6 +924,7 @@ function DramaEditor({
             free_episodes: drama.free_episodes,
             image: drama.image,
             rights_confirmed: Number(drama.rights_confirmed) === 1,
+            bl_confirmed: Number(drama.bl_confirmed) === 1,
             likeness_confirmed: Number(drama.likeness_confirmed) === 1,
             ai_usage: drama.ai_usage || 'none',
           },
@@ -1079,7 +1081,18 @@ function DramaEditor({
           />
         </label>
         <fieldset className="declaration">
-          <legend>권리 · AI 사용 확인 (심사 요청 전 필수)</legend>
+          <legend>BL 장르 · 권리 · AI 사용 확인 (심사 요청 전 필수)</legend>
+          <label className="check-row">
+            <input
+              type="checkbox"
+              checked={f.bl_confirmed}
+              onChange={(e) => setF({ ...f, bl_confirmed: e.target.checked })}
+            />
+            <span>
+              이 작품은 성인 남성 주인공 두 사람의 관계를 중심으로 한 <strong>BL 장르 드라마</strong>입니다. B엘라마는
+              BL 전문 서비스라 BL이 아닌 작품이나 미성년자를 연애 대상으로 그린 작품은 공개되지 않아요.
+            </span>
+          </label>
           <label className="check-row">
             <input
               type="checkbox"

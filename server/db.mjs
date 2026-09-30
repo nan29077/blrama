@@ -234,6 +234,8 @@ export async function migrate(db) {
   await ensureColumn(db, 'orders', 'product_id', 'TEXT');
   // 업로드 고도화: 권리·AI 자가 신고, 회차 출처와 자막, 소리 유무
   await ensureColumn(db, 'dramas', 'rights_confirmed', 'INTEGER NOT NULL DEFAULT 0');
+  // B엘라마는 BL 장르 전문: 심사 요청 전 'BL 장르 작품' 확인이 필수예요.
+  await ensureColumn(db, 'dramas', 'bl_confirmed', 'INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'dramas', 'likeness_confirmed', 'INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'dramas', 'ai_usage', "TEXT NOT NULL DEFAULT 'none'");
   await ensureColumn(db, 'dramas', 'declared_at', 'TEXT');

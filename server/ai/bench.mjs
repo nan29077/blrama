@@ -11,10 +11,10 @@ import { loadSettings } from '../settings.mjs';
 // 결과를 AI 검수로 자동 채점해 모델별 점수 · 인물 닮음 · 원가 · 걸린 시간을 한 표로 비교해요.
 // 채점 점수는 품질 표본(ai_quality_samples, source=bench)으로 남아 자동 선택의 '품질' 가중치에 쓰여요.
 const PRESETS = [
-  { name: '비 오는 골목 클로즈업', capability: 'image', prompt: 'Close-up of a young Korean woman in a beige trench coat standing in a rainy neon-lit alley at night, wet hair, teary eyes, cinematic lighting, vertical 9:16, no text.' },
-  { name: '카페 대화 투샷', capability: 'image', prompt: 'Two-shot of a Korean man and woman talking across a small cafe table by a window, warm afternoon light, natural hands holding coffee cups, vertical 9:16, no text.' },
-  { name: '손과 소품 디테일', capability: 'image', prompt: 'Close-up of a woman\'s hands opening an old yellowed letter with a red wax seal, five natural fingers on each hand, soft window light, vertical 9:16, no text.' },
-  { name: '천천히 다가가는 고백', capability: 'video', prompt: 'A Korean man confesses to a woman on a rooftop at golden hour, slow push-in toward his face, gentle wind in hair, vertical 9:16, natural motion, no text overlay.', seconds: 5 },
+  { name: '비 오는 골목 클로즈업', capability: 'image', prompt: 'Close-up of a young adult Korean man in a beige trench coat standing in a rainy neon-lit alley at night, wet hair, teary eyes, cinematic lighting, vertical 9:16, no text.' },
+  { name: '카페 대화 투샷', capability: 'image', prompt: 'Two-shot of two adult Korean men talking across a small cafe table by a window, warm afternoon light, natural hands holding coffee cups, vertical 9:16, no text.' },
+  { name: '손과 소품 디테일', capability: 'image', prompt: 'Close-up of a man\'s hands opening an old yellowed letter with a red wax seal, five natural fingers on each hand, soft window light, vertical 9:16, no text.' },
+  { name: '천천히 다가가는 고백', capability: 'video', prompt: 'An adult Korean man confesses to another adult Korean man on a rooftop at golden hour, slow push-in toward his face, gentle wind in hair, vertical 9:16, natural motion, no text overlay.', seconds: 5 },
 ];
 
 export function benchRoutes({ app, db, fail, now, roles, engine, uploadDir }) {
