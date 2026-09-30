@@ -4,10 +4,9 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronRight,
-  Clapperboard,
   Copy,
-  Film,
   Lightbulb,
+  Play,
   Search,
   ShieldCheck,
   Sparkles,
@@ -223,18 +222,26 @@ export default function ProductionGuide({
           </button>
         </div>
         <div className="guide-visual" aria-hidden="true">
-          <div className="guide-film">
-            <Film size={36} />
-            <span>
-              YOUR FIRST
-              <br />
-              SHORT DRAMA
-            </span>
-            <i>01 / ACTION</i>
+          <div className="guide-scene-card">
+            <div className="guide-scene-top">
+              <span>BELLAMA ORIGINAL</span>
+              <span>01 / STORY</span>
+            </div>
+            <div className="guide-scene-art">
+              <svg viewBox="0 0 180 108" fill="none" role="presentation">
+                <circle cx="54" cy="45" r="19" fill="#8699c3" />
+                <path d="M18 109c4-28 17-42 37-42s33 14 37 42" fill="#586d9c" />
+                <circle cx="126" cy="43" r="18" fill="#c1c9e5" />
+                <path d="M91 109c4-28 17-42 36-42s33 14 37 42" fill="#899ac2" />
+                <path d="M80 28c5-8 15-8 20 0" stroke="#e8eaf7" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <span className="guide-scene-play"><Play size={16} fill="currentColor" /></span>
+            </div>
+            <div className="guide-scene-bottom">
+              <strong>첫 장면에서<br />시작되는 우리</strong>
+              <span>EPISODE 01</span>
+            </div>
           </div>
-          <span className="guide-sticker">
-            <Clapperboard size={18} /> 작은 시작, 새로운 이야기
-          </span>
         </div>
       </section>
       <div className="guide-routes">

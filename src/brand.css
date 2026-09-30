@@ -266,3 +266,134 @@ body { background: #100b13; }
   .management-layout .studio-header { padding: 23px 21px; }
   .management-layout .studio-header::after { font-size: 31px; }
 }
+
+/* 붉은 조명을 낮춘 차가운 잉크·라벤더 팔레트. */
+:root {
+  --lime: #bfc2e0;
+  --bg: #151a27;
+  --panel: #222839;
+  --muted: #aeb6c6;
+  --border: #46506a;
+  color: #f2f3fa;
+  background: #111723;
+}
+body { background: #111723; }
+.app-shell { background: #151a27; }
+.app-header, .feed-tabs { background: #171e2cf5; }
+.primary { background: #bfc2e0; color: #20283d; }
+.primary:hover { background: #d5d8ee; color: #20283d; }
+.secondary { background: #293149; border-color: #4e5b78; }
+.secondary:hover { background: #34405a; }
+.brand b { color: #f4f3fc; }
+.brand b > span { color: #bac2e4; }
+.genre-chips button { background: #252d41; border-color: #49536d; color: #c5cadd; }
+.genre-chips button.active { background: #bfc2e022; border-color: #bfc2e0; color: #e4e5fb; }
+.hero-shade {
+  background: linear-gradient(0deg, #151a27 0%, #151a27f0 9%, #151a2782 37%, #151a2705 78%), linear-gradient(90deg, #15223899, transparent 65%);
+}
+.membership-banner { background: linear-gradient(115deg, #343e65, #252d45); border-color: #6876a0; }
+.desktop-menu > button.active { color: #e1e3f6; background: #bfc2e01b; box-shadow: inset 0 0 0 1px #bfc2e044; }
+.desktop-menu > button:hover { background: #bfc2e016; }
+.ambient-one { background: #475577; }
+.ambient-two { background: #39486e; }
+.rail-account-card, .right-rail .app-intro { background: #222a3cc9; border-color: #505a76; }
+@media (min-width: 1000px) {
+  .site-layout:not(.management-layout)::before {
+    background:
+      linear-gradient(0deg, rgb(12 20 34 / var(--home-shade, 0)), rgb(12 20 34 / var(--home-shade, 0))),
+      linear-gradient(180deg, #111c2ce0 0%, #16253b9c 43%, #101a2add 100%),
+      linear-gradient(90deg, #14253bb3, #1b2638a6),
+      var(--home-wallpaper, url('/images/bellama-desktop.webp')) var(--home-focus, center) / cover no-repeat;
+  }
+  .left-rail .rail-copy.boxed { background: linear-gradient(135deg, #182538dc, #2c344d99); }
+  .right-rail .app-intro { background: linear-gradient(140deg, #26334cde, #192333e0); }
+  .desktop-menu > button { background: #182335a6; color: #d7dbeb; }
+}
+.bellama-my-page { background: radial-gradient(circle at 94% 1%, #59688a3b, transparent 290px); }
+.bellama-my-heading { background: linear-gradient(118deg, #303d59, #242c42 68%, #1e2536); border-color: #8591af55; }
+.bellama-my-heading .eyebrow { color: #cfd3f0; }
+.bellama-my-heading p, .bellama-my-page .profile-card p, .bellama-my-page .my-summary span { color: #bfc7df; }
+.bellama-my-page .profile-card { background: linear-gradient(120deg, #2c3650, #222a3c); border-color: #586481; }
+.bellama-my-page .large-avatar { background: #bac3e433; box-shadow: inset 0 0 0 1px #bac3e477; }
+.bellama-my-page .role-badge { background: #929cc34a; color: #ebedff; }
+.bellama-my-page .my-summary > div { background: #222a3d; border-color: #495670; border-left-color: #929fc8; }
+.bellama-my-page .my-summary > div:nth-child(even) { border-left-color: #a5afd4; }
+.bellama-my-page .my-wallet, .bellama-my-page .my-pass { background: linear-gradient(115deg, #34425d, #222c42 80%); border-color: #627093; }
+.bellama-my-page .my-wallet span, .bellama-my-page .my-pass span { color: #c4cce1; }
+.bellama-my-page .my-shortcuts button, .bellama-my-page .studio-entry { background: #222b3e; border-color: #4f5a76; color: #e0e4f4; }
+.bellama-my-page .my-shortcuts button:hover, .bellama-my-page .studio-entry:hover { background: #303d57; border-color: #a3afd6; }
+.bellama-settings-page .settings-card { background: linear-gradient(145deg, #273147, #1f293a); border-color: #596684; box-shadow: inset 3px 0 #889bc8; }
+.bellama-settings-page .settings-card:nth-child(even) { box-shadow: inset 3px 0 #a4a2cc; }
+.bellama-settings-page .assigned-avatar { background: #303d55; border-color: #5b6884; }
+.membership-page { background: radial-gradient(circle at 50% 8%, #596d9b3d, transparent 360px); }
+.membership-page .plan-card { background: linear-gradient(145deg, #344463, #222c44); border-color: #8192bc; }
+.login-page { background: radial-gradient(circle at 50% 0%, #576b9940, transparent 270px); }
+.login-page .test-login { background: #2c385455; border-color: #7c8db4; }
+.pings-page .wallet-card { background: radial-gradient(circle at 92% 0%, #bfc2e035, transparent 55%), #2b3750; border-color: #8191ba; }
+.channel-card { background: #222b3e; border-color: #4f5e7b; }
+.channel-card:hover { border-color: #a8b6db; }
+.management-layout > .app-shell { background: radial-gradient(circle at 85% 5%, #43587b45, transparent 420px), #151b29; }
+.management-topbar { background: #1b2231f5; border-bottom-color: #45526b; }
+.management-topbar > a > span:last-child { color: #aebadb; border-left-color: #515f7a; }
+.environment-pill { background: #65749d33; border-color: #8391b466; color: #d0d7f1; }
+.management-sidebar { background: linear-gradient(180deg, #222d42, #192337 75%); border-right-color: #4c5b78; }
+.sidebar-caption, .sidebar-group-label { color: #aeb9d6; }
+.management-sidebar nav button { color: #c4cce1; }
+.management-sidebar nav button:hover { background: #91a3d129; }
+.management-sidebar nav button.active { background: linear-gradient(100deg, #8698c445, #6c7fa12d); color: #f2f3ff; box-shadow: inset 3px 0 #bdc7e9, inset 0 0 0 1px #8493bb55; }
+.sidebar-footer { border-color: #4b5a76; }
+.management-layout .studio-header { background: linear-gradient(110deg, #344460, #25344c 70%, #222c40); border-color: #647597; }
+.management-layout .studio-header .eyebrow { color: #d3dcf8; }
+.management-layout .studio-header p { color: #c9d2e6; }
+.management-layout .stat-card, .management-layout .stat-card:nth-child(2), .management-layout .stat-card:nth-child(3), .management-layout .stat-card:nth-child(4) { background: linear-gradient(145deg, #29364e, #202a3d); border-color: #53627f; }
+.management-layout .content-row, .management-layout .user-row, .management-panel { background: #222c3e; border-color: #4e5d78; }
+.management-layout .studio-callout { background: linear-gradient(105deg, #35486a, #25334e); border-color: #667da6; }
+.management-layout .chart-track, .management-layout .pipeline-list > div > div { background: #3a4863; }
+.management-layout .chart-track > span, .management-layout .pipeline-list > div > div i { background: linear-gradient(#c4cdeb, #788bb7); }
+.management-layout .sidebar-profile { background: #2d3b54; border-color: #596b8d; }
+.management-layout .sidebar-home { background: #bfc2e0; color: #222b3d; }
+.management-layout .sidebar-footer { background: #192337; border-color: #4b5a76; }
+.management-layout .sidebar-profile-avatar { background: linear-gradient(135deg, #b9c8e7, #748bb9); color: #263550; }
+.management-layout .sidebar-footer .sidebar-home:hover { background: #d5daef; color: #20283d; }
+.management-layout .sidebar-logout:hover { color: #e0e7fa; }
+
+/* 제작 가이드의 숏핑 녹색 잔재 제거. 동적 Studio CSS보다 구체적인 선택자를 사용합니다. */
+.production-guide .creator-welcome {
+  background: radial-gradient(ellipse at 92% 8%, #6c7db54a, transparent 62%), linear-gradient(125deg, #2c3a58, #1c283b);
+  border-color: #63759a;
+}
+.production-guide .creator-welcome .eyebrow { color: #d2dbf8; }
+.production-guide .creator-welcome p { color: #cbd3e6; }
+.production-guide .guide-film { background: linear-gradient(145deg, #576990, #293a58); border-color: #a1b2d188; color: #f2f4ff; }
+.production-guide .guide-sticker { background: #c5cbe7; color: #27334b; }
+.production-guide .guide-routes > button { background: #233149; border-color: #4d607e; }
+.production-guide .guide-routes > button:hover { border-color: #a9b8dc; background: #2b3b59; }
+.production-guide .guide-routes > button > svg:first-child { color: #bfcaf1; }
+.production-guide .guide-routes small { color: #b9c5db; }
+.production-guide .creator-search { background: #1e2a3b; border-color: #50617e; color: #bfc9df; }
+.production-guide .creator-search button { color: #ccd5f1; }
+.production-guide .guide-layout nav button { background: #233046; border-color: #3e506c; }
+.production-guide .guide-layout nav button:hover { background: #2b3b57; }
+.production-guide .guide-layout nav button > span,
+.production-guide .guide-layout nav button small { color: #aebcda; }
+.production-guide .guide-layout nav button[aria-current='page'] { background: #354664; border-color: #9badcf; }
+.production-guide .guide-lesson { background: #222e42; border-color: #536581; }
+.production-guide .guide-lesson .eyebrow,
+.production-guide .guide-bottom .eyebrow { color: #c4d0ef; }
+.production-guide .guide-intro,
+.production-guide .guide-lesson aside p,
+.production-guide .guide-sample p,
+.production-guide .guide-bottom details p,
+.production-guide .guide-help { color: #c4cfe2; }
+.production-guide .guide-lesson li b { background: #3b4d6c; color: #e4eafb; }
+.production-guide .guide-lesson aside { background: #b9c7e70d; border-color: #9fb1d65c; }
+.production-guide .guide-lesson aside > svg,
+.production-guide .guide-lesson aside strong { color: #d8e1fa; }
+.production-guide .guide-sample { border-color: #8294b8; }
+.production-guide .guide-bottom small { color: #bdc9e6; }
+.production-guide .guide-bottom details { border-color: #4f5f7a; }
+@media (max-width: 760px) {
+  .production-guide .creator-welcome { flex-direction: column; align-items: stretch; }
+  .production-guide .guide-visual { display: grid; width: 100%; min-width: 0; min-height: 215px; margin-top: 8px; }
+  .production-guide .guide-scene-card { transform: rotate(2deg); }
+}
