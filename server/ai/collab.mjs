@@ -93,9 +93,9 @@ export function collabRoutes({ app, db, fail, now, roles, project, memberOf, set
           EXISTS (SELECT 1 FROM studio_locations l WHERE l.project_id=p.id AND l.image=?) OR
           EXISTS (SELECT 1 FROM studio_props pr WHERE pr.project_id=p.id AND pr.image=?) OR
           EXISTS (SELECT 1 FROM studio_episodes e WHERE e.project_id=p.id AND (e.video=? OR e.intro_card=? OR e.outro_card=? OR e.thumbnail=? OR e.bgm=?)) OR
-          EXISTS (SELECT 1 FROM studio_shots s JOIN studio_episodes e ON e.id=s.episode_id WHERE e.project_id=p.id AND (s.image=? OR s.audio=? OR s.video=? OR s.lipsync=? OR s.sfx=?))
+          EXISTS (SELECT 1 FROM studio_shots s JOIN studio_episodes e ON e.id=s.episode_id WHERE e.project_id=p.id AND (s.image=? OR s.audio=? OR s.video=? OR s.lipsync=? OR s.sfx=? OR s.end_image=?))
         ) LIMIT 1`,
-      [user.id, ownerId, ...Array(19).fill(url)],
+      [user.id, ownerId, ...Array(20).fill(url)],
     ));
   }
   async function myInvites(user) {
@@ -356,8 +356,12 @@ export function collabRoutes({ app, db, fail, now, roles, project, memberOf, set
   app.patch('/api/studio/ai/projects/:id/comments/:cid', roles('pd', 'admin'), async (req, res) => {
     const p = await project(req, req.params.id, 'view');
     const b = z.object({ resolved: z.boolean() }).parse(req.body);
-    const c = await db.get('SELECT id FROM studio_comments WHERE id=? AND project_id=?', [req.params.cid, p.id]);
+    const c = await db.get('SELECT id,user_id,body FROM studio_comments WHERE id=? AND project_id=?', [req.params.cid, p.id]);
     if (!c) fail(404, '댓글을 찾을 수 없어요.');
+    // 해결 표시: 쓴 사람 · 불린 사람(@이름) · 소유자 · 승인 권한 · 관리자만(2026-09-30 점검).
+    const mentioned = String(c.body || '').includes('@' + req.user.name);
+    const allowed = c.user_id === req.user.id || mentioned || req.user.role === 'admin' || !req.teamRole || req.teamRole === 'owner' || can(req.teamRole, 'approve');
+    if (!allowed) fail(403, '의견을 쓴 사람, 불린 사람, 승인 권한이 있는 팀원만 해결 표시를 바꿀 수 있어요.');
     await db.run('UPDATE studio_comments SET resolved=? WHERE id=?', [b.resolved ? 1 : 0, c.id]);
     res.json({ ok: true });
   });
@@ -422,7 +426,7 @@ export function collabRoutes({ app, db, fail, now, roles, project, memberOf, set
       for (const r of eps)
         await copy('studio_episodes', r, {
           video: '', duration: 0, subtitles: '', exported_at: null, status: ['composed', 'composing', 'compose_failed'].includes(r.status) ? 'scripted' : r.status,
-          compose_progress: 0, compose_error: '', compose_claimed_by: null, compose_queued_at: null, script_version: 0, script_review: '', final_review: '', review_note: '',
+          compose_progress: 0, compose_error: '', compose_claimed_by: null, compose_queued_at: null, script_version: 0, script_review: '', final_review: '', review_note: '', compose_dirty: 0,
         });
       for (const r of shots) await copy('studio_shots', r, { verify: r.verify || '', updated_at: null, updated_by: null });
     });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, ChevronDown, Loader2, Settings2 } from 'lucide-react';
 import type { AiFamily, AiModelOption, StudioEpisode, StudioFeatures, StudioJob, StudioProjectDetail, TeamPerm } from '../../api';
 import { type Choice, type ChoiceKey, type Choices, type ModelMode } from '../parts';
@@ -13,7 +13,8 @@ export const TABS: { id: TabId; name: string; hint: string }[] = [
   { id: 'finish', name: '완성 · 공개', hint: '합성 · 예고편 · 썸네일 · 공개' },
 ];
 
-export type RunOpts = { targetId?: string; instruction?: string; options?: Record<string, unknown>; tier?: 'draft' | 'standard' | 'premium'; requested?: string };
+// quickOk: 예상 라마가 이미 화면에 보이는 버튼(컷 에디터 만들기)에서만 true — '확인 없이 바로 실행'이 켜져 있어도 다른 버튼은 늘 확인 창을 거쳐요.
+export type RunOpts = { targetId?: string; instruction?: string; options?: Record<string, unknown>; tier?: 'draft' | 'standard' | 'premium'; requested?: string; quickOk?: boolean };
 // 작업 공간의 탭들이 함께 쓰는 값과 함수
 export type WS = {
   data: StudioProjectDetail;
@@ -41,6 +42,11 @@ export type WS = {
   // 협업: 내 역할로 할 수 있는지(소유자·혼자 작업은 늘 true) · 의견 창 열기
   can: (need: TeamPerm | TeamPerm[]) => boolean;
   comment: (target: { type: 'project' | 'episode' | 'shot'; id: string; label: string }) => void;
+  // 확인 창 없이 바로 실행(컷 에디터 만들기 버튼)
+  quick: boolean;
+  setQuick: (v: boolean) => void;
+  // 견적 · 실행 요청이 진행 중(버튼 잠금용)
+  running: boolean;
 };
 
 export const episodeStatus: Record<string, string> = {
@@ -52,6 +58,11 @@ export const episodeStatus: Record<string, string> = {
 };
 export const epLabel = (e: { number: number; title: string }) => (e.title.startsWith(`${e.number}화`) ? e.title : `${e.number}화 · ${e.title}`);
 export const hasModel = (models: AiModelOption[], cap: string) => models.some((m) => m.capability === cap);
+// 합성 진행률: 서버는 0~1로 저장하고 조회 API는 %로 줘요. 둘 다 %로 맞춰요.
+export const pct = (v: unknown) => {
+  const n = Number(v || 0);
+  return Math.round(n <= 1 ? n * 100 : n);
+};
 export const runningCount = (jobs: StudioJob[], pred: (j: StudioJob) => boolean) => jobs.filter((j) => (j.status === 'queued' || j.status === 'running') && pred(j)).length;
 
 // 자동 저장 상태 표시
@@ -174,4 +185,34 @@ export function Section({
 // 준비 중(모델 없음 · 가격 미설정) 안내
 export function NotReady({ what }: { what: string }) {
   return <small className="ws-not-ready">{what}은(는) 준비 중이에요. 관리자가 AI 모델과 라마 가격을 정하면 쓸 수 있어요.</small>;
+}
+
+// 전체 화면 창(붓 · 끝 장면 고르기 등)에서 Tab 초점이 창 밖으로 나가지 않게 하고, 닫으면 원래 자리로 돌려줘요.
+export function useFocusTrap<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const box = ref.current;
+    if (!box) return;
+    const before = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const items = [...box.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    box.addEventListener('keydown', onKey);
+    return () => {
+      box.removeEventListener('keydown', onKey);
+      before?.focus?.();
+    };
+  }, []);
+  return ref;
 }

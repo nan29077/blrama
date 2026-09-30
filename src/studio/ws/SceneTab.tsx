@@ -1,22 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CheckSquare, MessageSquare, ChevronLeft, ChevronRight, Film, Plus, ShieldCheck, ImageIcon, Lock, Mic, Music, PlayCircle, Sparkles, Upload, Volume2, Wand2 } from 'lucide-react';
-import { api, ApiError, parseJson, studioMedia, type StudioEpisode, type StudioShot } from '../../api';
+import { useEffect, useRef, useState } from 'react';
+import { CheckSquare, ChevronLeft, ChevronRight, Film, ShieldCheck, ImageIcon, Mic, Music, PlayCircle, Sparkles, Upload, Volume2, Wand2 } from 'lucide-react';
+import { api, parseJson, studioMedia, type StudioEpisode } from '../../api';
 import { Empty } from '../../App';
-import { useAutosave, useSyncedForm } from '../hooks';
-import { JobBadge, Versions, isBusy } from '../parts';
-import { CAMERAS, CAMERA_MOVES, EMOTIONS, shotBase } from './ScriptTab';
-import { EpisodeSwitcher, ModelSettings, NotReady, SaveBadge, Section, hasModel, runningCount, type WS } from './shared';
+import { changedFields, useAutosave, useSyncedForm } from '../hooks';
+import { JobBadge, isBusy } from '../parts';
+import { CAMERA_MOVES, EMOTIONS } from './ScriptTab';
+import { EFFECTS, LIGHTS, PresetSelect, TONES, presetValue } from './Direction';
+import { EpisodeSwitcher, ModelSettings, NotReady, SaveBadge, Section, hasModel, pct, runningCount, type WS } from './shared';
 import { asset } from '../../platform';
-import MyMedia from './MyMedia';
-import { VerifyBadge, verifyOf } from './DramaParts';
+import { verifyOf } from './DramaParts';
+import ShotEditor, { TRANSITIONS } from './ShotEditor';
+import ScriptTab from './ScriptTab';
+import { ReadyChecklist } from './Readiness';
+import { Clapperboard, Eye, FileText, Send, X } from 'lucide-react';
 
-const TRANSITIONS = [
-  { id: 'cut', name: '바로 전환' },
-  { id: 'fade', name: '겹쳐 전환' },
-  { id: 'dip', name: '검은 화면 거쳐' },
-  { id: 'flash', name: '번쩍(플래시)' },
-];
-const SFX_CHIPS = ['문이 쾅 닫히는 소리', '빗소리', '심장 박동', '휴대폰 진동', '발소리', '유리 깨지는 소리', '카페 소음', '천둥'];
 const MUSIC_MOODS = ['설레는 로맨스', '긴장감 있는 스릴러', '슬프고 잔잔한', '밝고 경쾌한', '웅장한 반전', '미스터리'];
 type SubStyle = { position: 'bottom' | 'middle' | 'top'; size: 's' | 'm' | 'l' | 'xl'; background: 'none' | 'box' | 'shadow'; names: boolean };
 const defaultSub: SubStyle = { position: 'bottom', size: 'm', background: 'shadow', names: false };
@@ -39,6 +36,7 @@ function EpisodeScenes({ ws, e }: { ws: WS; e: StudioEpisode }) {
   const [selId, setSelId] = useState(ws.focus && e.shots.some((s) => s.id === ws.focus) ? ws.focus : e.shots[0]?.id || '');
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  const [script, setScript] = useState(false); // 대본 서랍(3단계)
   const index = Math.max(0, e.shots.findIndex((s) => s.id === selId));
   const shot = e.shots[index];
   const jobs = data.jobs;
@@ -56,15 +54,53 @@ function EpisodeScenes({ ws, e }: { ws: WS; e: StudioEpisode }) {
     lipsync: e.shots.filter((s) => s.lipsync).length,
     sfx: e.shots.filter((s) => s.sfx).length,
   };
+  // 서버 일괄 작업과 같은 기준: 화면 묘사가 빈 컷은 이미지·영상을 만들지 않아요.
+  const imageable = e.shots.filter((s) => !s.image && s.visual.trim()).length;
+  const videoable = e.shots.filter((s) => !s.video && s.visual.trim()).length;
   const syncable = e.shots.filter((s) => s.video && s.audio && !s.lipsync).length;
   const sfxable = e.shots.filter((s) => s.sfx_prompt?.trim() && !s.sfx).length;
   const unverified = e.shots.filter((s) => s.image && !verifyOf(s)).length;
+  const videoUnchecked = e.shots.filter((s) => (s.lipsync || s.video) && !String(s.video_verify || '').includes(`"video":"${s.lipsync || s.video}"`)).length;
   const running = (kind: string) => runningCount(jobs, (j) => j.kind === kind && e.shots.some((s) => s.id === j.target_id));
   const batch = (label: string, action: string, cap: 'image' | 'tts' | 'video' | 'lipsync' | 'sfx') => ws.run(`${e.number}화 ${label}`, action, cap, { targetId: e.id });
+  // 순서 자유(3단계): 대본이 없어도 여기서 바로 시작할 수 있어요 — AI 대본 · 빈 컷 · 대본 붙여 넣기
   if (!e.shots.length)
     return (
-      <section className="management-panel">
-        <Empty title="대본이 없어요" text="대본 탭에서 컷을 먼저 만들어 주세요." action={() => ws.goTab('script')} label="대본으로 이동" />
+      <section className="management-panel ws-scenes">
+        <div className="ws-script-head">
+          <div>
+            <h3>{e.number}화 장면 편집</h3>
+            <p className="muted">아직 컷이 없어요. 어디서든 시작할 수 있어요.</p>
+          </div>
+        </div>
+        <div className="ws-start-options">
+          <button type="button" className="ws-start-card" disabled={!ws.can('script') || isBusy(jobs, e.id, 'script')} onClick={() => ws.run(`${e.number}화 대본`, 'script', 'text', { targetId: e.id })}>
+            <Wand2 size={20} />
+            <strong>AI로 대본 쓰기</strong>
+            <small>{e.summary.trim() ? '이 회차 줄거리로 컷 · 대사를 한 번에 써요(라마).' : '줄거리가 없어도 아이디어로 써요(라마). 기획을 먼저 하면 더 좋아요.'}</small>
+            <JobBadge jobs={jobs} targetId={e.id} kind="script" />
+          </button>
+          <button
+            type="button"
+            className="ws-start-card"
+            disabled={!ws.can('script') || ws.busy}
+            onClick={() =>
+              void ws.act(
+                () => api(`/studio/ai/projects/${data.project.id}/episodes/${e.id}/shots`, 'POST', { scene: '1', visual: '', dialogue: '', speaker_id: null, camera: '미디엄', seconds: 5 }),
+                '빈 컷을 만들었어요. 장면을 적고 바로 만들어 보세요.',
+              )
+            }
+          >
+            <Film size={20} />
+            <strong>빈 컷으로 바로 시작</strong>
+            <small>폴로처럼 컷 하나부터. 프롬프트 창에 장면을 적고 이미지 · 영상을 만들어요(대본은 나중에).</small>
+          </button>
+          <button type="button" className="ws-start-card" onClick={() => ws.goTab('script')}>
+            <FileText size={20} />
+            <strong>대본 붙여 넣기 · 직접 쓰기</strong>
+            <small>가진 대본이 있으면 붙여 넣어 컷으로 나눠요. 라마가 들지 않아요.</small>
+          </button>
+        </div>
       </section>
     );
   return (
@@ -78,23 +114,29 @@ function EpisodeScenes({ ws, e }: { ws: WS; e: StudioEpisode }) {
             {counts.sfx ? ` · 효과음 ${counts.sfx}` : ''}
           </p>
         </div>
-        <button className="secondary compact" onClick={() => ws.preview(e)}>
-          <PlayCircle size={14} /> 미리보기 (무료)
-        </button>
+        <div className="ws-head-actions">
+          <button className="secondary compact" onClick={() => setScript(true)} title="이 회차 대본을 옆 서랍에서 보고 고쳐요">
+            <FileText size={14} /> 대본
+          </button>
+          <button className="secondary compact" disabled={!e.shots.some((s) => s.image || s.video)} title={!e.shots.some((s) => s.image || s.video) ? '이미지나 영상이 있는 컷이 생기면 볼 수 있어요' : ''} onClick={() => ws.preview(e)}>
+            <PlayCircle size={14} /> 미리보기 (무료)
+          </button>
+        </div>
       </div>
+      {script && <ScriptDrawer ws={ws} close={() => setScript(false)} />}
       <ModelSettings ws={ws} caps={['image', 'tts', 'video', 'lipsync', 'sfx']} />
       <div className="ws-batch" aria-label="비어 있는 컷 한 번에 채우기">
         <span>한 번에 채우기</span>
-        <button className="secondary compact" disabled={counts.image === e.shots.length || running('shot_image') > 0} onClick={() => batch('빈 컷 이미지 모두', 'batch_shot_image', 'image')}>
-          <ImageIcon size={13} /> 빈 이미지 {e.shots.length - counts.image}
+        <button className="secondary compact" disabled={!imageable || running('shot_image') > 0} title={e.shots.length - counts.image > imageable ? '화면 묘사가 빈 컷은 빼고 만들어요' : ''} onClick={() => batch('빈 컷 이미지 모두', 'batch_shot_image', 'image')}>
+          <ImageIcon size={13} /> 빈 이미지 {imageable}
           {running('shot_image') ? ` · 진행 ${running('shot_image')}` : ''}
         </button>
         <button className="secondary compact" disabled={counts.audio === lines.length || running('shot_tts') > 0} onClick={() => batch('대사 음성 모두', 'batch_shot_tts', 'tts')}>
           <Mic size={13} /> 빈 음성 {lines.length - counts.audio}
           {running('shot_tts') ? ` · 진행 ${running('shot_tts')}` : ''}
         </button>
-        <button className="secondary compact" disabled={counts.video === e.shots.length || running('shot_video') > 0} onClick={() => batch('빈 컷 영상 모두', 'batch_shot_video', 'video')}>
-          <Film size={13} /> 빈 영상 {e.shots.length - counts.video}
+        <button className="secondary compact" disabled={!videoable || running('shot_video') > 0} onClick={() => batch('빈 컷 영상 모두', 'batch_shot_video', 'video')}>
+          <Film size={13} /> 빈 영상 {videoable}
           {running('shot_video') ? ` · 진행 ${running('shot_video')}` : ''}
         </button>
         <button
@@ -105,6 +147,15 @@ function EpisodeScenes({ ws, e }: { ws: WS; e: StudioEpisode }) {
         >
           <ShieldCheck size={13} /> AI 검수 {unverified}
           {running('verify_shot') ? ` · 진행 ${running('verify_shot')}` : ''}
+        </button>
+        <button
+          className="secondary compact"
+          title="영상이 있는 컷을 AI가 한 번에 검수해요(라마 소액)"
+          disabled={!videoUnchecked || running('verify_video') > 0}
+          onClick={() => ws.run(`${e.number}화 영상 AI 검수 ${videoUnchecked}컷`, 'batch_verify_video', 'text', { targetId: e.id })}
+        >
+          <ShieldCheck size={13} /> 영상 검수 {videoUnchecked}
+          {running('verify_video') ? ` · 진행 ${running('verify_video')}` : ''}
         </button>
         {hasModel(ws.models, 'lipsync') && (
           <button className="secondary compact" disabled={!syncable || running('shot_lipsync') > 0} onClick={() => batch('입 모양 모두 맞추기', 'batch_shot_lipsync', 'lipsync')}>
@@ -128,51 +179,166 @@ function EpisodeScenes({ ws, e }: { ws: WS; e: StudioEpisode }) {
         selected={shot?.id || ''}
         select={(id) => (picking ? setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]) : setSelId(id))}
         jobs={jobs}
+        assets={data.assets}
         picked={picking ? picked : null}
         reorder={(ids) => void ws.act(() => api(`/studio/ai/projects/${data.project.id}/episodes/${e.id}/shots/order`, 'POST', { ids }), '컷 순서를 바꿨어요.')}
+        resize={ws.can(['script', 'scene']) ? (id, seconds) => void ws.act(() => api(`/studio/ai/shots/${id}`, 'PATCH', { seconds }), `컷 길이를 ${seconds}초로 바꿨어요.`) : undefined}
       />
       {picking && picked.length > 0 && <BulkBar ws={ws} e={e} picked={picked} clear={() => setPicked([])} />}
       {shot && (
-        <ShotDetail
+        <ShotEditor
           key={shot.id}
           ws={ws}
           s={shot}
           index={index}
           total={e.shots.length}
           next={e.shots[index + 1]}
+          prev={index > 0 ? e.shots[index - 1] : undefined}
           go={(d) => setSelId(e.shots[Math.min(e.shots.length - 1, Math.max(0, index + d))].id)}
         />
       )}
+      <FinishBar ws={ws} e={e} />
     </section>
   );
 }
 
+// 대본 서랍(3단계): 장면 편집을 떠나지 않고 이 회차 대본을 보고 고쳐요. PC는 오른쪽, 휴대폰은 전체 시트.
+function ScriptDrawer({ ws, close }: { ws: WS; close: () => void }) {
+  const closeRef = useRef(close);
+  closeRef.current = close;
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => ev.key === 'Escape' && !document.querySelector('.modal-backdrop, .ws-overlay, .preview-overlay') && closeRef.current();
+    document.addEventListener('keydown', onKey);
+    const old = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = old;
+    };
+  }, []);
+  return (
+    <>
+      <div className="ws-drawer-backdrop" onClick={close} />
+      <aside className="ws-drawer" role="dialog" aria-label="대본 서랍">
+        <div className="ws-drawer-head">
+          <strong>
+            <FileText size={15} /> 대본 · {ws.episode?.number}화
+          </strong>
+          <small className="muted">고치면 장면 편집에 바로 반영돼요</small>
+          <button type="button" className="icon-button" aria-label="대본 서랍 닫기" onClick={close}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="ws-drawer-body">
+          <ScriptTab ws={ws} />
+        </div>
+      </aside>
+    </>
+  );
+}
+
+// 완성 바(3단계): 이 회차를 여기서 바로 합성 · 미리보기 · 검수 준비 확인. 자세한 건 완성 · 공개 탭.
+function FinishBar({ ws, e }: { ws: WS; e: StudioEpisode }) {
+  const p = ws.data.project;
+  const [check, setCheck] = useState(false);
+  const composing = e.status === 'composing';
+  const missing = e.shots.findIndex((s) => !s.image && !s.video && !s.lipsync);
+  const pending = e.shots.some((s) => ['shot_image', 'shot_tts', 'shot_video', 'shot_lipsync', 'shot_sfx', 'shot_image_edit'].some((k) => isBusy(ws.data.jobs, s.id, k)));
+  const ready = e.shots.length > 0 && missing < 0 && !pending;
+  const stale = !!e.video && e.status !== 'composed' && !composing;
+  const why = missing >= 0 ? `${missing + 1}번 컷에 이미지가 없어요` : pending ? 'AI 작업이 끝나면 합성할 수 있어요' : '';
+  const status = composing ? `합성 중 ${pct(e.compose_progress)}%` : e.status === 'compose_failed' ? '합성 실패' : stale ? '내용이 바뀌어 다시 합성 필요' : e.video ? `합성 완료${e.duration ? ` · ${e.duration}초` : ''}` : ready ? '합성 준비됨' : why || '컷을 채우는 중';
+  return (
+    <div className={'ws-finishbar' + (e.video && !stale ? ' done' : '')} aria-label="이 회차 완성">
+      <div className="ws-finishbar-info">
+        <Send size={14} />
+        <span>
+          <b>{e.number}화 완성</b>
+          <small className={e.status === 'compose_failed' ? 'danger' : stale ? 'lime' : 'muted'}>{status}</small>
+        </span>
+      </div>
+      <div className="ws-finishbar-actions">
+        <button type="button" className="secondary compact" disabled={!e.shots.some((s) => s.image || s.video)} onClick={() => ws.preview(e)}>
+          <Eye size={13} /> 미리보기
+        </button>
+        <button type="button" className={(e.video && !stale ? 'secondary' : 'primary') + ' compact'} disabled={ws.busy || !ready || composing} title={!ready ? why : ''} onClick={() => void ws.act(() => api(`/studio/ai/projects/${p.id}/episodes/${e.id}/compose`, 'POST'), `${e.number}화 합성을 시작했어요.`)}>
+          <Clapperboard size={13} /> {composing ? '합성 중…' : e.video ? '다시 합성' : '합성하기'}
+        </button>
+        <button type="button" className="secondary compact" aria-expanded={check} onClick={() => setCheck(!check)}>
+          <ShieldCheck size={13} /> 공개 전 확인
+        </button>
+        <button type="button" className="text-link" onClick={() => ws.goTab('finish')}>
+          완성 · 공개 탭 <ChevronRight size={13} />
+        </button>
+      </div>
+      {check && <ReadyChecklist ws={ws} />}
+    </div>
+  );
+}
+
+const MEDIA_KINDS = ['shot_image', 'shot_image_edit', 'shot_tts', 'shot_video', 'shot_lipsync', 'shot_sfx', 'shot_upscale', 'shot_upscale_video'];
 // 타임라인: 컷 길이에 비례한 칸으로 한 회차를 한눈에 보여 줘요.
 function Timeline({
   e,
   selected,
   select,
   jobs,
+  assets,
   picked,
   reorder,
+  resize,
 }: {
   e: StudioEpisode;
   selected: string;
   select: (id: string) => void;
   jobs: WS['data']['jobs'];
+  assets: WS['data']['assets'];
   picked: string[] | null;
   reorder: (ids: string[]) => void;
+  resize?: (id: string, seconds: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState('');
   const [over, setOver] = useState('');
+  // 컷 오른쪽 끝을 끌어 길이 바꾸기(2~10초). 끄는 동안 바뀐 초를 보여 주고, 놓으면 저장해요.
+  const [sizing, setSizing] = useState<{ id: string; seconds: number } | null>(null);
+  const startResize = (ev: React.PointerEvent, id: string, seconds: number) => {
+    if (!resize) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const clip = (ev.currentTarget as HTMLElement).parentElement;
+    const perSec = Math.max(12, (clip?.getBoundingClientRect().width || 64) / Math.max(1, seconds));
+    const x0 = ev.clientX;
+    let cur = seconds;
+    setSizing({ id, seconds });
+    const move = (m: PointerEvent) => {
+      cur = Math.min(10, Math.max(2, Math.round(seconds + (m.clientX - x0) / perSec)));
+      setSizing({ id, seconds: cur });
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      setSizing(null);
+      if (cur !== seconds) resize(id, cur);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  };
   const drop = (target: string) => {
     if (!drag || drag === target) return;
     const ids = e.shots.map((s) => s.id).filter((id) => id !== drag);
     ids.splice(ids.indexOf(target), 0, drag);
     reorder(ids);
   };
+  const firstScroll = useRef(true);
   useEffect(() => {
+    // 처음 열릴 때는 화면을 움직이지 않아요(휴대폰에서 장면 편집으로 착지할 때 튀지 않게).
+    if (firstScroll.current) {
+      firstScroll.current = false;
+      return;
+    }
     ref.current?.querySelector<HTMLElement>('.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [selected]);
   const total = e.shots.reduce((n, s) => n + Number(s.seconds), 0);
@@ -180,7 +346,10 @@ function Timeline({
     <div className="ws-timeline" ref={ref} role="listbox" aria-label="컷 타임라인">
       {e.shots.map((s, i) => {
         const busy = jobs.some((j) => j.target_id === s.id && (j.status === 'queued' || j.status === 'running'));
-        const failed = jobs.find((j) => j.target_id === s.id)?.status === 'failed';
+        // 실패 표시는 이 컷의 결과물을 만드는 작업(이미지·음성·영상·입 모양·효과음)의 마지막 결과만 봐요.
+        const failed = jobs.find((j) => j.target_id === s.id && MEDIA_KINDS.includes(j.kind))?.status === 'failed';
+        const cands = assets.some((a) => a.target_id === s.id && a.batch);
+        const secs = sizing?.id === s.id ? sizing.seconds : Number(s.seconds);
         return (
           <button
             key={s.id}
@@ -194,9 +363,9 @@ function Timeline({
               (drag === s.id ? ' dragging' : '') +
               (over === s.id && drag && drag !== s.id ? ' drop-here' : '')
             }
-            style={{ flexGrow: Number(s.seconds), minWidth: Math.max(64, (Number(s.seconds) / Math.max(1, total)) * 900) }}
+            style={{ flexGrow: secs, minWidth: Math.max(64, (secs / Math.max(1, total)) * 900) }}
             onClick={() => select(s.id)}
-            draggable={!picked}
+            draggable={!picked && !sizing}
             onDragStart={(ev) => {
               setDrag(s.id);
               ev.dataTransfer.effectAllowed = 'move';
@@ -222,8 +391,12 @@ function Timeline({
             {picked && <i className={'ws-clip-pick' + (picked.includes(s.id) ? ' on' : '')} aria-hidden="true">{picked.includes(s.id) ? picked.indexOf(s.id) + 1 : ''}</i>}
             {s.image ? <img src={asset(s.image)} alt="" loading="lazy" /> : <span className="ws-clip-empty">이미지 없음</span>}
             <b>
-              {i + 1} · {s.seconds}초
+              {i + 1} · {secs}초
             </b>
+            {cands && <i className="ws-clip-cands" title="후보가 있어요" aria-label="후보 있음" />}
+            {resize && !picked && (
+              <span className="ws-clip-resize" role="presentation" title="끌어서 길이 바꾸기(2~10초)" onPointerDown={(ev) => startResize(ev, s.id, Number(s.seconds))} onClick={(ev) => ev.stopPropagation()} />
+            )}
             <span className="ws-clip-flags">
               {s.video && <Film size={10} aria-label="영상" />}
               {s.audio && <Mic size={10} aria-label="음성" />}
@@ -235,377 +408,6 @@ function Timeline({
           </button>
         );
       })}
-    </div>
-  );
-}
-
-function ShotDetail({ ws, s, index, total, next, go }: { ws: WS; s: StudioShot; index: number; total: number; next?: StudioShot; go: (d: number) => void }) {
-  const { data } = ws;
-  const jobs = data.jobs;
-  const server = {
-    ...shotBase(s),
-    cast_ids: String(s.cast_ids || '').split(',').filter(Boolean),
-    location_id: s.location_id || null,
-    camera_move: s.camera_move || '',
-    speed: Number(s.speed) || 1,
-    seed_lock: !!Number(s.seed_lock),
-    end_frame: !!Number(s.end_frame),
-    transition: (s.transition || 'cut') as 'cut' | 'fade' | 'dip' | 'flash',
-    sfx_prompt: s.sfx_prompt || '',
-    sfx_volume: s.sfx_volume === undefined || s.sfx_volume === null ? 0.6 : Number(s.sfx_volume),
-    caption: s.caption ?? null,
-    prop_ids: String(s.prop_ids || '').split(',').filter(Boolean),
-    states: parseJson<Record<string, string>>(s.states, {}),
-  };
-  const [f, setF] = useSyncedForm(server);
-  const save = useAutosave(
-    f,
-    server,
-    async (v) => {
-      const r = await api<{ audioReset: boolean }>(`/studio/ai/shots/${s.id}`, 'PATCH', { ...v, base_updated_at: s.updated_at ?? null }).catch((e) => {
-        // 협업 중 다른 사람이 먼저 고쳤으면 최신 내용을 다시 불러와요.
-        if (e instanceof ApiError && e.code === 'edit_conflict') void ws.load();
-        throw e;
-      });
-      if (r.audioReset && (s.audio || s.lipsync)) ws.notify(`${index + 1}번 컷 대사 · 목소리 설정이 바뀌어 음성을 다시 만들어야 해요.`);
-      void ws.load();
-    },
-    { delay: 1200 },
-  );
-  const [editText, setEditText] = useState('');
-  // 앞 컷들에서 이어지는 인물 상태(이 컷에 적지 않으면 이 모습으로 그려요)
-  const inherited = useMemo(() => {
-    const ep = data.episodes.find((e) => e.id === s.episode_id);
-    const out: Record<string, string> = {};
-    for (const x of ep?.shots || []) {
-      if (x.id === s.id) break;
-      for (const [cid, v] of Object.entries(parseJson<Record<string, string>>(x.states, {}))) out[cid] = /^(기본|원래대로)$/.test(String(v).trim()) ? '' : String(v).trim();
-    }
-    return out;
-  }, [data.episodes, s.episode_id, s.id]);
-  // AI 작업 전에는 입력 중인 변경을 먼저 저장합니다(최신 내용으로 만들도록).
-  const run = async (label: string, action: string, cap: 'text' | 'image' | 'tts' | 'video' | 'lipsync' | 'sfx', opts: { instruction?: string; options?: Record<string, unknown>; tier?: 'premium' } = {}) => {
-    if (!(await save.flush()) && save.dirty) return;
-    ws.run(`${index + 1}번 컷 ${label}`, action, cap, { targetId: s.id, ...opts });
-  };
-  const speaker = data.characters.find((c) => c.id === f.speaker_id);
-  const media = s.lipsync || s.video;
-  return (
-    <div className="ws-detail">
-      <div className="ws-detail-nav">
-        <button className="icon-button" aria-label="이전 컷" disabled={index === 0} onClick={() => go(-1)}>
-          <ChevronLeft size={16} />
-        </button>
-        <strong>
-          {index + 1}번 컷 <small>/ {total}</small>
-        </strong>
-        <button className="icon-button" aria-label="다음 컷" disabled={index === total - 1} onClick={() => go(1)}>
-          <ChevronRight size={16} />
-        </button>
-        <button
-          type="button"
-          className="secondary compact"
-          title="이 컷 뒤에 2~3초짜리 연결 컷(소품 클로즈업 · 장소 전경 · 표정)을 AI가 넣어요"
-          disabled={isBusy(jobs, s.id, 'bridge_shot') || total >= 40}
-          onClick={() => void run('뒤에 사이 컷 넣기', 'bridge_shot', 'text')}
-        >
-          <Plus size={13} /> 사이 컷
-        </button>
-        <JobBadge jobs={jobs} targetId={s.id} kind="bridge_shot" />
-        {!!data.team?.members.length && (
-          <button type="button" className="secondary compact" onClick={() => ws.comment({ type: 'shot', id: s.id, label: `${data.episodes.find((e) => e.id === s.episode_id)?.number ?? ''}화 ${index + 1}번 컷` })}>
-            <MessageSquare size={13} /> 의견
-          </button>
-        )}
-        <SaveBadge state={save.state} error={save.error} />
-      </div>
-      <div className="ws-detail-grid">
-        <div className="ws-detail-media">
-          <div className="ws-frame">
-            {media ? (
-              <video key={media} controls preload="none" playsInline poster={asset(s.image) || undefined} src={studioMedia(media)} />
-            ) : s.image ? (
-              <img src={asset(s.image)} alt={`${index + 1}번 컷`} />
-            ) : (
-              <span>이미지 없음</span>
-            )}
-            {s.lipsync && <em className="ws-frame-tag">입 모양 맞춤</em>}
-          </div>
-          <MyMedia ws={ws} s={s} index={index} />
-          <div className="ws-tools">
-            <button className="secondary compact" disabled={isBusy(jobs, s.id, 'shot_image') || !f.visual.trim()} onClick={() => void run('이미지', 'shot_image', 'image')}>
-              <ImageIcon size={13} /> {s.image ? '이미지 다시' : '이미지'}
-            </button>
-            {s.image && ws.choices.image.tier !== 'premium' && (
-              <button className="secondary compact upgrade" title="마음에 드는 컷만 고급 품질로 다시 만들어요" disabled={isBusy(jobs, s.id, 'shot_image') || !f.visual.trim()} onClick={() => void run('이미지 고급으로 다시', 'shot_image', 'image', { tier: 'premium' })}>
-                <Sparkles size={13} /> 고급으로
-              </button>
-            )}
-            <JobBadge jobs={jobs} targetId={s.id} kind="shot_image" onRetry={() => void run('이미지', 'shot_image', 'image')} />
-            <Versions assets={data.assets} targetId={s.id} kind="image" current={s.image} onUse={ws.useAsset} />
-          </div>
-          {s.image && (
-            <div className="ws-tools">
-              <button
-                className="secondary compact"
-                title="얼굴 · 인물 수 · 글자 · 손 모양 · 구도를 AI가 확인해요(라마 소액)"
-                disabled={isBusy(jobs, s.id, 'verify_shot') || !!verifyOf(s)}
-                onClick={() => void run('AI 검수', 'verify_shot', 'text')}
-              >
-                <ShieldCheck size={13} /> AI 검수
-              </button>
-              <JobBadge jobs={jobs} targetId={s.id} kind="verify_shot" />
-              <VerifyBadge s={s} onRedo={() => void run('이미지 다시', 'shot_image', 'image')} />
-            </div>
-          )}
-          {s.image && (
-            <form
-              className="ws-edit-image"
-              onSubmit={(ev) => {
-                ev.preventDefault();
-                if (editText.trim().length < 2) return;
-                void run('이미지 부분 고치기', 'shot_image_edit', 'image', { instruction: editText.trim() });
-                setEditText('');
-              }}
-            >
-              <input aria-label="이미지 고칠 내용" value={editText} maxLength={300} placeholder="이미지 고치기 · 예: 배경을 밤으로, 우산 들게" onChange={(ev) => setEditText(ev.target.value)} />
-              <button className="secondary compact" disabled={editText.trim().length < 2 || isBusy(jobs, s.id, 'shot_image_edit')}>
-                <Wand2 size={13} /> 고치기
-              </button>
-              <JobBadge jobs={jobs} targetId={s.id} kind="shot_image_edit" />
-            </form>
-          )}
-          <label className="inline-check" title="같은 컷을 다시 만들 때 구도와 느낌이 크게 바뀌지 않게 해요">
-            <input type="checkbox" checked={f.seed_lock} onChange={(ev) => setF({ ...f, seed_lock: ev.target.checked })} />
-            <Lock size={12} /> 다시 만들어도 비슷한 그림 유지(시드 고정)
-          </label>
-          <div className="ws-tools">
-            <button className="secondary compact" disabled={isBusy(jobs, s.id, 'shot_video') || !f.visual.trim()} onClick={() => void run(`영상 (${f.seconds}초)`, 'shot_video', 'video')}>
-              <Film size={13} /> {s.video ? '영상 다시' : '영상 만들기'}
-            </button>
-            {s.video && ws.choices.video.tier !== 'premium' && (
-              <button className="secondary compact upgrade" title="이 컷만 고급 품질 영상으로 다시 만들어요" disabled={isBusy(jobs, s.id, 'shot_video') || !f.visual.trim()} onClick={() => void run(`영상 고급으로 다시 (${f.seconds}초)`, 'shot_video', 'video', { tier: 'premium' })}>
-                <Sparkles size={13} /> 고급으로
-              </button>
-            )}
-            <JobBadge jobs={jobs} targetId={s.id} kind="shot_video" onRetry={() => void run(`영상 (${f.seconds}초)`, 'shot_video', 'video')} />
-            <Versions assets={data.assets} targetId={s.id} kind="video" current={s.video} onUse={ws.useAsset} />
-          </div>
-          {hasModel(ws.models, 'lipsync') ? (
-            <div className="ws-tools">
-              <button
-                className="secondary compact"
-                disabled={!s.video || !s.audio || isBusy(jobs, s.id, 'shot_lipsync')}
-                title={!s.video || !s.audio ? '영상과 대사 음성이 모두 있어야 해요' : ''}
-                onClick={() => void run('입 모양 맞추기', 'shot_lipsync', 'lipsync')}
-              >
-                <Sparkles size={13} /> {s.lipsync ? '입 모양 다시' : '입 모양 맞추기'}
-              </button>
-              <JobBadge jobs={jobs} targetId={s.id} kind="shot_lipsync" />
-            </div>
-          ) : (
-            s.dialogue && <NotReady what="입 모양 맞추기" />
-          )}
-        </div>
-        <div className="ws-detail-fields">
-          <label>
-            화면 묘사
-            <textarea rows={3} maxLength={800} value={f.visual} onChange={(ev) => setF({ ...f, visual: ev.target.value })} />
-          </label>
-          <div className="form-columns">
-            <label>
-              카메라
-              <select value={f.camera} onChange={(ev) => setF({ ...f, camera: ev.target.value })}>
-                <option value="">선택 안 함</option>
-                {[...CAMERAS, ...(f.camera && !CAMERAS.includes(f.camera) ? [f.camera] : [])].map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              카메라 움직임
-              <select value={f.camera_move} onChange={(ev) => setF({ ...f, camera_move: ev.target.value })}>
-                {[...CAMERA_MOVES, ...(f.camera_move && !CAMERA_MOVES.includes(f.camera_move) ? [f.camera_move] : [])].map((c) => (
-                  <option key={c} value={c}>
-                    {c || '자동'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              길이(초)
-              <input type="number" min={2} max={10} value={f.seconds} onChange={(ev) => setF({ ...f, seconds: Math.min(10, Math.max(2, Math.round(Number(ev.target.value) || 2))) })} />
-            </label>
-          </div>
-          <div className="ws-field">
-            <span>등장 인물</span>
-            <div className="chip-row">
-              {data.characters.map((c) => {
-                const on = f.cast_ids.includes(c.id);
-                return (
-                  <button type="button" key={c.id} className={'chip' + (on ? ' active' : '')} aria-pressed={on} onClick={() => setF({ ...f, cast_ids: on ? f.cast_ids.filter((x) => x !== c.id) : [...f.cast_ids, c.id] })}>
-                    {c.image && <img src={asset(c.image)} alt="" />}
-                    {c.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {f.cast_ids.length > 0 && (
-            <div className="ws-field">
-              <span>
-                인물 상태 <small className="muted">이 컷부터 달라지는 모습(비워 두면 앞 컷 모습을 이어 가요 · ‘기본’은 원래 모습)</small>
-              </span>
-              <div className="state-list">
-                {f.cast_ids.map((cid) => {
-                  const c = data.characters.find((x) => x.id === cid);
-                  if (!c) return null;
-                  return (
-                    <label key={cid} className="state-row">
-                      <b>{c.name}</b>
-                      <input
-                        value={f.states[cid] || ''}
-                        maxLength={120}
-                        placeholder={inherited[cid] ? `앞 컷에서 이어짐: ${inherited[cid]}` : '평소 모습'}
-                        onChange={(ev) => setF({ ...f, states: { ...f.states, [cid]: ev.target.value } })}
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {(data.props || []).length > 0 && (
-            <div className="ws-field">
-              <span>소품</span>
-              <div className="chip-row">
-                {(data.props || []).map((x) => {
-                  const on = f.prop_ids.includes(x.id);
-                  return (
-                    <button
-                      type="button"
-                      key={x.id}
-                      className={'chip' + (on ? ' active' : '')}
-                      aria-pressed={on}
-                      onClick={() => (on ? setF({ ...f, prop_ids: f.prop_ids.filter((y) => y !== x.id) }) : f.prop_ids.length >= 6 ? ws.notify('소품은 컷마다 6개까지 고를 수 있어요.') : setF({ ...f, prop_ids: [...f.prop_ids, x.id] }))}
-                    >
-                      {x.image && <img src={asset(x.image)} alt="" />}
-                      {x.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          <label>
-            장소
-            <select value={f.location_id || ''} onChange={(ev) => setF({ ...f, location_id: ev.target.value || null })}>
-              <option value="">지정 안 함</option>
-              {(data.locations || []).map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          {next && (
-            <label className="inline-check" title="영상의 마지막 장면이 다음 컷 이미지로 끝나 자연스럽게 이어져요(지원하는 모델만)">
-              <input type="checkbox" checked={f.end_frame} disabled={!next.image} onChange={(ev) => setF({ ...f, end_frame: ev.target.checked })} />
-              영상이 다음 컷 이미지로 이어지게{!next.image ? ' (다음 컷 이미지가 필요해요)' : ''}
-            </label>
-          )}
-          <fieldset className="ws-voice">
-            <legend>
-              <Mic size={13} /> 대사 · 목소리
-            </legend>
-            <div className="ws-dialogue">
-              <select aria-label="말하는 인물" value={f.narration ? '__narr' : f.speaker_id || ''} onChange={(ev) => setF({ ...f, narration: ev.target.value === '__narr', speaker_id: ev.target.value && ev.target.value !== '__narr' ? ev.target.value : null })}>
-                <option value="">(대사 없음)</option>
-                {data.characters.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-                <option value="__narr">내레이션</option>
-              </select>
-              <input aria-label="대사" value={f.dialogue} maxLength={300} onChange={(ev) => setF({ ...f, dialogue: ev.target.value })} />
-            </div>
-            <div className="form-columns">
-              <label>
-                감정
-                <select value={f.emotion} onChange={(ev) => setF({ ...f, emotion: ev.target.value })}>
-                  {[...EMOTIONS, ...(f.emotion && !EMOTIONS.includes(f.emotion) ? [f.emotion] : [])].map((x) => (
-                    <option key={x} value={x}>
-                      {x || (speaker?.voice_style ? `기본(${speaker.voice_style})` : '기본')}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                말 빠르기 <small className="muted">{f.speed.toFixed(1)}배</small>
-                <input type="range" min={0.5} max={2} step={0.1} value={f.speed} onChange={(ev) => setF({ ...f, speed: Number(ev.target.value) })} />
-              </label>
-            </div>
-            <div className="ws-tools">
-              <button className="secondary compact" disabled={!f.dialogue.trim() || isBusy(jobs, s.id, 'shot_tts')} onClick={() => void run('대사 음성', 'shot_tts', 'tts')}>
-                <Mic size={13} /> {s.audio ? '음성 다시' : '음성 만들기'}
-              </button>
-              <JobBadge jobs={jobs} targetId={s.id} kind="shot_tts" onRetry={() => void run('대사 음성', 'shot_tts', 'tts')} />
-              <Versions assets={data.assets} targetId={s.id} kind="audio" current={s.audio} onUse={ws.useAsset} />
-            </div>
-            {s.audio && <audio key={s.audio} controls preload="none" src={studioMedia(s.audio)} />}
-            <label className="inline-check">
-              <input type="checkbox" checked={f.caption !== null} onChange={(ev) => setF({ ...f, caption: ev.target.checked ? f.dialogue : null })} />
-              자막을 대사와 다르게 쓰기
-            </label>
-            {f.caption !== null && <input aria-label="자막" value={f.caption} maxLength={300} placeholder="비워 두면 자막 없이 나가요" onChange={(ev) => setF({ ...f, caption: ev.target.value })} />}
-          </fieldset>
-          <fieldset className="ws-voice">
-            <legend>
-              <Volume2 size={13} /> 효과음
-            </legend>
-            {hasModel(ws.models, 'sfx') ? (
-              <>
-                <div className="ws-edit-image">
-                  <input aria-label="효과음 설명" value={f.sfx_prompt} maxLength={200} placeholder="예: 문이 쾅 닫히는 소리" onChange={(ev) => setF({ ...f, sfx_prompt: ev.target.value })} />
-                  <button className="secondary compact" disabled={!f.sfx_prompt.trim() || isBusy(jobs, s.id, 'shot_sfx')} onClick={() => void run('효과음', 'shot_sfx', 'sfx', { options: { prompt: f.sfx_prompt.trim() } })}>
-                    <Volume2 size={13} /> {s.sfx ? '다시' : '만들기'}
-                  </button>
-                  <JobBadge jobs={jobs} targetId={s.id} kind="shot_sfx" />
-                </div>
-                <div className="chip-row">
-                  {SFX_CHIPS.map((c) => (
-                    <button type="button" key={c} className={'chip' + (f.sfx_prompt === c ? ' active' : '')} onClick={() => setF({ ...f, sfx_prompt: c })}>
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                {s.sfx && <audio key={s.sfx} controls preload="none" src={studioMedia(s.sfx)} />}
-              </>
-            ) : (
-              <NotReady what="효과음" />
-            )}
-            {(s.sfx || hasModel(ws.models, 'sfx')) && (
-              <label>
-                효과음 크기 <small className="muted">{Math.round(f.sfx_volume * 100)}%</small>
-                <input type="range" min={0} max={1.5} step={0.05} value={f.sfx_volume} onChange={(ev) => setF({ ...f, sfx_volume: Number(ev.target.value) })} />
-              </label>
-            )}
-          </fieldset>
-          {index > 0 && (
-            <label>
-              앞 컷에서 넘어오는 방식
-              <select value={f.transition} onChange={(ev) => setF({ ...f, transition: ev.target.value as typeof f.transition })}>
-                {TRANSITIONS.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -661,11 +463,38 @@ function BulkBar({ ws, e, picked, clear }: { ws: WS; e: StudioEpisode; picked: s
             </option>
           ))}
         </select>
+        <PresetSelect disabled={ws.busy} onPick={(x) => patch({ ...presetValue(x) }, `연출(${x.name})`)} />
+        <select aria-label="조명 한 번에" value="" disabled={ws.busy} onChange={(ev) => ev.target.value && patch({ light: ev.target.value === '_' ? '' : ev.target.value }, '조명')}>
+          <option value="">조명…</option>
+          <option value="_">자동</option>
+          {LIGHTS.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.id}
+            </option>
+          ))}
+        </select>
+        <select aria-label="시간 · 색감 한 번에" value="" disabled={ws.busy} onChange={(ev) => ev.target.value && patch({ tone: ev.target.value === '_' ? '' : ev.target.value }, '시간 · 색감')}>
+          <option value="">시간 · 색감…</option>
+          <option value="_">자동</option>
+          {TONES.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.id}
+            </option>
+          ))}
+        </select>
         <select aria-label="카메라 움직임 한 번에" value="" disabled={ws.busy} onChange={(ev) => ev.target.value && patch({ camera_move: ev.target.value === '_' ? '' : ev.target.value }, '카메라 움직임')}>
           <option value="">카메라 움직임…</option>
           {CAMERA_MOVES.map((x) => (
             <option key={x || '_'} value={x || '_'}>
               {x || '자동'}
+            </option>
+          ))}
+        </select>
+        <select aria-label="효과 한 번에" value="" disabled={ws.busy} onChange={(ev) => ev.target.value && patch({ effect: ev.target.value === '_' ? '' : ev.target.value }, '효과')}>
+          <option value="">효과 바꾸기…</option>
+          {EFFECTS.map((x) => (
+            <option key={x.id || '_'} value={x.id || '_'}>
+              {x.name}
             </option>
           ))}
         </select>
@@ -702,14 +531,15 @@ function BgmSection({ ws, e }: { ws: WS; e: StudioEpisode }) {
   const file = useRef<HTMLInputElement>(null);
   const server = { bgm: p.bgm || '', bgm_volume: p.bgm_volume === undefined || p.bgm_volume === null ? 0.35 : Number(p.bgm_volume) };
   const [f, setF] = useSyncedForm(server);
-  const save = useAutosave(f, server, async (v) => {
-    await api(`/studio/ai/projects/${p.id}/settings`, 'PATCH', v);
+  const save = useAutosave(f, server, async (v, base) => {
+    await api(`/studio/ai/projects/${p.id}/settings`, 'PATCH', changedFields(v, base));
     void ws.load();
   });
   const epServer = { bgm: e.bgm || '', bgm_volume: e.bgm_volume === undefined || e.bgm_volume === null ? -1 : Number(e.bgm_volume) };
   const [ef, setEf] = useSyncedForm(epServer);
-  const epSave = useAutosave(ef, epServer, async (v) => {
-    await api(`/studio/ai/projects/${p.id}/episodes/${e.id}`, 'PATCH', { title: e.title, ...v });
+  const epSave = useAutosave(ef, epServer, async (v, base) => {
+    // 바뀐 음악 칸만 보내요(제목을 함께 보내면 다른 곳에서 고친 제목이 옛 값으로 돌아가요).
+    await api(`/studio/ai/projects/${p.id}/episodes/${e.id}`, 'PATCH', changedFields(v, base));
     void ws.load();
   });
   const label = (url: string) => {

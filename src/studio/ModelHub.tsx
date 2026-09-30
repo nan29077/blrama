@@ -7,15 +7,17 @@ import type { Choice, ChoiceKey, Choices, ModelMode } from './parts';
 // 모델 센터(2026-09-24): 바이브 코딩 도구처럼 '자동(B엘라마이 알아서)'과 '직접 선택'을 오가며 모델을 고릅니다.
 // - 자동: 작업마다 가장 알맞은 모델을 B엘라마이 고르고, 지금이라면 무엇을 왜 고르는지 보여 줘요.
 // - 직접: 모델 카드(잘하는 것·단가·성공률)에서 고르고, 못 하는 작업은 이유와 대신할 방법을 알려 줘요.
-export const HUB_CAPS: ChoiceKey[] = ['text', 'image', 'tts', 'video', 'music', 'sfx', 'lipsync'];
+export const HUB_CAPS: ChoiceKey[] = ['text', 'image', 'tts', 'video', 'music', 'sfx', 'lipsync', 'upscale', 'upscale_video'];
 const capHint: Record<ChoiceKey, string> = {
   text: '기획안 · 설정집 · 대본 · 대사 다듬기',
-  image: '인물 · 장소 · 컷 스토리보드 · 포스터',
+  image: '인물 · 장소 · 컷 이미지 · 포스터',
   tts: '대사 · 내레이션 목소리',
   video: '컷을 움직이는 영상으로',
   music: '회차 배경음악',
   sfx: '장면 효과음',
   lipsync: '대사에 맞춰 입 모양 움직이기',
+  upscale: '컷 이미지를 더 선명하게(2배)',
+  upscale_video: '컷 영상을 더 선명하게 — 1080p 합성에 알맞아요',
 };
 const tierShort: Record<string, string> = { draft: '초안', standard: '표준', premium: '고급' };
 // 받침에 따라 은/는, 을/를
@@ -50,6 +52,8 @@ export default function ModelHub({
   setChoice,
   projectId,
   close,
+  quick,
+  setQuick,
 }: {
   models: AiModelOption[];
   families: AiFamily[];
@@ -59,6 +63,8 @@ export default function ModelHub({
   setChoice: (k: ChoiceKey, c: Choice) => void;
   projectId?: string;
   close: () => void;
+  quick?: boolean;
+  setQuick?: (v: boolean) => void;
 }) {
   const [why, setWhy] = useState<Record<string, ModelWhy[]>>({});
   const [family, setFamily] = useState('');
@@ -135,6 +141,15 @@ export default function ModelHub({
         <p className="muted hub-tip">
           <Info size={13} /> 초안으로 전체를 먼저 만들어 보고, 마음에 드는 컷만 ‘고급으로 다시’ 만들면 라마를 아낄 수 있어요.
         </p>
+        {setQuick && (
+          <label className={'opt-row quick-run' + (quick ? ' on' : '')}>
+            <input type="checkbox" checked={!!quick} onChange={(e) => setQuick(e.target.checked)} />
+            <span>
+              <b>확인 없이 바로 실행</b>
+              <small>만들기 버튼에 예상 라마가 보이면 확인 창을 건너뛰어요. 라마가 모자라거나 예산·지원 한도를 넘을 때는 그래도 물어봐요.</small>
+            </span>
+          </label>
+        )}
         {connected.length > 0 && (
           <div className="hub-row">
             <span className="hub-label">AI 계열로 맞추기</span>
