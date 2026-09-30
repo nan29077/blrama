@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="장면 프레임 B">
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#304568"/><stop offset="1" stop-color="#172235"/></linearGradient><linearGradient id="ink" x2="1" y2="1"><stop stop-color="#dce5f8"/><stop offset="1" stop-color="#91a9d5"/></linearGradient></defs>
+  <rect width="100" height="100" rx="23" fill="url(#bg)"/>
+  <path d="M27 18v64h31c17 0 27-8 27-20 0-8-5-14-13-17 6-3 9-8 9-14 0-9-8-13-23-13H27Zm14 12h16c7 0 10 2 10 7s-4 8-11 8H41V30Zm0 27h18c8 0 12 3 12 9s-5 9-13 9H41V57Z" fill="url(#ink)" fill-rule="evenodd"/>
+  <path d="M28 27h6m-6 13h6m-6 13h6m-6 13h6" stroke="#586f9e" stroke-width="3" stroke-linecap="round"/>
+  <path d="m49 59 11 7-11 7V59Z" fill="#d8cda5"/>
+</svg>
