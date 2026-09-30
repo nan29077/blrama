@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "B엘라마 — 모든 사랑의 장면",
+  "short_name": "B엘라마",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#160f1b",
+  "theme_color": "#160f1b",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

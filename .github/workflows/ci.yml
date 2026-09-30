@@ -1,0 +1,21 @@
+name: Bellama checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      # ffmpeg-static downloads its platform binary in postinstall. Upload and
+      # review tests exercise the real media decoder, so lifecycle scripts must
+      # run in CI just as they do in local development and deployment.
+      - run: npm ci
+      - run: npm run build
+      - run: npm test

@@ -1,0 +1,44 @@
+/* B엘라마 공통 브랜드 스킨 */
+:root {
+  --lime: #e6a5c9;
+  --bg: #160f1b;
+  --panel: #241928;
+  --muted: #ae9eae;
+  --border: #49364a;
+  color: #fff5fa;
+  background: #100b13;
+}
+
+body { background: #100b13; }
+.app-shell { background: #160f1b; border-color: #54394c35; }
+.app-header, .feed-tabs { background: #1b1120f5; border-color: #ffffff14; }
+.brand b { color: #fff1f8; letter-spacing: -1.9px; }
+.brand b > span { color: #df9fc1; font-size: 9px; letter-spacing: 1.25px; }
+.primary { background: #e6a5c9; color: #30172b; }
+.primary:hover { background: #f4c4db; color: #251020; }
+.secondary { background: #312238; border-color: #523a53; }
+.secondary:hover { background: #3d2b43; }
+.genre-chips button { background: #291d2f; border-color: #47344b; color: #cfbdce; }
+.genre-chips button.active { background: #e6a5c91c; border-color: #e6a5c9; color: #f7cce0; }
+.hero-shade { background: linear-gradient(0deg, #160f1b 0%, #160f1bf0 9%, #160f1b82 37%, #160f1b05 78%), linear-gradient(90deg, #1d0d1d8c, transparent 65%); }
+.hero-content h2 { color: #fff7fb; }
+.hero-top > span:first-child, .poster-wordmark, .detail-original { letter-spacing: 1.8px; }
+.membership-banner { background: linear-gradient(115deg, #4b2647, #24182e); border-color: #865c7d; }
+.desktop-menu > button.active { color: #f4c2db; background: #e6a5c916; box-shadow: inset 0 0 0 1px #e6a5c933; }
+.desktop-menu > button:hover { background: #e6a5c910; }
+.home-notice.tone-lime { background: #e6a5c91a; border-color: #e6a5c94a; color: #f7d9e9; }
+.ambient-one { background: #66344f; }
+.ambient-two { background: #492448; }
+.rail-account-card, .right-rail .app-intro { background: #26192abf; border-color: #533d52; }
+
+@media (min-width: 1000px) {
+  .site-layout:not(.management-layout)::before {
+    background:
+      linear-gradient(0deg, rgb(13 6 17 / var(--home-shade, 0)), rgb(13 6 17 / var(--home-shade, 0))),
+      linear-gradient(180deg, #100813d9 0%, #160d1a66 35%, #160d1a33 60%, #100b13ee 100%),
+      var(--home-wallpaper, url('/images/bellama-desktop.webp')) var(--home-focus, center) / cover no-repeat;
+  }
+  .left-rail .rail-copy.boxed { background: linear-gradient(135deg, #1b0e20dc, #2d192a99); }
+  .right-rail .app-intro { background: linear-gradient(140deg, #2b1a31de, #170f1cd9); }
+  .desktop-menu > button { background: #1c10218f; color: #e4cedd; }
+}
