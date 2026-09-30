@@ -3,6 +3,9 @@ chcp 65001 >nul
 setlocal
 title Bellama Commit and Push
 cd /d "%~dp0"
+git config i18n.commitEncoding utf-8
+git config i18n.logOutputEncoding utf-8
+git config core.quotepath false
 
 where git >nul 2>nul
 if errorlevel 1 ( echo [ERROR] Git not found. Install Git for Windows. & pause & exit /b 1 )
@@ -23,7 +26,7 @@ git add -A
 if errorlevel 1 ( echo [ERROR] git add failed & pause & exit /b 1 )
 
 set "MSG=%~1"
-if "%MSG%"=="" set "MSG=chore: sync B엘라마 work %DATE% %TIME:~0,5%"
+if "%MSG%"=="" set "MSG=정리: B엘라마 작업 내용 동기화 (%DATE% %TIME:~0,5%)"
 git diff --cached --quiet
 if errorlevel 1 (
   echo [2/4] Committing...
