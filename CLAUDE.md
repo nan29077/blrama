@@ -10,3 +10,4 @@
 - 커밋·푸시: 이 세션 환경에는 GitHub 로그인이 없으므로 로컬 커밋까지만 하고, 푸시는 사용자가 `B엘라마-커밋푸시.bat`(Claude·Codex 변경 전체 add → commit → pull --rebase → push)을 실행합니다.
 - 커밋 메시지는 한글로 씁니다. 형식: `<유형>: <한글 요약>` (유형: 기능·수정·디자인·문서·정리·테스트 등). 본문 항목도 한글로 적습니다.
   예) `디자인: 스튜디오 사이드바 프로필을 둥근 카드로 변경`
+- AI 스튜디오·작품 등록은 BL 전용: AI 지시문(server/ai/prompts.mjs의 SYSTEM·BL_VISUAL·maleLeads), 스토리 스타터(src/studio/presets.ts), 심사 요청 시 bl_confirmed 필수. 숏핑 코드를 옮길 때 이 규칙을 지워지지 않게 유지합니다.
