@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" role="img" aria-label="B엘라마 오프닝 타이틀 로고">
+  <path d="M96 32C57 32 30 59 30 90s27 58 66 58" fill="none" stroke="#bcc8e5" stroke-width="5" stroke-linecap="round"/>
+  <path d="M105 32c39 0 66 27 66 58s-27 58-66 58" fill="none" stroke="#8096c7" stroke-width="5" stroke-linecap="round"/>
+  <path d="M81 76c-8-7-18-2-18 7 0 13 17 23 33 36 16-13 33-23 33-36 0-9-10-14-18-7l-15 13-15-13Z" fill="#d7e0f4"/>
+  <path d="m92 83 17 10-17 10V83Z" fill="#344765"/>
+  <text x="208" y="105" fill="#f5f6fc" font-family="Batang,'Noto Serif KR',serif" font-size="66" font-weight="700" letter-spacing="-5">B엘라마</text>
+  <text x="215" y="136" fill="#b7c4e3" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="5">BOYS LOVE DRAMA</text>
+</svg>

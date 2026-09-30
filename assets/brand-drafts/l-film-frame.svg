@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" role="img" aria-label="B엘라마 필름 프레임 로고">
+  <rect x="26" y="29" width="143" height="122" rx="17" fill="none" stroke="#c4d0e9" stroke-width="4"/>
+  <path d="M40 37v105M154 37v105" stroke="#8fa4ce" stroke-width="5" stroke-dasharray="11 9"/>
+  <circle cx="77" cy="72" r="16" fill="#99aed5"/>
+  <circle cx="119" cy="70" r="16" fill="#d7e0f3"/>
+  <path d="M52 130c2-23 10-37 25-37 14 0 20 11 21 27 2-17 9-29 22-29 15 0 23 14 25 39" fill="#798ebc"/>
+  <path d="m92 92 16 10-16 10V92Z" fill="#f6f7ff"/>
+  <text x="204" y="100" fill="#f5f6fc" font-family="Batang,'Noto Serif KR',serif" font-size="65" font-weight="700" letter-spacing="-5">B엘라마</text>
+  <text x="210" y="136" fill="#b7c4e3" font-family="'Malgun Gothic',sans-serif" font-size="15" letter-spacing="2">모든 사랑의 장면</text>
+</svg>

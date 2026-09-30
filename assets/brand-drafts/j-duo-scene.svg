@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" role="img" aria-label="B엘라마 두 사람의 장면 로고">
+  <rect x="28" y="32" width="134" height="116" rx="24" fill="#2b3c5c" stroke="#9bafd4" stroke-width="2"/>
+  <circle cx="77" cy="76" r="16" fill="#9eb3db"/>
+  <circle cx="116" cy="76" r="16" fill="#e2e8f7"/>
+  <path d="M47 124c2-22 13-35 30-35 14 0 23 9 28 26 5-17 14-26 28-26 17 0 28 13 30 35" fill="#788fc0"/>
+  <circle cx="96" cy="113" r="18" fill="#e9ecf9"/>
+  <path d="m92 104 14 9-14 9v-18Z" fill="#304464"/>
+  <text x="205" y="75" fill="#b9c7e7" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="4">TWO HEARTS · ONE SCREEN</text>
+  <text x="203" y="128" fill="#f5f6fc" font-family="'Malgun Gothic',Arial,sans-serif" font-size="61" font-weight="800" letter-spacing="-6">B엘라마</text>
+</svg>
