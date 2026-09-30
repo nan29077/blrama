@@ -225,10 +225,7 @@ const roleLabel = { admin: '슈퍼관리자', pd: '업로더 · PD', viewer: '�
 export function Brand({ small = false }: { small?: boolean }) {
   return (
     <span className={'brand ' + (small ? 'small' : '')}>
-      <img src="/icon.svg" alt="" />
-      <b>
-        B엘라마<span>BOYS LOVE DRAMA</span>
-      </b>
+      <img className="brand-wordmark" src="/logo.svg" alt="B엘라마" />
     </span>
   );
 }
@@ -1691,9 +1688,7 @@ export default function App() {
           <div className="app-icon">
             <img src="/icon.svg" alt="B엘라마 앱 아이콘" />
           </div>
-          <div className="app-name">
-            B엘라마 <span>BOYS LOVE DRAMA</span>
-          </div>
+          <div className="app-name"><img src="/logo.svg" alt="B엘라마" /></div>
           <button className="store-button" onClick={() => appLink('ios')}>
             <AppleIcon />
             <span>
@@ -2078,7 +2073,7 @@ function LoginPage({
   return (
     <div className="login-page">
       <div className="login-emblem">
-        <img src="/icon.svg" alt="" />
+        <img src="/logo.svg" alt="B엘라마" />
       </div>
       <span className="eyebrow lime">WELCOME TO BELLAMA</span>
       <h1>

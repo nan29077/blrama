@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 180" role="img" aria-labelledby="title desc">
+  <title id="title">B엘라마</title>
+  <desc id="desc">클래식 블루 B와 엔딩 크레딧 선, 골드 재생 버튼으로 구성된 B엘라마 로고</desc>
+  <text x="24" y="104" fill="#a9bfe8" font-family="Georgia,'Times New Roman',serif" font-size="82" font-weight="700">B</text>
+  <text x="81" y="104" fill="#f2f4fc" font-family="Batang,'Noto Serif KR','Malgun Gothic',serif" font-size="82" font-weight="700" letter-spacing="-6">엘라마</text>
+  <path d="M30 124h193M272 124h168" stroke="#a9b8d9" stroke-width="2" stroke-linecap="round"/>
+  <path d="m244 116 18 9-18 9v-18Z" fill="#dfc88f"/>
+  <text x="31" y="153" fill="#9daed1" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="4">EVERY LOVE HAS A SCENE</text>
+</svg>

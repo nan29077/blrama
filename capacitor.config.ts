@@ -3,6 +3,6 @@ const config: CapacitorConfig = {
   appId: 'com.bellama.app',
   appName: 'B엘라마',
   webDir: 'dist',
-  backgroundColor: '#160f1b',
+  backgroundColor: '#111723',
 };
 export default config;

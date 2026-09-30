@@ -1,7 +1,7 @@
-const CACHE = 'bellama-static-v2';
+const CACHE = 'bellama-static-v3';
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['/icon.svg', '/offline.html'])));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['/icon.svg', '/logo.svg', '/offline.html'])));
 });
 self.addEventListener('activate', (event) =>
   event.waitUntil(
