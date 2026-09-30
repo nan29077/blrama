@@ -273,7 +273,12 @@ export function ChannelPage({
   const share = async () => {
     const url = publicUrl(`/share/channel/${encodeURIComponent(channel.id)}`);
     try {
-      if (navigator.share) await navigator.share({ title: `${channel.name} 방송국 | B엘라마`, text: channel.tagline, url });
+      if (navigator.share)
+        await navigator.share({
+          title: `${channel.name} 방송국 | B엘라마`,
+          text: `${channel.tagline || channel.description || '새로운 이야기를 만나보세요.'}\n두 사람의 서사가 머무는 곳, B엘라마.`,
+          url,
+        });
       else {
         await navigator.clipboard.writeText(url);
         notify('방송국 주소를 복사했어요.');

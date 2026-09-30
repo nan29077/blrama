@@ -2406,7 +2406,12 @@ function DramaPage({
           onClick={async () => {
             const url = publicUrl(`/share/drama/${encodeURIComponent(d.id)}`);
             try {
-              if (navigator.share) await navigator.share({ title: `${d.title} | B엘라마`, text: d.tagline, url });
+              if (navigator.share)
+                await navigator.share({
+                  title: `${d.title} | B엘라마`,
+                  text: `${d.tagline || d.synopsis || '지금 새로운 이야기를 만나보세요.'}\n두 사람의 서사가 머무는 곳, B엘라마.`,
+                  url,
+                });
               else {
                 await navigator.clipboard.writeText(url);
                 notify('작품 링크를 복사했어요.');

@@ -12,6 +12,9 @@ export const homeShare = {
   description: '두 사람의 서사가 머무는 곳. 오직 BL을 위한 숏폼 드라마 플랫폼 B엘라마.',
 };
 
+export const shareImageUrl = (base) =>
+  `${base.replace(/\/$/, '')}/images/share-bellama.jpg`;
+
 export function socialOrigin(req, configuredOrigin, production) {
   // 개발용 공개 터널은 호스트를 제한해 공유 미리보기에만 사용합니다.
   const hostname = req.get('host') || '';
@@ -29,14 +32,16 @@ export function socialTags({ title, description, url, image }) {
     ['property', 'og:description', description],
     ['property', 'og:url', url],
     ['property', 'og:image', image],
+    ['property', 'og:image:url', image],
     ['property', 'og:image:type', 'image/jpeg'],
     ['property', 'og:image:width', '1200'],
     ['property', 'og:image:height', '630'],
-    ['property', 'og:image:alt', 'B엘라마 숏폼 드라마 공유 카드'],
+    ['property', 'og:image:alt', '두 사람의 서사가 머무는 곳, B엘라마'],
     ['name', 'twitter:card', 'summary_large_image'],
     ['name', 'twitter:title', title],
     ['name', 'twitter:description', description],
     ['name', 'twitter:image', image],
+    ['name', 'twitter:image:alt', '두 사람의 서사가 머무는 곳, B엘라마'],
   ];
   return `<link rel="canonical" href="${escapeHtml(url)}" />\n` +
     tags.map(([kind, name, content]) => `<meta ${kind}="${name}" content="${escapeHtml(content)}" />`).join('\n');
@@ -57,6 +62,6 @@ export function injectHomeTags(html, base) {
   return html.replace('</head>', `${socialTags({
     ...homeShare,
     url: `${base}/`,
-    image: `${base}/images/share-bellama.jpg`,
+    image: shareImageUrl(base),
   })}\n</head>`);
 }
