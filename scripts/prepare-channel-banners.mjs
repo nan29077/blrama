@@ -3,7 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-const themes = ['neon', 'romance', 'noir', 'fantasy', 'atelier'];
+// romance·fantasy 배너는 B엘라마 포스터(bellama-desktop·bellama-moon)에서 잘라 만든 완성본이라 원본 PNG가 없습니다.
+const themes = ['neon', 'noir', 'atelier'];
 
 await mkdir(path.join(root, 'public', 'images'), { recursive: true });
 

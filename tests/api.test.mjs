@@ -337,7 +337,7 @@ test('PD creates private draft; empty draft cannot be submitted', async () => {
       synopsis: '테스트를 위한 충분한 길이의 작품 줄거리입니다.',
       genre: '스릴러',
       free_episodes: 1,
-      image: '/images/shadow.webp',
+      image: '/images/bellama-shadow.webp',
       rights_confirmed: true,
     },
   });
@@ -593,7 +593,7 @@ const draftBody = {
   synopsis: '파일 등록부터 관리자 심사까지 점검하는 테스트 작품입니다.',
   genre: '로맨스',
   free_episodes: 1,
-  image: '/images/hero.webp',
+  image: '/images/bellama-midnight.webp',
   rights_confirmed: true,
 };
 const makeDraft = async () => {
@@ -623,7 +623,7 @@ test('media decoder rejects spoofed signatures, validates posters, and measures 
   const image = new FormData();
   image.set(
     'file',
-    new Blob([readFileSync('public/images/hero.webp')], { type: 'image/webp' }),
+    new Blob([readFileSync('public/images/bellama-midnight.webp')], { type: 'image/webp' }),
     'poster.webp',
   );
   const poster = await request('/studio/upload', { method: 'POST', cookie: pd, body: image });
@@ -709,7 +709,7 @@ test('private inspection, uploaded file ownership, episode correction and deleti
   const body = new FormData();
   body.set(
     'file',
-    new Blob([readFileSync('public/images/hero.webp')], { type: 'image/webp' }),
+    new Blob([readFileSync('public/images/bellama-midnight.webp')], { type: 'image/webp' }),
     'poster.webp',
   );
   const poster = await request('/studio/upload', { method: 'POST', cookie: pd, body });
@@ -824,7 +824,7 @@ test('viewer profile uploads accept real images and block videos and foreign med
   const body = new FormData();
   body.set(
     'file',
-    new Blob([readFileSync('public/images/hero.webp')], { type: 'image/webp' }),
+    new Blob([readFileSync('public/images/bellama-midnight.webp')], { type: 'image/webp' }),
     'profile.webp',
   );
   const uploaded = await request('/account/avatar', { method: 'POST', cookie, body });

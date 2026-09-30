@@ -11,7 +11,7 @@ export const usingPg = Boolean(adminUrl);
 export async function prepareTestDb(runId, dataDir) {
   if (!usingPg) return { url: '', all: sqliteAll(dataDir), run: sqliteRun(dataDir), close: async () => {} };
   const pg = (await import('pg')).default;
-  const name = 'sp_test_' + runId.replace(/[^a-z0-9]/gi, '').slice(0, 24).toLowerCase();
+  const name = 'bl_test_' + runId.replace(/[^a-z0-9]/gi, '').slice(0, 24).toLowerCase();
   const admin = new pg.Client({ connectionString: adminUrl });
   await admin.connect();
   await admin.query(`CREATE DATABASE ${name}`);

@@ -285,8 +285,8 @@ function mockAssistant(c) {
 
 async function posterFile(seed) {
   const dir = path.resolve('public/images');
-  const files = (await readdir(dir)).filter((f) => /^(hero|spring|shadow|moon|office|midnight|desktop-cinema)\.webp$/.test(f));
-  return path.join(dir, files[hash(seed) % files.length] || 'hero.webp');
+  const files = (await readdir(dir)).filter((f) => /^bellama-(midnight|spring|shadow|moon|office|summer|desktop)\.webp$/.test(f));
+  return path.join(dir, files[hash(seed) % files.length] || 'bellama-midnight.webp');
 }
 async function temp(ext) {
   const dir = path.join(tmpdir(), 'bellama-mock');

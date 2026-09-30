@@ -183,7 +183,7 @@ const publicUser = (u) =>
 const cookieToken = (req) => {
   const raw = req.headers.cookie
     ?.split(';')
-    .find((c) => c.trim().startsWith('sp_session='))
+    .find((c) => c.trim().startsWith('bl_session='))
     ?.trim()
     .slice(11);
   return raw ? createHash('sha256').update(raw).digest('hex') : '';
@@ -266,7 +266,7 @@ async function session(req, res, user) {
   // 앱(X-Client: app)은 쿠키를 쓰지 않으므로 로그인 토큰을 응답에 담아 줍니다(앱이 보관).
   const isApp = req.get('x-client') === 'app';
   if (!isApp)
-    res.cookie('sp_session', token, {
+    res.cookie('bl_session', token, {
       httpOnly: true,
       sameSite: 'lax',
       secure: production,
@@ -347,7 +347,7 @@ app.get('/api/auth/media-token', requireAuth, (req, res) => {
 });
 app.post('/api/auth/logout', async (req, res) => {
   await db.run('DELETE FROM sessions WHERE token=?', [sessionToken(req)]);
-  res.clearCookie('sp_session', { path: '/' }).json({ ok: true });
+  res.clearCookie('bl_session', { path: '/' }).json({ ok: true });
 });
 app.patch('/api/account/profile', requireAuth, async (req, res) => {
   const b = z

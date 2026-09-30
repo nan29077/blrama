@@ -17,9 +17,26 @@ npm install
 npm run dev
 ```
 
-별도 DB 설치나 API 키 없이 실행됩니다. 첫 실행 시 테스트 계정과 BL 데모 드라마 8편이 생성됩니다. `data/bellama.sqlite`에 회원·작품·주문·시청 기록이 저장되고 `uploads/bellama/`에 업로드 파일이 저장됩니다. 기존 `data/shortping.sqlite`는 읽거나 변경하지 않습니다. PostgreSQL을 사용할 때도 B엘라마 전용 데이터베이스를 지정해야 합니다. `.env.example`을 `.env`로 복사해 설정을 변경할 수 있습니다.
+별도 DB 설치나 API 키 없이 실행됩니다. 첫 실행 시 테스트 계정과 BL 데모 드라마 8편이 생성됩니다. `data/bellama.sqlite`에 회원·작품·주문·시청 기록이 저장되고 `uploads/bellama/`에 업로드 파일이 저장됩니다. 숏핑과 DB·업로드·세션을 공유하지 않으며, PostgreSQL을 사용할 때도 B엘라마 전용 데이터베이스를 지정해야 합니다(아래 '숏핑과의 분리' 참고). `.env.example`을 `.env`로 복사해 설정을 변경할 수 있습니다.
 
 PowerShell `./scripts/start-local.ps1`로 숨김 창에서 실행할 수도 있습니다. 기본 포트가 이미 사용 중이면 새 서버를 실행하지 않습니다. 로그는 `data/server.log`, `data/server-error.log`입니다.
+
+## 숏핑과의 분리
+
+B엘라마는 숏핑(Shortping)을 복사해 시작했지만 **완전히 독립된 서비스**입니다. 숏핑 폴더(`E:\프로젝트\숏핑`)·DB·저장소와 어떤 자원도 공유하지 않습니다.
+
+| 항목 | B엘라마 | 비고 |
+| --- | --- | --- |
+| 저장소 | https://github.com/nan29077/blrama | 숏핑 저장소로 push 금지 |
+| 개발 포트 | 3036 (HMR 3037) | 숏핑은 3034 |
+| 로컬 DB | `data/bellama.sqlite` | `DATA_DIR`로 변경 가능 |
+| PostgreSQL | DB명 `bellama`, 로컬 5433 | DB명이 `shortping`이면 서버가 기동을 거부 |
+| 업로드 | `uploads/bellama/` | `UPLOAD_DIR`로 변경 가능 |
+| 로그인 쿠키 | `bl_session` | 같은 localhost에서 숏핑(`sp_session`)과 충돌하지 않음 |
+| 브라우저 저장소 | `bellama.*` 키 | 서비스워커 캐시 `bellama-static-*` |
+| 앱 ID | `com.bellama.app` | |
+
+숏핑 코드에서 기능을 가져올 때는 파일을 통째로 덮어쓰지 말고 필요한 부분만 옮긴 뒤, 문구·이미지·키 이름이 B엘라마 기준인지 확인합니다.
 
 ## 직접 테스트
 

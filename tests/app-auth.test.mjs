@@ -58,7 +58,7 @@ after(async () => {
 test('web login keeps cookies and never returns a token', async () => {
   const r = await call('/api/auth/demo', { method: 'POST', body: { role: 'viewer' } });
   assert.equal(r.status, 200);
-  assert.ok(r.cookie?.startsWith('sp_session='));
+  assert.ok(r.cookie?.startsWith('bl_session='));
   assert.equal(r.data.token, undefined);
   const me = await call('/api/auth/me', { headers: { cookie: r.cookie } });
   assert.equal(me.data.user.role, 'viewer');

@@ -3411,19 +3411,6 @@ details > p {
 .app-intro {
   position: relative;
 }
-.app-mascot {
-  position: absolute;
-  top: 150px;
-  right: 5px;
-  width: 124px;
-  height: 124px;
-  object-fit: contain;
-  mix-blend-mode: lighten;
-  pointer-events: none;
-}
-.poster img[src*='hero'] {
-  object-position: 68% center;
-}
 /* Desktop viewer navigation: the story stays central, navigation lives on the right. */
 .desktop-account > a {
   display: inline-flex;
@@ -3624,15 +3611,6 @@ details > p {
   .right-rail .app-icon,
   .right-rail .app-name {
     display: none;
-  }
-  .right-rail .app-mascot {
-    position: absolute;
-    width: 91px;
-    height: 91px;
-    right: -3px;
-    top: -2px;
-    margin: 0;
-    opacity: 0.8;
   }
   .right-rail .store-button {
     position: relative;
@@ -4854,6 +4832,20 @@ details > p {
   align-items: center;
   justify-content: flex-start;
   text-align: left;
+  /* 배경색이 들어가도 네모 블록처럼 보이지 않도록 카드 모양(여백·둥근 모서리·테두리)을 줍니다. */
+  padding: 10px 10px 10px 11px;
+  border: 1px solid #ffffff1a;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 #ffffff0f;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.sidebar-footer .sidebar-profile:hover {
+  border-color: #ffffff38;
+  filter: brightness(1.06);
+}
+.sidebar-footer .sidebar-profile:focus-visible {
+  outline: 2px solid #c9d3f2;
+  outline-offset: 2px;
 }
 .sidebar-profile-avatar {
   display: flex;

@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import sharp from 'sharp';
 
-const source = 'assets/source/shortping-block-avatars-sheet.png';
+const source = 'assets/source/bellama-block-avatars-sheet.png';
 const output = 'public/avatars';
 const columns = 6;
 const rows = 5;
