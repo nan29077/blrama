@@ -42,3 +42,186 @@ body { background: #100b13; }
   .right-rail .app-intro { background: linear-gradient(140deg, #2b1a31de, #170f1cd9); }
   .desktop-menu > button { background: #1c10218f; color: #e4cedd; }
 }
+
+/* 마이페이지: 작은 영화 서재처럼 부드러운 종이와 잉크 색을 겹칩니다. */
+.bellama-my-page {
+  background: radial-gradient(circle at 94% 1%, #7e425438, transparent 290px);
+}
+.bellama-my-heading {
+  position: relative;
+  padding: 24px 26px 27px;
+  margin: -6px -26px 18px;
+  border-bottom: 1px solid #b889a044;
+  background: linear-gradient(118deg, #432637 0%, #2a1b2c 64%, #211822 100%);
+  overflow: hidden;
+}
+.bellama-my-heading::after {
+  content: 'B';
+  position: absolute;
+  top: -64px;
+  right: 2px;
+  font: 190px/1 'Noto Serif KR Variable', serif;
+  color: #efb7ce12;
+  pointer-events: none;
+}
+.bellama-my-heading .eyebrow { color: #edbed2; }
+.bellama-my-heading h1 {
+  position: relative;
+  font-family: 'Noto Serif KR Variable', serif;
+  letter-spacing: -1.5px;
+  margin: 12px 0 8px;
+}
+.bellama-my-heading p { position: relative; color: #d2bac7; font-size: 11px; line-height: 1.7; }
+.bellama-my-page .profile-card {
+  padding: 20px;
+  margin-bottom: 17px;
+  border: 1px solid #68495a;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #352436, #271c2b);
+  box-shadow: 0 15px 34px #12091342;
+}
+.bellama-my-page .large-avatar {
+  width: 66px;
+  height: 66px;
+  border-radius: 18px;
+  background: #f0c9d529;
+  box-shadow: inset 0 0 0 1px #edc4d951;
+}
+.bellama-my-page .profile-card h2 { font-family: 'Noto Serif KR Variable', serif; }
+.bellama-my-page .profile-card p,
+.bellama-my-page .my-summary span { color: #c7abbc; }
+.bellama-my-page .role-badge { background: #b9799a33; color: #f8d5e4; }
+.bellama-my-page .my-summary { gap: 10px; }
+.bellama-my-page .my-summary > div {
+  min-height: 77px;
+  background: #261b2a;
+  border-color: #493448;
+  border-radius: 5px 14px 14px 5px;
+  border-left: 3px solid #b57998;
+  padding: 13px;
+}
+.bellama-my-page .my-summary > div:nth-child(even) { border-left-color: #a392b5; }
+.bellama-my-page .my-summary strong { color: #fff3f8; font-size: 17px; }
+.bellama-my-page .my-wallet,
+.bellama-my-page .my-pass {
+  border-radius: 15px;
+  border-color: #684358;
+  background: linear-gradient(115deg, #472538, #2a1a2b 80%);
+}
+.bellama-my-page .my-pass { background: linear-gradient(115deg, #4a354a, #292032 80%); }
+.bellama-my-page .my-wallet span,
+.bellama-my-page .my-pass span { color: #d1aebe; }
+.bellama-my-page .my-shortcuts button {
+  background: #241b29;
+  border-color: #493749;
+  color: #ead8e3;
+  border-radius: 14px;
+}
+.bellama-my-page .my-shortcuts button:hover,
+.bellama-my-page .studio-entry:hover { border-color: #d298b5; background: #38263a; }
+.bellama-my-page .studio-entry { background: #2a1e30; border-color: #523b53; }
+.bellama-my-page .library-tabs { border-color: #6c4c60; }
+.bellama-my-page .library-tabs button { color: #c3aabb; }
+.bellama-my-page .order-kind.episode { color: #f2bfda; }
+.bellama-settings-page .account-settings,
+.bellama-settings-page .settings-card { border-color: #61455a; }
+
+/* 운영 화면: 시청 화면보다 더 정돈된 와인빛 콘솔. */
+.management-layout > .app-shell {
+  background: radial-gradient(circle at 85% 5%, #50304745, transparent 420px), #17111c;
+}
+.management-topbar {
+  background: #1c1421f2;
+  border-bottom-color: #56394c;
+  box-shadow: 0 5px 28px #08040a38;
+}
+.management-topbar > a > span:last-child { color: #bb93aa; border-left-color: #67465e; }
+.management-topbar button { color: #d9c2d0; }
+.environment-pill { background: #71436038; border-color: #a9759477; color: #efbfd8; }
+.management-sidebar {
+  background: linear-gradient(180deg, #26192c, #1c1422 70%);
+  border-right-color: #573b51;
+}
+.sidebar-caption,
+.sidebar-group-label { color: #b98fa9; }
+.management-sidebar nav button { color: #cab4c4; border-radius: 11px; }
+.management-sidebar nav button:hover { background: #a45b8324; color: #fff0f8; }
+.management-sidebar nav button.active {
+  background: linear-gradient(100deg, #9e5a8138, #854a7130);
+  color: #ffe4f2;
+  box-shadow: inset 3px 0 #e6a5c9, inset 0 0 0 1px #c078a442;
+}
+.management-sidebar nav i { color: #30172b; }
+.sidebar-footer { border-top: 1px solid #66455e; }
+.sidebar-footer p,
+.sidebar-profile-details small { color: #b99aac; }
+.management-breadcrumb { color: #bda6b5; }
+.management-layout .studio-header {
+  position: relative;
+  padding: 29px 32px;
+  border: 1px solid #71485f;
+  border-radius: 20px;
+  background: linear-gradient(110deg, #503047, #2e2033 70%, #271c2b);
+  box-shadow: 0 18px 40px #0e071037;
+  overflow: hidden;
+}
+.management-layout .studio-header::after {
+  content: 'BELLAMA';
+  position: absolute;
+  right: 25px;
+  bottom: -11px;
+  color: #f1bad315;
+  font: 700 52px/1 'Noto Serif KR Variable', serif;
+  letter-spacing: 4px;
+  pointer-events: none;
+}
+.management-layout .studio-header > * { position: relative; z-index: 1; }
+.management-layout .studio-header h1 { font-family: 'Noto Serif KR Variable', serif; color: #fff3f9; }
+.management-layout .studio-header p { color: #d9bfcd; }
+.management-layout .studio-header .eyebrow { color: #e9abc9; }
+.management-layout .stat-card {
+  background: linear-gradient(145deg, #322338, #241b2b);
+  border: 1px solid #62475f;
+  border-radius: 16px;
+  box-shadow: 0 12px 26px #0c06102b;
+}
+.management-layout .stat-card:nth-child(2) { background: linear-gradient(145deg, #342a40, #251e30); }
+.management-layout .stat-card:nth-child(3) { background: linear-gradient(145deg, #432d3e, #291e2d); }
+.management-layout .stat-card:nth-child(4) { background: linear-gradient(145deg, #38263a, #241b2c); }
+.management-layout .stat-card > strong { color: #fff0f7; }
+.management-layout .stat-card > div,
+.management-layout .stat-card > small,
+.management-layout .chart-column small,
+.management-layout .chart-column > span { color: #d5b9ca; }
+.management-layout .content-row,
+.management-layout .user-row,
+.management-panel { background: #271d2c; border-color: #544053; }
+.management-panel { border-radius: 17px; }
+.management-layout .studio-callout {
+  background: linear-gradient(105deg, #573148, #302138);
+  border-color: #82536e;
+}
+.management-layout .panel-heading p,
+.management-layout .panel-footnote,
+.management-layout .panel-heading .eyebrow { color: #bca5b5; }
+.management-layout .chart-track,
+.management-layout .pipeline-list > div > div { background: #463146; }
+.management-layout .chart-track > span,
+.management-layout .pipeline-list > div > div i { background: linear-gradient(#f2c6dd, #ae638f); }
+.management-layout .pipeline-list > div > span,
+.management-layout .audit-row,
+.management-layout .content-row small { color: #c5abbb; }
+.management-layout .sidebar-profile { background: #352438; border-color: #694b64; }
+.management-layout .sidebar-profile-details strong { color: #f9e5f0; }
+.management-layout .sidebar-profile-details > span { color: #bd9eaf; }
+.management-layout .sidebar-home { background: #af6b91; color: #291827; }
+.management-layout .sidebar-logout { color: #c6a5b8; }
+.management-layout input,
+.management-layout select,
+.management-layout textarea { accent-color: #e6a5c9; }
+@media (max-width: 620px) {
+  .bellama-my-heading { margin-left: -18px; margin-right: -18px; padding-left: 18px; padding-right: 18px; }
+  .bellama-my-page .profile-card { padding: 16px; gap: 12px; }
+  .management-layout .studio-header { padding: 23px 21px; }
+  .management-layout .studio-header::after { font-size: 31px; }
+}

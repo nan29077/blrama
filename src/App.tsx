@@ -145,7 +145,7 @@ export const loginWithReturn = (next?: string) => {
   navigate('login' + (target && !/^login\b/.test(target) ? '/' + encodeURIComponent(target) : ''));
 };
 // 썸네일 A/B: 카드에서 작품을 열면 어떤 후보 이미지를 보고 눌렀는지 한 번만 서버에 알립니다.
-const THUMB_KEY = 'sp:thumb:';
+const THUMB_KEY = 'bellama.thumb:';
 const rememberThumb = (d: ViewerDrama) => {
   if (!d.thumb_id) return;
   try {
@@ -164,7 +164,7 @@ const consumeThumb = (id: string) => {
   }
 };
 // 다음 회차 자동 재생 표시. 끝난 회차에서 넘어온 경우에만(1분 이내) 새 회차를 바로 재생합니다.
-const AUTOPLAY_KEY = 'sp:autoplay';
+const AUTOPLAY_KEY = 'bellama.autoplay';
 const markAutoplay = (id: string, n: number) => {
   try {
     sessionStorage.setItem(AUTOPLAY_KEY, JSON.stringify({ key: `${id}/${n}`, at: Date.now() }));
@@ -1228,9 +1228,12 @@ export default function App() {
               />
             )}
             {route.page === 'my' && (
-              <div className="page-content">
-                <span className="eyebrow lime">MY BELLAMA</span>
-                <h1>나의 B엘라마</h1>
+              <div className="page-content bellama-my-page">
+                <div className="bellama-my-heading">
+                  <span className="eyebrow lime">MY BELLAMA · PRIVATE COLLECTION</span>
+                  <h1>나의 B엘라마</h1>
+                  <p>좋아하는 장면과 이어 볼 이야기를 한곳에 모았어요.</p>
+                </div>
                 {user ? (
                   <>
                     <div className="profile-card">
@@ -1501,7 +1504,7 @@ export default function App() {
             )}
             {route.page === 'support' && <Support user={user} notify={notify} />}
             {route.page === 'settings' && (
-              <div className="page-content">
+              <div className="page-content bellama-settings-page">
                 <button className="back-link" onClick={() => goBack('my')}>
                   <ArrowLeft size={16} />
                   마이페이지
