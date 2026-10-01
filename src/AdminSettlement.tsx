@@ -32,6 +32,7 @@ import { downloadCsv } from './StudioPanels';
 import { entryStatus, payoutStatus } from './Settlement';
 import { RevealAccount } from './AdminOps';
 import NumberInput from './NumberInput';
+import { useConfirm } from './confirm';
 
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 // setMonth(-1)은 31일에 달을 건너뛰므로(5/31 → 4/31 → 5/1) 1일로 고정해 계산합니다.
@@ -55,6 +56,7 @@ export function AdminSettlementPanel({
     [payout, setPayout] = useState<Payout | null>(null),
     [memo, setMemo] = useState(''),
     [filter, setFilter] = useState('requested');
+  const [ask, confirmUi] = useConfirm();
   const load = useCallback(async (key: string) => {
     try {
       setData(await api<AdminSettlementData>('/admin/settlements' + (key ? '?month=' + key : '')));
@@ -325,6 +327,7 @@ export function AdminSettlementPanel({
 
   return (
     <>
+      {confirmUi}
       <div className="stats-grid">
         <div className="stat-card">
           <div>
@@ -364,8 +367,8 @@ export function AdminSettlementPanel({
           <div>
             <h3>구독 매출 월 마감</h3>
             <p>
-              B엘라마 패스 매출을 해당 월 시청 회차 비중으로 PD에게 배분합니다. 같은 달을 다시 마감해도
-              중복 정산되지 않습니다.
+              B엘라마 패스 매출을 해당 월 시청 회차 비중으로 PD에게 배분합니다. 한 달은 한 번만 마감할 수
+              있으니, 가중치·배분 제외·상한 설정을 먼저 확인한 뒤 실행해 주세요.
             </p>
           </div>
         </div>
@@ -381,7 +384,14 @@ export function AdminSettlementPanel({
             className="primary compact"
             disabled={busy}
             onClick={() =>
-              void act(async () => {
+              void (async () => {
+                const go = await ask({
+                  title: `${closing} 구독 정산을 마감할까요?`,
+                  text: '마감한 달은 다시 마감할 수 없어요. PD 가중치·배분 제외·상한 설정이 맞는지 먼저 확인해 주세요.',
+                  ok: '월 마감 실행',
+                });
+                if (!go) return;
+                await act(async () => {
                 const r = await api<{ pool: number; shares: unknown[] }>(
                   '/admin/settlements/close',
                   'POST',
@@ -392,7 +402,8 @@ export function AdminSettlementPanel({
                     ? `${closing} 구독 매출 ${won(r.pool)}을 ${r.shares.length}개 방송국에 배분했어요.`
                     : `${closing}에는 배분할 구독 매출이 없어요.`,
                 );
-              }, '구독 정산을 마감했어요.')
+              }, '구독 정산을 마감했어요.');
+              })()
             }
           >
             <RefreshCw size={15} />월 마감 실행

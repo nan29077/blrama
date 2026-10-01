@@ -4,8 +4,8 @@ import { api, capabilityLabel, lama, tagLabel, unitLabel, type AiFamily, type Ai
 import { Modal } from '../App';
 import type { Choice, ChoiceKey, Choices, ModelMode } from './parts';
 
-// 모델 센터(2026-09-24): 바이브 코딩 도구처럼 '자동(B엘라마이 알아서)'과 '직접 선택'을 오가며 모델을 고릅니다.
-// - 자동: 작업마다 가장 알맞은 모델을 B엘라마이 고르고, 지금이라면 무엇을 왜 고르는지 보여 줘요.
+// 모델 센터(2026-09-24): 바이브 코딩 도구처럼 '자동(B엘라마가 알아서)'과 '직접 선택'을 오가며 모델을 고릅니다.
+// - 자동: 작업마다 가장 알맞은 모델을 B엘라마가 고르고, 지금이라면 무엇을 왜 고르는지 보여 줘요.
 // - 직접: 모델 카드(잘하는 것·단가·성공률)에서 고르고, 못 하는 작업은 이유와 대신할 방법을 알려 줘요.
 export const HUB_CAPS: ChoiceKey[] = ['text', 'image', 'tts', 'video', 'music', 'sfx', 'lipsync', 'upscale', 'upscale_video'];
 const capHint: Record<ChoiceKey, string> = {
@@ -116,7 +116,7 @@ export default function ModelHub({
             <Bot size={16} />
             <span>
               <b>자동 (추천)</b>
-              <small>작업마다 B엘라마이 가장 알맞은 모델을 골라요</small>
+              <small>작업마다 B엘라마가 가장 알맞은 모델을 골라요</small>
             </span>
           </button>
           <button type="button" role="radio" aria-checked={mode === 'manual'} className={mode === 'manual' ? 'active' : ''} onClick={() => setMode('manual')}>
@@ -246,7 +246,7 @@ export default function ModelHub({
                         <b>
                           <Bot size={13} /> 자동 선택
                         </b>
-                        <small>품질·장면에 맞춰 B엘라마이 골라요. 실패하면 다음 후보로 다시 시도해요.</small>
+                        <small>품질·장면에 맞춰 B엘라마가 골라요. 실패하면 다음 후보로 다시 시도해요.</small>
                         {ch.requested === 'auto' && <Check size={14} className="model-card-check" />}
                       </button>
                       {list.map((m) => (

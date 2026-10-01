@@ -288,7 +288,7 @@ export function accountRoutes({
           stamp,
         ]);
     });
-    res.clearCookie('bl_session', { path: '/' }).json({ ok: true, message: '탈퇴가 완료됐어요. 그동안 B엘라마을 이용해 주셔서 고마워요.' });
+    res.clearCookie('bl_session', { path: '/' }).json({ ok: true, message: '탈퇴가 완료됐어요. 그동안 B엘라마를 이용해 주셔서 고마워요.' });
   });
 
   // ── 최고 관리자: 이메일 · 문자 발송 설정 ───────────────────────────

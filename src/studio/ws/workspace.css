@@ -30,7 +30,7 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   background: #121a1c;
   text-align: left;
   min-width: 0;
@@ -58,7 +58,7 @@
 }
 .ws-tabs small {
   font-size: 10px;
-  color: #8a9a90;
+  color: #868d9e;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -119,7 +119,7 @@
 }
 .ws-section-toggle small {
   font-size: 11px;
-  color: #7f9589;
+  color: #7a839b;
   line-height: 1.6;
   font-weight: 400;
 }
@@ -135,7 +135,7 @@
 .ws-count {
   font-style: normal;
   font-size: 10px;
-  color: #8a9a90;
+  color: #868d9e;
   font-weight: 400;
 }
 
@@ -146,10 +146,10 @@
   gap: 4px;
   font-size: 10px;
   font-weight: 400;
-  color: #8a9a90;
+  color: #868d9e;
 }
 .save-state.saved {
-  color: #b6dc7d;
+  color: #b7bad3;
 }
 .save-state.saving {
   color: #cdb6ff;
@@ -200,7 +200,7 @@ button.job-badge {
   gap: 6px;
 }
 .ws-models-toggle small {
-  color: #8a9a90;
+  color: #868d9e;
 }
 .ws-models.open .ws-models-toggle > svg:last-child {
   transform: rotate(180deg);
@@ -222,7 +222,7 @@ button.job-badge {
   gap: 3px;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   min-width: 78px;
 }
 .ws-episodes button b {
@@ -231,7 +231,7 @@ button.job-badge {
 .ws-episodes button i {
   font-style: normal;
   font-size: 10px;
-  color: #8a9a90;
+  color: #868d9e;
 }
 .ws-episodes button.active {
   border-color: #b28cff88;
@@ -259,7 +259,7 @@ button.job-badge {
 }
 .ws-list-edit > strong {
   font-size: 11px;
-  color: #b4bfb7;
+  color: #b1b6c2;
 }
 .ws-list-edit .ws-row > input,
 .ws-list-edit .ws-row > select {
@@ -284,7 +284,7 @@ button.job-badge {
   grid-template-columns: 44px 1fr;
   gap: 10px;
   padding: 12px;
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   border-radius: 12px;
 }
 .ws-episode-outline > b {
@@ -308,7 +308,7 @@ button.job-badge {
   grid-template-columns: 132px 1fr;
   gap: 14px;
   padding: 14px;
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   border-radius: 14px;
   background: #121a1c;
   min-width: 0;
@@ -329,7 +329,7 @@ button.job-badge {
 }
 .ws-cast-media > svg {
   padding: 40px;
-  color: #3c4a44;
+  color: #383f4e;
 }
 .ws-cast-tools {
   display: flex;
@@ -374,10 +374,10 @@ button.job-badge {
   gap: 5px;
 }
 .ws-voice-summary i {
-  color: #8a9a90;
+  color: #868d9e;
 }
 .voice-picker {
-  border: 1px dashed #3a4a40;
+  border: 1px dashed #363d4e;
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 10px;
@@ -401,13 +401,13 @@ button.job-badge {
 }
 .voice-option {
   display: flex;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 9px;
   overflow: hidden;
 }
 .voice-option.selected {
   border-color: var(--lime);
-  background: #e6a5c90f;
+  background: #bfc2e00f;
 }
 .voice-choose {
   flex: 1;
@@ -423,11 +423,11 @@ button.job-badge {
 }
 .voice-choose small {
   font-size: 10px;
-  color: #8a9a90;
+  color: #868d9e;
 }
 .voice-play {
   width: 34px;
-  border-left: 1px solid #2c3832;
+  border-left: 1px solid #292e3b;
 }
 .voice-play:disabled {
   opacity: 0.4;
@@ -445,7 +445,7 @@ button.job-badge {
   grid-template-columns: 96px 1fr;
   gap: 12px;
   padding: 12px;
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   border-radius: 12px;
 }
 .ws-location-media {
@@ -456,7 +456,7 @@ button.job-badge {
   display: grid;
   place-items: center;
   overflow: hidden;
-  color: #3c4a44;
+  color: #383f4e;
 }
 .ws-location-media img {
   width: 100%;
@@ -510,7 +510,7 @@ button.job-badge {
 }
 .ws-diagnosis-head small {
   font-weight: 400;
-  color: #8a9a90;
+  color: #868d9e;
   font-size: 10px;
 }
 .ws-scores {
@@ -602,7 +602,7 @@ button.job-badge {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   background: #121a1c;
 }
 .ws-line.selected {
@@ -627,7 +627,7 @@ button.job-badge {
   width: 26px;
   height: 24px;
   border-radius: 6px;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
 }
 .ws-line-index button:disabled {
   opacity: 0.3;
@@ -719,11 +719,11 @@ button.job-badge {
   padding: 2px 6px;
   border-radius: 999px;
   background: #ffffff0a;
-  color: #5f6d66;
+  color: #5c6270;
 }
 .ws-media-dots i.on {
-  background: #e6a5c91c;
-  color: #d1f59b;
+  background: #bfc2e01c;
+  color: #cbcee6;
 }
 .ws-empty-script {
   padding: 18px 0;
@@ -738,7 +738,7 @@ button.job-badge {
   font-size: 12px;
 }
 .ws-versions > li {
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 10px;
   padding: 10px;
 }
@@ -747,7 +747,7 @@ button.job-badge {
   padding-left: 18px;
   font-size: 11px;
   line-height: 1.7;
-  color: #b4bfb7;
+  color: #b1b6c2;
 }
 .ws-version-shots small {
   color: #cdb6ff;
@@ -764,7 +764,7 @@ button.job-badge {
 }
 .ws-batch > span {
   font-size: 11px;
-  color: #8a9a90;
+  color: #868d9e;
   margin-right: 4px;
 }
 .ws-timeline {
@@ -812,7 +812,7 @@ button.job-badge {
 }
 .ws-clip-empty {
   font-size: 10px;
-  color: #5f6d66;
+  color: #5c6270;
 }
 .ws-clip > b {
   position: absolute;
@@ -846,7 +846,7 @@ button.job-badge {
   background: linear-gradient(#b28cff, transparent);
 }
 .ws-detail {
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 14px;
   padding: 14px;
   background: #11181a;
@@ -862,7 +862,7 @@ button.job-badge {
   height: 32px;
 }
 .ws-detail-nav small {
-  color: #8a9a90;
+  color: #868d9e;
   font-weight: 400;
 }
 .ws-detail-grid {
@@ -884,7 +884,7 @@ button.job-badge {
   background: #0b1012;
   display: grid;
   place-items: center;
-  color: #5f6d66;
+  color: #5c6270;
   font-size: 11px;
 }
 .ws-frame img,
@@ -942,7 +942,7 @@ button.job-badge {
 .ws-field > span {
   display: block;
   font-size: 11px;
-  color: #b4bfb7;
+  color: #b1b6c2;
   margin-bottom: 6px;
 }
 .ws-field .chip img {
@@ -952,7 +952,7 @@ button.job-badge {
   object-fit: cover;
 }
 .ws-voice {
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   border-radius: 12px;
   padding: 10px 12px;
   margin: 0 0 12px;
@@ -979,7 +979,7 @@ button.job-badge {
   margin-bottom: 0;
 }
 .ws-music-make {
-  border-top: 1px solid #26312d;
+  border-top: 1px solid #232834;
   padding-top: 12px;
   margin-top: 12px;
   display: flex;
@@ -1074,7 +1074,7 @@ button.job-badge {
   gap: 14px;
   align-items: center;
   padding: 12px;
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   border-radius: 12px;
 }
 .ws-compose-row.failed {
@@ -1112,7 +1112,7 @@ button.job-badge {
 .ws-compose-progress i {
   position: absolute;
   inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #b28cff88, #e6a5c988);
+  background: linear-gradient(90deg, #b28cff88, #bfc2e088);
   transition: width 0.5s;
 }
 .ws-compose-progress span {
@@ -1141,7 +1141,7 @@ button.job-badge {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #221824;
+  background: #1b1c21;
 }
 .ws-trailer {
   width: 180px;
@@ -1219,7 +1219,7 @@ button.job-badge {
 }
 .ws-poster-grid figcaption small {
   width: 100%;
-  color: #8a9a90;
+  color: #868d9e;
 }
 .ws-poster-grid .inline-check {
   margin: 0;
@@ -1272,7 +1272,7 @@ button.job-badge {
   gap: 8px;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -1355,7 +1355,7 @@ button.job-badge {
 }
 .shot-mode {
   display: inline-flex;
-  border: 1px solid #2f3c34;
+  border: 1px solid #2c323f;
   border-radius: 999px;
   padding: 2px;
   margin-left: auto;
@@ -1363,7 +1363,7 @@ button.job-badge {
 .shot-mode button {
   border: 0;
   background: transparent;
-  color: #9aa79f;
+  color: #979daa;
   font-size: 12px;
   padding: 5px 12px;
   border-radius: 999px;
@@ -1371,7 +1371,7 @@ button.job-badge {
   cursor: pointer;
 }
 .shot-mode button.on {
-  background: #c4f562;
+  background: #afb3da;
   color: #111;
   font-weight: 700;
 }
@@ -1385,12 +1385,12 @@ button.job-badge {
   font-size: 11px;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid #2f3c34;
-  color: #8a9a90;
+  border: 1px solid #2c323f;
+  color: #868d9e;
 }
 .shot-status span.ok {
-  border-color: #c4f56255;
-  color: #c4f562;
+  border-color: #afb3da55;
+  color: #afb3da;
 }
 .shot-primary {
   display: grid;
@@ -1451,7 +1451,7 @@ button.job-badge {
   max-width: 110px;
 }
 .ws-fold {
-  border: 1px solid #26312d;
+  border: 1px solid #232834;
   border-radius: 12px;
   margin: 0 0 10px;
   background: #0f1517;
@@ -1464,12 +1464,12 @@ button.job-badge {
   min-height: 44px;
   padding: 8px 12px;
   cursor: pointer;
-  color: #dfe6e1;
+  color: #dde0e8;
   user-select: none;
   border-radius: 12px;
 }
 .ws-fold-head:focus-visible {
-  outline: 2px solid #c4f562;
+  outline: 2px solid #afb3da;
   outline-offset: 2px;
 }
 .ws-fold-head strong {
@@ -1478,7 +1478,7 @@ button.job-badge {
 }
 .ws-fold-head small {
   font-size: 11px;
-  color: #8a9a90;
+  color: #868d9e;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1489,7 +1489,7 @@ button.job-badge {
   flex: 0 0 auto;
   transform: rotate(-90deg);
   transition: transform 0.15s;
-  color: #8a9a90;
+  color: #868d9e;
 }
 .ws-fold.open .ws-fold-caret {
   transform: none;
@@ -1519,7 +1519,7 @@ button.job-badge {
     padding: 10px 14px;
     background: #11181af2;
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid #26312d;
+    border-bottom: 1px solid #232834;
     border-radius: 14px 14px 0 0;
   }
   .ws-detail-nav {
@@ -1556,7 +1556,7 @@ button.job-badge {
   cursor: ew-resize;
   touch-action: none;
   z-index: 2;
-  background: linear-gradient(90deg, transparent, #c4f56233);
+  background: linear-gradient(90deg, transparent, #afb3da33);
   opacity: 0;
   transition: opacity 0.15s;
 }
@@ -1573,7 +1573,7 @@ button.job-badge {
   height: 22px;
   margin-top: -11px;
   border-radius: 2px;
-  background: #c4f562;
+  background: #afb3da;
 }
 .ws-clip-cands {
   position: absolute;

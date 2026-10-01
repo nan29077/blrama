@@ -177,6 +177,11 @@ test('stage 3: character/location/prop locks go into image, video and AI-check p
   ok(await request(`/studio/ai/projects/${pid}/characters/${c.id}`, { method: 'PATCH', cookie: pd, body: { hair: '어깨 길이 흑발 단발', body: '마른 체형', forbid: '안경', locked: true } }));
   // 한 칸만 보내도 나머지(이름 · 외모 · 목소리)는 그대로
   ok(await request(`/studio/ai/projects/${pid}/characters/${c.id}`, { method: 'PATCH', cookie: pd, body: { role: '주인공(고정)' } }));
+  // BL 전용: 인물 외형에 미성년으로 보이는 표현은 저장되지 않는다(추가 · 수정 모두).
+  const minorPatch = await request(`/studio/ai/projects/${pid}/characters/${c.id}`, { method: 'PATCH', cookie: pd, body: { look: '교복 입은 고등학생' } });
+  assert.equal(minorPatch.status, 400);
+  assert.match(minorPatch.data.error, /성인/);
+  assert.equal((await request(`/studio/ai/projects/${pid}/characters`, { method: 'POST', cookie: pd, body: { name: '어린 동생', look: 'a teenage boy in school uniform' } })).status, 400);
   d = await detail();
   const saved = d.characters.find((x) => x.id === c.id);
   assert.deepEqual([saved.name, saved.look, saved.hair, saved.body, saved.forbid, Number(saved.locked), saved.role], [c.name, c.look, '어깨 길이 흑발 단발', '마른 체형', '안경', 1, '주인공(고정)']);

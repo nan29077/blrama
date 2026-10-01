@@ -231,6 +231,11 @@ test('subscription pool follows server-recorded plays by subscribers, not client
   assert.equal(byPd['demo-pd'].weight, 3);
   assert.equal(byPd['demo-pd-2'].weight, 1);
   assert.equal(byPd['demo-pd'].gross + byPd['demo-pd-2'].gross, Number(pool));
+  // 이미 마감한 달은 설정을 바꿔도 다시 마감할 수 없어 풀보다 많이 배분되지 않는다.
+  const again = await request('/admin/settlements/close', { method: 'POST', cookie: admin, body: { period } });
+  assert.equal(again.status, 409);
+  const [{ n: distributed }] = await testDb.all("SELECT SUM(gross) AS n FROM settlement_entries WHERE kind='subscription' AND period=?", [period]);
+  assert.equal(Number(distributed), Number(pool));
   // 잘못된 기간 형식은 거절
   assert.equal((await request('/admin/settlements/close', { method: 'POST', cookie: admin, body: { period: '2025-13' } })).status, 400);
 });
@@ -264,4 +269,34 @@ test('tax report groups by payment date in Korean time and accepts a year', asyn
   assert.equal(r.status, 200);
   assert.equal(r.data.year, '2025');
   assert.equal((await request('/admin/tax?year=20x5', { cookie: admin })).status, 400);
+});
+
+test('whole-title unlock opens only the episodes paid for, not episodes published later', async () => {
+  const v = await newUser('title-later');
+  await charge(v.cookie);
+  const first = await request('/pings/unlock', { method: 'POST', cookie: v.cookie, body: { dramaId: 'midnight', all: true, idempotencyKey: randomUUID() } });
+  assert.equal(first.status, 200, JSON.stringify(first.data));
+  const max = Number((await testDb.all("SELECT MAX(number) AS n FROM episodes WHERE drama_id='midnight'"))[0].n);
+  const lib = (await request('/library', { cookie: v.cookie })).data;
+  assert.ok(lib.purchases.includes('midnight'));
+  assert.equal(lib.orders.find((o) => o.kind === 'ping_title').episode ?? null, null);
+  assert.equal((await request('/play/midnight/' + max, { cookie: v.cookie })).status !== 403, true);
+  // 나중에 새 회차가 공개되면 그 회차는 잠겨 있고, 전체 열기로 그 회차만 다시 열 수 있다.
+  const newNo = max + 1;
+  await testDb.run(
+    "INSERT INTO episodes (id,drama_id,number,title,video,duration,review_status) VALUES (?,?,?,?,?,?,'approved')",
+    ['later-' + runId, 'midnight', newNo, newNo + '화', '/demo/preview.mp4', 12],
+  );
+  try {
+    const detail = (await request('/dramas/midnight', { cookie: v.cookie })).data;
+    assert.equal(detail.episodes.find((e) => e.number === newNo).locked, true);
+    assert.equal((await request('/play/midnight/' + newNo, { cookie: v.cookie })).status, 403);
+    const again = await request('/pings/unlock', { method: 'POST', cookie: v.cookie, body: { dramaId: 'midnight', all: true, idempotencyKey: randomUUID() } });
+    assert.equal(again.status, 200, JSON.stringify(again.data));
+    assert.equal(again.data.unlocked, 1);
+    assert.notEqual((await request('/play/midnight/' + newNo, { cookie: v.cookie })).status, 403);
+  } finally {
+    await testDb.run("DELETE FROM episode_entitlements WHERE drama_id='midnight' AND episode=?", [newNo]);
+    await testDb.run('DELETE FROM episodes WHERE id=?', ['later-' + runId]);
+  }
 });

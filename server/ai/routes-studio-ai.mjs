@@ -26,6 +26,7 @@ import {
   planSchema,
   maleLeads,
   BL_VISUAL,
+  minorTerm,
   posterPrompt,
   rangePrompt,
   rangeSchema,
@@ -1642,9 +1643,16 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
   });
   // 고치기(PATCH)는 보낸 칸만 바꿔요(다른 칸은 지금 값을 그대로 둠).
   const characterPatchSchema = z.object(Object.fromEntries(Object.entries(characterSchema.shape).map(([k, v]) => [k, v instanceof z.ZodDefault ? v.unwrap().optional() : v.optional()])));
+  // BL 전용: 인물 외형(이미지로 그려지는 칸)에 미성년으로 보이는 표현을 쓰지 못하게 합니다.
+  // 소개(description)는 '고등학교 동창' 같은 과거 이야기일 수 있어 검사하지 않습니다.
+  const assertAdultLook = (c) => {
+    const minor = minorTerm([c.look, c.outfit, c.hair, c.body], { strict: true });
+    if (minor) fail(400, `등장인물은 모두 성인(20세 이상)으로 그려야 해요. 외형에서 미성년으로 보이는 표현을 빼 주세요: "${minor}"`);
+  };
   app.post('/api/studio/ai/projects/:id/characters', roles('pd', 'admin'), async (req, res) => {
     const p = await project(req, req.params.id, 'script');
     const b = characterSchema.parse(req.body);
+    assertAdultLook(b);
     const count = (await charactersOf(p.id)).length;
     if (count >= 8) fail(400, '인물은 8명까지 만들 수 있어요.');
     const id = randomUUID();
@@ -1662,6 +1670,7 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
     if (!c) fail(404, '인물을 찾을 수 없어요.');
     const b = { ...c, ...Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== undefined)) };
     b.locked = raw.locked === undefined ? Number(c.locked || 0) : raw.locked ? 1 : 0;
+    assertAdultLook(raw);
     await db.run('UPDATE studio_characters SET name=?,role=?,description=?,look=?,outfit=?,voice_model=?,voice=?,voice_style=?,hair=?,body=?,forbid=?,locked=? WHERE id=?', [
       b.name, b.role, b.description, b.look, b.outfit, b.voice_model, b.voice, b.voice_style, b.hair || '', b.body || '', b.forbid || '', b.locked, c.id,
     ]);
@@ -2338,8 +2347,15 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
         publish_at: z.string().datetime().nullable().optional(),
         submit: z.boolean().default(false),
         forceApproval: z.boolean().default(false), // 협업 승인이 안 끝났어도 소유자가 내보내기
+        // 작품 등록과 같은 확인 3가지. PD가 직접 체크해야 하며, 서버가 대신 체크하지 않습니다(BL 전용 규칙).
+        bl_confirmed: z.boolean().default(false),
+        rights_confirmed: z.boolean().default(false),
+        likeness_confirmed: z.boolean().default(false),
+        age_rating: z.enum(['all', '12', '15', '18']).optional(),
       })
-      .parse(req.body);
+      .parse(req.body ?? {});
+    if (!b.bl_confirmed || !b.rights_confirmed || !b.likeness_confirmed)
+      fail(400, 'BL 장르 확인 · 권리 확인 · 출연자 동의 확인에 모두 체크해야 내보낼 수 있어요.');
     const all = await episodesOf(p.id);
     const approvals = await collab.approvalsActive(p);
     const composed = all.filter((e) => e.video);
@@ -2384,15 +2400,15 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
       if (!drama) {
         const id = randomUUID();
         await db.run(
-          "INSERT INTO dramas (id,owner_id,title,tagline,synopsis,genre,image,free,episode_pings,free_episodes,created_at,channel_id,rights_confirmed,bl_confirmed,likeness_confirmed,ai_usage,declared_at,hashtags,trailer,subtitle_style) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,1,1,'full',?,?,?,?)",
-          [id, p.owner_id, title, b.tagline, synopsis, p.genre, image, b.free ? 1 : 0, b.episode_pings, b.free_episodes, now(), channel?.id || null, now(), hashtags, trailer, p.subtitle_style || ''],
+          "INSERT INTO dramas (id,owner_id,title,tagline,synopsis,genre,image,free,episode_pings,free_episodes,created_at,channel_id,rights_confirmed,bl_confirmed,likeness_confirmed,ai_usage,declared_at,hashtags,trailer,subtitle_style,age_rating) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,1,1,'full',?,?,?,?,?)",
+          [id, p.owner_id, title, b.tagline, synopsis, p.genre, image, b.free ? 1 : 0, b.episode_pings, b.free_episodes, now(), channel?.id || null, now(), hashtags, trailer, p.subtitle_style || '', b.age_rating || '15'],
         );
         drama = await db.get('SELECT * FROM dramas WHERE id=?', [id]);
         await db.run('UPDATE studio_projects SET drama_id=? WHERE id=?', [id, p.id]);
       } else if (!serial) {
         await db.run(
-          "UPDATE dramas SET title=?,tagline=?,synopsis=?,genre=?,image=?,free=?,episode_pings=?,free_episodes=?,rights_confirmed=1,bl_confirmed=1,likeness_confirmed=1,ai_usage=CASE WHEN ai_usage='none' THEN 'partial' ELSE ai_usage END,declared_at=?,hashtags=?,trailer=?,subtitle_style=? WHERE id=?",
-          [title, b.tagline, synopsis, p.genre, image, b.free ? 1 : 0, b.episode_pings, b.free_episodes, now(), hashtags, trailer, p.subtitle_style || '', drama.id],
+          "UPDATE dramas SET title=?,tagline=?,synopsis=?,genre=?,image=?,free=?,episode_pings=?,free_episodes=?,rights_confirmed=1,bl_confirmed=1,likeness_confirmed=1,ai_usage=CASE WHEN ai_usage='none' THEN 'partial' ELSE ai_usage END,declared_at=?,hashtags=?,trailer=?,subtitle_style=?,age_rating=? WHERE id=?",
+          [title, b.tagline, synopsis, p.genre, image, b.free ? 1 : 0, b.episode_pings, b.free_episodes, now(), hashtags, trailer, p.subtitle_style || '', b.age_rating || drama.age_rating || '15', drama.id],
         );
       } else {
         // 연재 중: 작품 정보(가격·포스터)는 그대로 두고, 예고편·해시태그만 보탭니다.
@@ -2867,7 +2883,7 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
         tier: b.tier,
         tags: ['poster'],
         input: {
-          prompt: `Korean short drama poster, vertical 9:16, key art for "${d.title}" (${d.genre}). ${d.tagline}. ${b.prompt}. Cinematic lighting, empty space at top for the title, no text.`,
+          prompt: `Korean BL short drama poster, vertical 9:16, key art for "${d.title}" (${d.genre}). ${d.tagline}. ${b.prompt}. ${BL_VISUAL}; if two people appear they are the two male leads. Cinematic lighting, empty space at top for the title, no text.`,
           aspect: '9:16',
           userText: b.prompt,
         },

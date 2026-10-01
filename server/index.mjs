@@ -351,9 +351,15 @@ app.get('/api/health', async (req, res) => {
   }
 });
 app.get('/api/auth/me', (req, res) => res.json({ user: publicUser(req.user) }));
+// Cloudflare 터널 등 외부에서 들어온 요청인지 확인합니다(터널 링크를 아는 사람이 관리자 데모로 들어오지 못하게).
+const viaTunnel = (req) =>
+  Boolean(req.get('cf-ray') || req.get('cf-connecting-ip')) ||
+  [req.get('host'), req.get('x-forwarded-host'), req.get('origin')].some((v) => /trycloudflare\.com(:\d+)?$/i.test(v || ''));
 app.post('/api/auth/demo', authLimiter, async (req, res) => {
   if (!demo) fail(404, '사용할 수 없는 기능입니다.');
-  const role = z.enum(['admin', 'pd', 'viewer']).parse(req.body.role);
+  const role = z.enum(['admin', 'pd', 'viewer']).parse(req.body?.role);
+  if (role === 'admin' && viaTunnel(req) && process.env.ALLOW_TUNNEL_ADMIN_DEMO !== 'true')
+    fail(403, '외부 미리보기 링크에서는 관리자 데모 로그인을 쓸 수 없어요.');
   const user = await db.get('SELECT * FROM users WHERE id=?', [`demo-${role}`]);
   if (user.status !== 'active') fail(403, '이용이 제한된 계정입니다.');
   await session(req, res, user);
@@ -536,7 +542,8 @@ app.get('/api/dramas/:id', async (req, res) => {
   res.json({
     // 작품 주인·관리자는 관리용 칸(심사 의견 등)까지, 시청자는 공개 칸만 받습니다.
     ...(seesAll(req.user, d) ? d : publicDrama(d)),
-    entitled,
+    // 지금 공개된 회차를 모두 볼 수 있으면(작품 전체 열기 등) true. 새 회차가 공개되면 다시 false가 됩니다.
+    entitled: entitled || (lockedCount === 0 && owned.length > 0),
     // AI 기본법에 따른 생성형 AI 결과물 표시: PD 자가 신고 또는 스튜디오 제작 회차가 있으면 표시
     ai_label: d.ai_usage !== 'none' || Number(d.studio_episodes) > 0,
     episode_pings: perEpisode,
@@ -680,12 +687,16 @@ app.get('/api/library', requireAuth, async (req, res) => {
     ),
     history: await db.all('SELECT * FROM history WHERE user_id=? ORDER BY updated_at DESC', [u]),
     orders: await db.all(
-      'SELECT o.*,d.title,(SELECT e.episode FROM episode_entitlements e WHERE e.order_id=o.id) AS episode FROM orders o LEFT JOIN dramas d ON d.id=o.drama_id WHERE o.user_id=? ORDER BY o.created_at DESC',
+      "SELECT o.*,d.title,CASE WHEN o.kind='ping_episode' THEN (SELECT MIN(e.episode) FROM episode_entitlements e WHERE e.order_id=o.id) END AS episode FROM orders o LEFT JOIN dramas d ON d.id=o.drama_id WHERE o.user_id=? ORDER BY o.created_at DESC",
       [u],
     ),
-    purchases: (await db.all('SELECT drama_id FROM entitlements WHERE user_id=?', [u])).map(
-      (x) => x.drama_id,
-    ),
+    // 소장 작품: 예전 작품 단위 소장 + 핑으로 '전체 열기'한 작품(그 시점 회차를 모두 연 작품).
+    purchases: (
+      await db.all(
+        "SELECT drama_id FROM entitlements WHERE user_id=? UNION SELECT drama_id FROM orders WHERE user_id=? AND kind='ping_title' AND status='ping_paid' AND drama_id IS NOT NULL",
+        [u, u],
+      )
+    ).map((x) => x.drama_id),
     channels: (await db.all('SELECT channel_id FROM channel_follows WHERE user_id=?', [u])).map(
       (x) => x.channel_id,
     ),
@@ -911,9 +922,10 @@ app.post('/api/pings/unlock', requireAuth, async (req, res) => {
     if (existing) {
       if (existing.user_id !== req.user.id || !['ping_episode', 'ping_title'].includes(existing.kind))
         fail(409, '중복 요청입니다.');
-      const episode = await db.get('SELECT episode FROM episode_entitlements WHERE order_id=?', [
-        existing.id,
-      ]);
+      const episode =
+        existing.kind === 'ping_episode'
+          ? await db.get('SELECT episode FROM episode_entitlements WHERE order_id=?', [existing.id])
+          : null;
       return orderShape(existing, {
         episode: episode?.episode ?? null,
         wallet: await walletOf(db, req.user.id),
@@ -959,11 +971,14 @@ app.post('/api/pings/unlock', requireAuth, async (req, res) => {
       episode: b.all ? null : b.episode,
       memo: b.all ? `전체 열기 ${locked.length}편` : `${b.episode}화`,
     });
+    // 전체 열기는 '지금 잠긴 회차'만큼 값을 받으므로, 그 회차들만 엽니다.
+    // (작품 단위 권한을 주면 이후 공개되는 회차까지 값을 내지 않고 열려 버립니다.)
     if (b.all)
-      await db.run(
-        'INSERT INTO entitlements (user_id,drama_id,order_id) VALUES (?,?,?) ON CONFLICT DO NOTHING',
-        [req.user.id, drama.id, id],
-      );
+      for (const n of locked)
+        await db.run(
+          'INSERT INTO episode_entitlements (user_id,drama_id,episode,order_id,created_at) VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING',
+          [req.user.id, drama.id, n, id, createdAt],
+        );
     else
       await db.run(
         'INSERT INTO episode_entitlements (user_id,drama_id,episode,order_id,created_at) VALUES (?,?,?,?,?)',
@@ -1057,6 +1072,7 @@ const dramaSchema = z.object({
   bl_confirmed: z.boolean().optional(),
   likeness_confirmed: z.boolean().optional(),
   ai_usage: z.enum(['none', 'partial', 'full']).optional(),
+  age_rating: z.enum(['all', '12', '15', '18']).optional(),
 });
 async function saveDeclaration(id, b) {
   if (b.rights_confirmed === undefined && b.bl_confirmed === undefined && b.likeness_confirmed === undefined && b.ai_usage === undefined)
@@ -1121,7 +1137,7 @@ app.post('/api/studio/dramas', roles('pd', 'admin'), async (req, res) => {
   await checkMedia(req, b.image);
   const channel = await db.get('SELECT id FROM channels WHERE owner_id=?', [req.user.id]);
   await db.run(
-    'INSERT INTO dramas (id,owner_id,title,tagline,synopsis,genre,image,free,episode_pings,free_episodes,created_at,channel_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+    'INSERT INTO dramas (id,owner_id,title,tagline,synopsis,genre,image,free,episode_pings,free_episodes,created_at,channel_id,age_rating) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
     [
       id,
       req.user.id,
@@ -1135,6 +1151,7 @@ app.post('/api/studio/dramas', roles('pd', 'admin'), async (req, res) => {
       b.free_episodes,
       now(),
       channel?.id || null,
+      b.age_rating || '15',
     ],
   );
   await saveDeclaration(id, b);
@@ -1192,7 +1209,7 @@ app.patch('/api/studio/dramas/:id', roles('pd', 'admin'), async (req, res) => {
     const b = dramaSchema.parse(req.body);
     await checkMedia(req, b.image);
     await db.run(
-      'UPDATE dramas SET title=?,tagline=?,synopsis=?,genre=?,image=?,free=?,episode_pings=?,free_episodes=? WHERE id=?',
+      'UPDATE dramas SET title=?,tagline=?,synopsis=?,genre=?,image=?,free=?,episode_pings=?,free_episodes=?,age_rating=? WHERE id=?',
       [
         b.title,
         b.tagline,
@@ -1202,6 +1219,7 @@ app.patch('/api/studio/dramas/:id', roles('pd', 'admin'), async (req, res) => {
         b.free ? 1 : 0,
         b.episode_pings,
         b.free_episodes,
+        b.age_rating || d.age_rating || '15',
         d.id,
       ],
     );
@@ -1407,7 +1425,12 @@ app.delete('/api/studio/dramas/:id/episodes/:number', roles('pd', 'admin'), asyn
 });
 app.post('/api/admin/dramas/:id/review', roles('admin'), async (req, res) => {
   const b = z
-    .object({ status: z.enum(['published', 'rejected']), note: z.string().max(1000).default('') })
+    .object({
+      status: z.enum(['published', 'rejected']),
+      note: z.string().max(1000).default(''),
+      // 심사하면서 관람 등급을 바로잡을 수 있어요(보내지 않으면 PD가 정한 값 유지).
+      age_rating: z.enum(['all', '12', '15', '18']).optional(),
+    })
     .parse(req.body);
   const reviewed = await db.transaction(async () => {
     const d = await owned(req, true);
@@ -1418,8 +1441,8 @@ app.post('/api/admin/dramas/:id/review', roles('admin'), async (req, res) => {
       if (issues.length) fail(400, issues.join(' '));
     }
     await db.run(
-      'UPDATE dramas SET status=?,review_note=?,published_at=COALESCE(published_at,?) WHERE id=?',
-      [b.status, b.note, b.status === 'published' ? now() : null, d.id],
+      'UPDATE dramas SET status=?,review_note=?,published_at=COALESCE(published_at,?),age_rating=? WHERE id=?',
+      [b.status, b.note, b.status === 'published' ? now() : null, b.age_rating || d.age_rating || '15', d.id],
     );
     // 작품 전체 승인 시 함께 심사한 회차는 모두 공개합니다(공개 예약이 있는 회차는 예약대로).
     if (b.status === 'published')
@@ -1640,6 +1663,20 @@ if (production) {
   app.get('/', async (req, res) => {
     const html = await vite.transformIndexHtml('/', readFileSync(path.resolve('index.html'), 'utf8'));
     res.set('Cache-Control', 'no-store').type('html').send(injectHomeTags(html, shareBase(req)));
+  });
+  // 개발 서버(Vite)는 프로젝트 폴더 파일을 그대로 내려주므로, DB·암호 키·업로드 원본·서버 소스·로그를 막습니다.
+  // (업로드 파일은 위의 권한 확인 경로로만 내려갑니다.)
+  const devBlocked =
+    /^\/(data|uploads|server|tests|scripts|docs|assets|android|ios|\.git|\.github)(\/|$)|^\/[^/]*\.(log|sqlite[^/]*|bat|ps1|md)$|^\/\.env|^\/(Dockerfile|compose\.yaml)$/i;
+  app.use((req, res, next) => {
+    let p = req.path;
+    try {
+      p = decodeURIComponent(p);
+    } catch {}
+    // 화면 코드가 직접 가져오는 공용 기준표(JSON)만 예외로 둡니다.
+    if (/^\/server\/(genres|ai\/direction)\.json$/.test(p)) return next();
+    if (devBlocked.test(p) || /\/(data|uploads)\/|\.sqlite|\.ai-secret/i.test(p)) return res.sendStatus(404);
+    next();
   });
   app.use(vite.middlewares);
 }

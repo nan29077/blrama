@@ -1,9 +1,9 @@
 /* ThumbStudio · CardMaker (썸네일/타이틀 카드 편집기). 모든 선택자는 .tstudio 아래로 한정해요. */
 .tstudio {
-  --ts-panel: var(--panel, #221824);
+  --ts-panel: var(--panel, #1b1c21);
   --ts-border: var(--border, #2a3035);
   --ts-muted: var(--muted, #8d959c);
-  --ts-accent: var(--lime, #e6a5c9);
+  --ts-accent: var(--lime, #bfc2e0);
   --ts-field: #12171b;
   color: #f3f3f1;
   background: var(--bg, #160f1b);
@@ -88,7 +88,7 @@
 .tstudio-tabs button.on {
   border-color: var(--ts-accent);
   color: var(--ts-accent);
-  background: #1f2a1a;
+  background: #181e2c;
 }
 .tstudio-canvas-wrap {
   position: relative;
@@ -253,7 +253,7 @@
 }
 .tstudio-tpl.on {
   border-color: var(--ts-accent);
-  background: #1f2a1a;
+  background: #181e2c;
 }
 .tstudio-tpl.tpl-classic b {
   font-family: 'Noto Serif KR Variable', serif;
@@ -264,7 +264,7 @@
   color: #ff6b6b;
 }
 .tstudio-tpl.tpl-romance b {
-  color: #ffb3c9;
+  color: #c4ccee;
 }
 .tstudio-tpl.tpl-minimal b {
   font-weight: 600;

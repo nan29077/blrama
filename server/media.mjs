@@ -118,7 +118,7 @@ export function precheck(meta) {
     h = Number(meta?.height || 0),
     d = Number(meta?.duration || 0);
   if (w && h) {
-    if (w >= h) warnings.push('가로 영상이에요. B엘라마은 세로(9:16) 영상을 권장해요.');
+    if (w >= h) warnings.push('가로 영상이에요. B엘라마는 세로(9:16) 영상을 권장해요.');
     else if (Math.abs(w / h - 9 / 16) > 0.03) warnings.push(`화면 비율이 9:16이 아니에요 (${w}×${h}).`);
     if (Math.min(w, h) < 720) warnings.push(`해상도가 낮아요 (${w}×${h}). 720×1280 이상을 권장해요.`);
   }

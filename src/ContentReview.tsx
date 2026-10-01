@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { Modal } from './App';
-import { aiUsageLabel, api, jobKindLabel, type Drama, type Episode } from './api';
+import { AGE_RATINGS, aiUsageLabel, api, jobKindLabel, type AgeRating, type Drama, type Episode } from './api';
 import EpisodeManager from './EpisodeManager';
 import EpisodeReviewQueue from './serial/EpisodeReviewQueue';
 import { EpisodeStatusChip, useSerialToast } from './serial/EpisodeStatus';
@@ -65,6 +65,8 @@ export default function ContentReview({
   const [error, setError] = useState('');
   const [number, setNumber] = useState(1);
   const [note, setNote] = useState('');
+  // 관람 등급: PD가 정한 값으로 시작하고, 관리자가 승인하면서 바로잡을 수 있어요.
+  const [rating, setRating] = useState<AgeRating | ''>('');
   const [busy, setBusy] = useState(false);
   const [mediaError, setMediaError] = useState('');
   const [loaded, setLoaded] = useState<number[]>([]);
@@ -119,7 +121,11 @@ export default function ContentReview({
   async function decide(status: 'published' | 'rejected') {
     setBusy(true);
     try {
-      await api('/admin/dramas/' + drama.id + '/review', 'POST', { status, note });
+      await api('/admin/dramas/' + drama.id + '/review', 'POST', {
+        status,
+        note,
+        ...(rating ? { age_rating: rating } : {}),
+      });
       await onReviewed();
       close();
     } catch (e) {
@@ -250,6 +256,20 @@ export default function ContentReview({
                     {Number(detail.rights_confirmed) ? '권리 확인' : '권리 미확인'} ·{' '}
                     {Number(detail.likeness_confirmed) ? '초상권 동의' : '초상권 미확인'}
                   </strong>
+                </div>
+                <div>
+                  <span>관람 등급</span>
+                  <select
+                    aria-label="관람 등급"
+                    value={rating || detail.age_rating || '15'}
+                    onChange={(e) => setRating(e.target.value as AgeRating)}
+                  >
+                    {AGE_RATINGS.map((a) => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <span>AI 사용 신고</span>

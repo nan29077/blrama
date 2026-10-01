@@ -253,11 +253,16 @@ export async function subscriptionPlan(db, period, pool, settings) {
   };
 }
 // Subscription revenue is shared monthly in proportion to episodes watched, the same
-// pooled model streaming services use. Closing a period twice changes nothing.
+// pooled model streaming services use. 한 달은 한 번만 마감합니다.
+// (다시 마감을 허용하면 설정을 바꾼 뒤 새 PD 몫이 기존 몫 위에 더해져 풀보다 많이 배분됩니다.)
 export async function closeSubscriptionPeriod(db, period, settings, actorId) {
   const [, end] = periodRange(period);
   if (new Date(end).getTime() > Date.now())
     throw error(400, '아직 종료되지 않은 월은 마감할 수 없습니다.');
+  const closedBefore =
+    (await db.get("SELECT id FROM audit_logs WHERE action='settlement:closed' AND target_id=?", [period])) ||
+    (await db.get("SELECT id FROM settlement_entries WHERE kind='subscription' AND period=?", [period]));
+  if (closedBefore) throw error(409, `${period} 구독 정산은 이미 마감했어요. 한 달은 한 번만 마감할 수 있어요.`);
   const pool = await subscriptionPool(db, period);
   const plan = await subscriptionPlan(db, period, pool, settings);
   const stamp = iso();

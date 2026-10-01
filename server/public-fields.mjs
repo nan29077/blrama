@@ -22,6 +22,7 @@ const PUBLIC_DRAMA_FIELDS = [
   'views',
   'episode_count',
   'ai_usage',
+  'age_rating',
   'trailer',
   'hashtags',
   'subtitle_style',

@@ -66,16 +66,16 @@
   min-inline-size: 0; /* fieldset은 기본으로 내용보다 작아지지 않아요 */
   margin: 0;
   padding: 12px;
-  border: 1px solid #2c3a33;
+  border: 1px solid #292f3e;
   border-radius: 16px;
   background: linear-gradient(180deg, #131b1a, #0f1516);
   box-shadow: 0 12px 34px #00000045;
   min-width: 0;
 }
 .se-prompt:focus-within {
-  border-color: #c4f56255;
+  border-color: #afb3da55;
   box-shadow:
-    0 0 0 1px #c4f56222,
+    0 0 0 1px #afb3da22,
     0 12px 34px #00000045;
 }
 .se-presets {
@@ -93,9 +93,9 @@
   gap: 7px;
   padding: 6px 10px 6px 8px;
   border-radius: 10px;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
   background: #ffffff06;
-  color: #a9b8ae;
+  color: #a5acbc;
   font-size: 11px;
   line-height: 1.2;
   text-align: left;
@@ -103,7 +103,7 @@
 }
 .se-chip > svg {
   flex: none;
-  color: #8ea592;
+  color: #8893ab;
 }
 .se-chip span {
   display: flex;
@@ -113,19 +113,19 @@
 }
 .se-chip small {
   font-size: 9.5px;
-  color: #6f8978;
+  color: #687490;
   letter-spacing: 0.2px;
 }
 .se-chip b {
   font-weight: 600;
-  color: #dbe6dd;
+  color: #d8dde9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 150px;
 }
 .se-chip-caret {
-  color: #55695d;
+  color: #50596e;
   transition: transform 0.15s;
 }
 .se-chipwrap.open .se-chip-caret {
@@ -133,12 +133,12 @@
 }
 .se-chip:hover:not(:disabled),
 .se-chipwrap.open .se-chip {
-  border-color: #c4f56266;
-  background: #c4f5620d;
+  border-color: #afb3da66;
+  background: #afb3da0d;
 }
 .se-chip.on {
-  border-color: #3f5a3c;
-  background: #c4f56213;
+  border-color: #364360;
+  background: #afb3da13;
 }
 .se-chip.on b {
   color: var(--lime);
@@ -154,7 +154,7 @@
   width: min(420px, 90vw);
   max-width: calc(100vw - 260px); /* 왼쪽 메뉴 폭만큼 빼서 오른쪽으로 넘치지 않게 */
   border-radius: 14px;
-  border: 1px solid #34463b;
+  border: 1px solid #2f384b;
   background: #101716;
   box-shadow: 0 18px 50px #000000aa;
   overflow: hidden;
@@ -175,7 +175,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 8px 8px 14px;
-  border-bottom: 1px solid #22302a;
+  border-bottom: 1px solid #1e2533;
   font-size: 12px;
 }
 .se-pop-body {
@@ -213,7 +213,7 @@
 }
 .se-input textarea:focus {
   outline: none;
-  border-color: #2c3a33;
+  border-color: #292f3e;
 }
 .se-mention {
   position: absolute;
@@ -223,7 +223,7 @@
   width: min(320px, calc(100% - 16px));
   padding: 6px;
   border-radius: 12px;
-  border: 1px solid #34463b;
+  border: 1px solid #2f384b;
   background: #101716;
   box-shadow: 0 14px 40px #000000aa;
   display: flex;
@@ -239,16 +239,16 @@
   border-radius: 8px;
   background: none;
   border: 0;
-  color: #dbe6dd;
+  color: #d8dde9;
   font-size: 12px;
   text-align: left;
 }
 .se-mention button:hover,
 .se-mention button:focus-visible {
-  background: #c4f56214;
+  background: #afb3da14;
 }
 .se-mention button:first-child {
-  background: #c4f5620d;
+  background: #afb3da0d;
 }
 .se-mention img,
 .se-ref img {
@@ -259,7 +259,7 @@
 }
 .se-mention small {
   margin-left: auto;
-  color: #6f8978;
+  color: #687490;
 }
 .se-mention > span {
   padding: 8px;
@@ -269,11 +269,11 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #6f8978;
+  background: #687490;
   flex: none;
 }
 .se-mention-dot.cast {
-  background: #c4f562;
+  background: #afb3da;
 }
 .se-mention-dot.place {
   background: #7fd1ff;
@@ -293,13 +293,13 @@
   gap: 6px;
   padding: 3px 6px 3px 4px;
   border-radius: 999px;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
   background: #ffffff06;
   font-size: 11px;
-  color: #dbe6dd;
+  color: #d8dde9;
 }
 .se-ref.cast {
-  border-color: #c4f56244;
+  border-color: #afb3da44;
 }
 .se-ref.place {
   border-color: #7fd1ff44;
@@ -314,7 +314,7 @@
   height: 18px;
   border-radius: 50%;
   background: #ffffff0f;
-  color: #9fb0a5;
+  color: #9ba2b4;
   padding: 0;
   border: 0;
 }
@@ -337,7 +337,7 @@
 }
 .se-dialogue select:focus,
 .se-dialogue input:focus {
-  border-color: #2c3a33;
+  border-color: #292f3e;
   outline: none;
 }
 .se-speed {
@@ -353,7 +353,7 @@
   padding: 0;
 }
 .se-speed small {
-  color: #8ea592;
+  color: #8893ab;
   min-width: 34px;
   text-align: right;
 }
@@ -367,7 +367,7 @@
   gap: 10px;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #1f2b26;
+  border-top: 1px solid #1c212e;
 }
 .se-bar-left,
 .se-bar-right {
@@ -389,13 +389,13 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
   background: #ffffff06;
-  color: #a9b8ae;
+  color: #a5acbc;
   padding: 0;
 }
 .se-iconbtn:hover {
-  border-color: #c4f56266;
+  border-color: #afb3da66;
   color: var(--lime);
 }
 .se-seconds,
@@ -406,15 +406,15 @@
   height: 38px;
   padding: 0 4px;
   border-radius: 10px;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
   background: #ffffff06;
   font-size: 11px;
-  color: #a9b8ae;
+  color: #a5acbc;
 }
 .se-seconds b {
   min-width: 34px;
   text-align: center;
-  color: #dbe6dd;
+  color: #d8dde9;
   font-weight: 600;
 }
 .se-seconds button,
@@ -427,12 +427,12 @@
   border-radius: 7px;
   border: 0;
   background: transparent;
-  color: #9fb0a5;
+  color: #9ba2b4;
   font-size: 11px;
 }
 .se-seconds button:hover:not(:disabled),
 .se-count button:hover {
-  background: #c4f56214;
+  background: #afb3da14;
   color: var(--lime);
 }
 .se-seconds button:disabled {
@@ -440,10 +440,10 @@
 }
 .se-count > svg {
   margin: 0 4px 0 6px;
-  color: #8ea592;
+  color: #8893ab;
 }
 .se-count button.on {
-  background: #c4f56222;
+  background: #afb3da22;
   color: var(--lime);
   font-weight: 700;
 }
@@ -454,14 +454,14 @@
   height: 38px;
   padding: 0 10px;
   border-radius: 10px;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
   background: #ffffff06;
-  color: #a9b8ae;
+  color: #a5acbc;
   font-size: 11px;
 }
 .se-toggle.on {
-  border-color: #3f5a3c;
-  background: #c4f56213;
+  border-color: #364360;
+  background: #afb3da13;
   color: var(--lime);
 }
 .se-target {
@@ -469,7 +469,7 @@
   padding: 3px;
   border-radius: 11px;
   background: #0b1113;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
 }
 .se-target button {
   display: inline-flex;
@@ -481,12 +481,12 @@
   border-radius: 8px;
   border: 0;
   background: transparent;
-  color: #8ea592;
+  color: #8893ab;
   font-size: 11px;
 }
 .se-target button.on {
-  background: #1e2b26;
-  color: #e1e9df;
+  background: #1b212e;
+  color: #dce1eb;
 }
 .se-target button:disabled {
   opacity: 0.35;
@@ -500,7 +500,7 @@
   border-radius: 12px;
   font-size: 13px;
   white-space: nowrap;
-  box-shadow: 0 6px 20px #c4f56233;
+  box-shadow: 0 6px 20px #afb3da33;
 }
 .se-go span {
   display: flex;
@@ -540,25 +540,25 @@
   gap: 2px;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1px solid #2b3a33;
+  border: 1px solid #272e3e;
   background: #ffffff05;
-  color: #dbe6dd;
+  color: #d8dde9;
   text-align: left;
   font-size: 12px;
 }
 .se-model em {
   font-style: normal;
   font-size: 10px;
-  color: #8ea592;
+  color: #8893ab;
   margin-left: 4px;
 }
 .se-model small {
-  color: #7f9589;
+  color: #7a839b;
   font-size: 10.5px;
 }
 .se-model.on {
   border-color: var(--lime);
-  background: #c4f56213;
+  background: #afb3da13;
 }
 .se-model.cool {
   opacity: 0.6;

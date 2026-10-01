@@ -236,7 +236,7 @@ try {
   }
   // 한 명은 작품으로 내보내 검수 → 승인, 알림 확인
   const m0 = makers[0];
-  const ex = await request(`/studio/ai/projects/${m0.pid}/export`, { method: 'POST', cookie: m0.cookie, body: { tagline: '비 오는 밤의 편지', hashtags: ['로맨스', '비밀'], free_episodes: 1, submit: true } });
+  const ex = await request(`/studio/ai/projects/${m0.pid}/export`, { method: 'POST', cookie: m0.cookie, body: { bl_confirmed: true, rights_confirmed: true, likeness_confirmed: true, tagline: '비 오는 밤의 편지', hashtags: ['로맨스', '비밀'], free_episodes: 1, submit: true } });
   check('작품 내보내기 · 검수 신청', ex.status === 200 && ex.data.submitted, JSON.stringify(ex.data));
   const dramaId = ex.data?.dramaId;
   const approve = await request(`/admin/dramas/${dramaId}/review`, { method: 'POST', cookie: admin, body: { status: 'published', note: '' } });
@@ -252,7 +252,7 @@ try {
   const d3 = await waitAuto(m0);
   check('3화까지 합성 완료', d3.episodes.length === 3 && d3.episodes.every((e) => e.status === 'composed'), d3.autopilot?.message);
   const later = new Date(Date.now() + 3600000).toISOString();
-  const serial = await request(`/studio/ai/projects/${m0.pid}/export`, { method: 'POST', cookie: m0.cookie, body: { tagline: '비 오는 밤의 편지', publish_at: later, submit: true } });
+  const serial = await request(`/studio/ai/projects/${m0.pid}/export`, { method: 'POST', cookie: m0.cookie, body: { bl_confirmed: true, rights_confirmed: true, likeness_confirmed: true, tagline: '비 오는 밤의 편지', publish_at: later, submit: true } });
   check('새 회차만 회차 검수로 신청', serial.status === 200 && serial.data.serial && serial.data.numbers.join() === '3', JSON.stringify(serial.data));
   check('검수 전에는 시청자에게 2화만', Number((await visible())?.episodes?.length ?? 0) === 2);
   const queue = (await request('/admin/episodes/review', { cookie: admin })).data || [];

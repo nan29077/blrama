@@ -1,35 +1,35 @@
 /* B엘라마 공통 브랜드 스킨 */
 :root {
-  --lime: #e6a5c9;
+  --lime: #bfc2e0;
   --bg: #160f1b;
   --panel: #241928;
   --muted: #ae9eae;
-  --border: #49364a;
-  color: #fff5fa;
+  --border: #3b3d46;
+  color: #f7f8fd;
   background: #100b13;
 }
 
 body { background: #100b13; }
-.app-shell { background: #160f1b; border-color: #54394c35; }
+.app-shell { background: #160f1b; border-color: #3f424e35; }
 .app-header, .feed-tabs { background: #1b1120f5; border-color: #ffffff14; }
-.brand b { color: #fff1f8; letter-spacing: -1.9px; }
-.brand b > span { color: #df9fc1; font-size: 9px; letter-spacing: 1.25px; }
-.primary { background: #e6a5c9; color: #30172b; }
-.primary:hover { background: #f4c4db; color: #251020; }
-.secondary { background: #312238; border-color: #523a53; }
-.secondary:hover { background: #3d2b43; }
-.genre-chips button { background: #291d2f; border-color: #47344b; color: #cfbdce; }
-.genre-chips button.active { background: #e6a5c91c; border-color: #e6a5c9; color: #f7cce0; }
-.hero-shade { background: linear-gradient(0deg, #160f1b 0%, #160f1bf0 9%, #160f1b82 37%, #160f1b05 78%), linear-gradient(90deg, #1d0d1d8c, transparent 65%); }
-.hero-content h2 { color: #fff7fb; }
+.brand b { color: #f4f6fc; letter-spacing: -1.9px; }
+.brand b > span { color: #adb4d1; font-size: 9px; letter-spacing: 1.25px; }
+.primary { background: #bfc2e0; color: #1d1f2a; }
+.primary:hover { background: #cfd4e9; color: #151720; }
+.secondary { background: #312238; border-color: #40424d; }
+.secondary:hover { background: #30333e; }
+.genre-chips button { background: #291d2f; border-color: #393c46; color: #c1c3cb; }
+.genre-chips button.active { background: #bfc2e01c; border-color: #bfc2e0; color: #d6daed; }
+.hero-shade { background: linear-gradient(0deg, #160f1b 0%, #160f1bf0 9%, #160f1b82 37%, #160f1b05 78%), linear-gradient(90deg, #1112198c, transparent 65%); }
+.hero-content h2 { color: #f9fafd; }
 .hero-top > span:first-child, .poster-wordmark, .detail-original { letter-spacing: 1.8px; }
-.membership-banner { background: linear-gradient(115deg, #4b2647, #24182e); border-color: #865c7d; }
-.desktop-menu > button.active { color: #f4c2db; background: #e6a5c916; box-shadow: inset 0 0 0 1px #e6a5c933; }
-.desktop-menu > button:hover { background: #e6a5c910; }
-.home-notice.tone-lime { background: #e6a5c91a; border-color: #e6a5c94a; color: #f7d9e9; }
-.ambient-one { background: #66344f; }
-.ambient-two { background: #492448; }
-.rail-account-card, .right-rail .app-intro { background: #26192abf; border-color: #533d52; }
+.membership-banner { background: linear-gradient(115deg, #2e3243, #24182e); border-color: #656a7d; }
+.desktop-menu > button.active { color: #cdd3e9; background: #bfc2e016; box-shadow: inset 0 0 0 1px #bfc2e033; }
+.desktop-menu > button:hover { background: #bfc2e010; }
+.home-notice.tone-lime { background: #bfc2e01a; border-color: #bfc2e04a; color: #e0e3f0; }
+.ambient-one { background: #3f455b; }
+.ambient-two { background: #2c3041; }
+.rail-account-card, .right-rail .app-intro { background: #1d1f26bf; border-color: #42444e; }
 
 @media (min-width: 1000px) {
   .site-layout:not(.management-layout)::before {
@@ -38,21 +38,21 @@ body { background: #100b13; }
       linear-gradient(180deg, #100813d9 0%, #160d1a66 35%, #160d1a33 60%, #100b13ee 100%),
       var(--home-wallpaper, url('/images/bellama-desktop.webp')) var(--home-focus, center) / cover no-repeat;
   }
-  .left-rail .rail-copy.boxed { background: linear-gradient(135deg, #1b0e20dc, #2d192a99); }
+  .left-rail .rail-copy.boxed { background: linear-gradient(135deg, #1b0e20dc, #1e202999); }
   .right-rail .app-intro { background: linear-gradient(140deg, #2b1a31de, #170f1cd9); }
-  .desktop-menu > button { background: #1c10218f; color: #e4cedd; }
+  .desktop-menu > button { background: #1c10218f; color: #d3d5df; }
 }
 
 /* 마이페이지: 작은 영화 서재처럼 부드러운 종이와 잉크 색을 겹칩니다. */
 .bellama-my-page {
-  background: radial-gradient(circle at 94% 1%, #7e425438, transparent 290px);
+  background: radial-gradient(circle at 94% 1%, #50567038, transparent 290px);
 }
 .bellama-my-heading {
   position: relative;
   padding: 24px 26px 27px;
   margin: -6px -26px 18px;
-  border-bottom: 1px solid #b889a044;
-  background: linear-gradient(118deg, #432637 0%, #2a1b2c 64%, #211822 100%);
+  border-bottom: 1px solid #9499ad44;
+  background: linear-gradient(118deg, #2d303c 0%, #1f2128 64%, #1a1b20 100%);
   overflow: hidden;
 }
 .bellama-my-heading::after {
@@ -61,149 +61,149 @@ body { background: #100b13; }
   top: -64px;
   right: 2px;
   font: 190px/1 'Noto Serif KR Variable', serif;
-  color: #efb7ce12;
+  color: #c4cae212;
   pointer-events: none;
 }
-.bellama-my-heading .eyebrow { color: #edbed2; }
+.bellama-my-heading .eyebrow { color: #c9cee2; }
 .bellama-my-heading h1 {
   position: relative;
   font-family: 'Noto Serif KR Variable', serif;
   letter-spacing: -1.5px;
   margin: 12px 0 8px;
 }
-.bellama-my-heading p { position: relative; color: #d2bac7; font-size: 11px; line-height: 1.7; }
+.bellama-my-heading p { position: relative; color: #bfc2cd; font-size: 11px; line-height: 1.7; }
 .bellama-my-page .profile-card {
   padding: 20px;
   margin-bottom: 17px;
-  border: 1px solid #68495a;
+  border: 1px solid #505361;
   border-radius: 18px;
-  background: linear-gradient(120deg, #352436, #271c2b);
-  box-shadow: 0 15px 34px #12091342;
+  background: linear-gradient(120deg, #282a32, #271c2b);
+  box-shadow: 0 15px 34px #0b0c1142;
 }
 .bellama-my-page .large-avatar {
   width: 66px;
   height: 66px;
   border-radius: 18px;
-  background: #f0c9d529;
-  box-shadow: inset 0 0 0 1px #edc4d951;
+  background: #d2d6e729;
+  box-shadow: inset 0 0 0 1px #cdd2e451;
 }
 .bellama-my-page .profile-card h2 { font-family: 'Noto Serif KR Variable', serif; }
 .bellama-my-page .profile-card p,
-.bellama-my-page .my-summary span { color: #c7abbc; }
-.bellama-my-page .role-badge { background: #b9799a33; color: #f8d5e4; }
+.bellama-my-page .my-summary span { color: #b1b4c1; }
+.bellama-my-page .role-badge { background: #878eab33; color: #dde1f0; }
 .bellama-my-page .my-summary { gap: 10px; }
 .bellama-my-page .my-summary > div {
   min-height: 77px;
   background: #261b2a;
-  border-color: #493448;
+  border-color: #393b44;
   border-radius: 5px 14px 14px 5px;
-  border-left: 3px solid #b57998;
+  border-left: 3px solid #868da8;
   padding: 13px;
 }
 .bellama-my-page .my-summary > div:nth-child(even) { border-left-color: #a392b5; }
-.bellama-my-page .my-summary strong { color: #fff3f8; font-size: 17px; }
+.bellama-my-page .my-summary strong { color: #f6f7fc; font-size: 17px; }
 .bellama-my-page .my-wallet,
 .bellama-my-page .my-pass {
   border-radius: 15px;
-  border-color: #684358;
-  background: linear-gradient(115deg, #472538, #2a1a2b 80%);
+  border-color: #4b4f60;
+  background: linear-gradient(115deg, #2d303f, #1e2027 80%);
 }
-.bellama-my-page .my-pass { background: linear-gradient(115deg, #4a354a, #292032 80%); }
+.bellama-my-page .my-pass { background: linear-gradient(115deg, #3a3c45, #292032 80%); }
 .bellama-my-page .my-wallet span,
-.bellama-my-page .my-pass span { color: #d1aebe; }
+.bellama-my-page .my-pass span { color: #b6bac9; }
 .bellama-my-page .my-shortcuts button {
   background: #241b29;
-  border-color: #493749;
-  color: #ead8e3;
+  border-color: #3b3d45;
+  color: #dcdee6;
   border-radius: 14px;
 }
 .bellama-my-page .my-shortcuts button:hover,
-.bellama-my-page .studio-entry:hover { border-color: #d298b5; background: #38263a; }
-.bellama-my-page .studio-entry { background: #2a1e30; border-color: #523b53; }
-.bellama-my-page .library-tabs { border-color: #6c4c60; }
-.bellama-my-page .library-tabs button { color: #c3aabb; }
-.bellama-my-page .order-kind.episode { color: #f2bfda; }
+.bellama-my-page .studio-entry:hover { border-color: #a5abc5; background: #2b2d35; }
+.bellama-my-page .studio-entry { background: #2a1e30; border-color: #40434e; }
+.bellama-my-page .library-tabs { border-color: #535765; }
+.bellama-my-page .library-tabs button { color: #b0b2bd; }
+.bellama-my-page .order-kind.episode { color: #cad0e7; }
 .bellama-settings-page .account-settings,
-.bellama-settings-page .settings-card { border-color: #61455a; }
-.bellama-settings-page > .back-link { color: #d7a8c1; }
+.bellama-settings-page .settings-card { border-color: #4b4e5b; }
+.bellama-settings-page > .back-link { color: #b3b8cc; }
 .bellama-settings-page .settings-card {
-  background: linear-gradient(145deg, #2b1e30, #211923);
-  box-shadow: inset 3px 0 #9f6385;
+  background: linear-gradient(145deg, #2b1e30, #1b1c21);
+  box-shadow: inset 3px 0 #707792;
 }
 .bellama-settings-page .settings-card:nth-child(even) { box-shadow: inset 3px 0 #8977a2; }
 .bellama-settings-page .settings-card h2 { font-family: 'Noto Serif KR Variable', serif; }
-.bellama-settings-page .assigned-avatar { background: #38273b; border-color: #61465c; }
+.bellama-settings-page .assigned-avatar { background: #2c2e37; border-color: #4c4f5b; }
 .membership-page {
-  background: radial-gradient(circle at 50% 8%, #96516b36, transparent 360px);
+  background: radial-gradient(circle at 50% 8%, #61688636, transparent 360px);
 }
 .membership-page > h1 { font-family: 'Noto Serif KR Variable', serif; }
 .membership-page > p,
 .membership-page .price span,
 .membership-page .plan-card ul,
 .membership-page .plan-card > small,
-.membership-page .faq details > p { color: #d2b7c5; }
+.membership-page .faq details > p { color: #bdc0cc; }
 .membership-page .plan-card {
-  background: linear-gradient(145deg, #483047, #281f31);
-  border-color: #aa7397;
-  box-shadow: 0 22px 42px #0c061038, inset 0 0 0 1px #f1bbd20d;
+  background: linear-gradient(145deg, #353843, #281f31);
+  border-color: #7f859e;
+  box-shadow: 0 22px 42px #0c061038, inset 0 0 0 1px #c7cde50d;
 }
-.membership-page .plan-ribbon { color: #31182a; border-radius: 3px 9px 9px 3px; }
-.membership-page .faq details { border-color: #674b5e; }
-.login-page { background: radial-gradient(circle at 50% 0%, #834b6840, transparent 270px); }
+.membership-page .plan-ribbon { color: #1e202b; border-radius: 3px 9px 9px 3px; }
+.membership-page .faq details { border-color: #515461; }
+.login-page { background: radial-gradient(circle at 50% 0%, #585e7640, transparent 270px); }
 .login-page > h1 { font-family: 'Noto Serif KR Variable', serif; }
 .login-page > p,
 .login-page .or-divider,
-.login-page .switch-auth { color: #c8aebe; }
+.login-page .switch-auth { color: #b4b7c2; }
 .login-page .or-divider::before,
-.login-page .or-divider::after { background: #62465a; }
-.login-page .test-login { border-color: #a36b8e; background: #3b263c55; }
+.login-page .or-divider::after { background: #4c4f5c; }
+.login-page .test-login { border-color: #787e96; background: #2b2d3755; }
 .pings-page .wallet-card {
-  background: radial-gradient(circle at 92% 0%, #e6a5c931, transparent 55%), #332238;
-  border-color: #a87495;
+  background: radial-gradient(circle at 92% 0%, #bfc2e031, transparent 55%), #272933;
+  border-color: #80859c;
   box-shadow: 0 15px 35px #0c061037;
 }
 .pings-page .wallet-card > div span,
-.pings-page .wallet-card p { color: #d7b9cb; }
-.channel-card { border-color: #604358; background: #281d2d; }
-.channel-card:hover { border-color: #c28aa9; }
+.pings-page .wallet-card p { color: #c0c3d0; }
+.channel-card { border-color: #4a4d59; background: #281d2d; }
+.channel-card:hover { border-color: #979db5; }
 
 /* 운영 화면: 시청 화면보다 더 정돈된 와인빛 콘솔. */
 .management-layout > .app-shell {
-  background: radial-gradient(circle at 85% 5%, #50304745, transparent 420px), #17111c;
+  background: radial-gradient(circle at 85% 5%, #373b4945, transparent 420px), #17111c;
 }
 .management-topbar {
   background: #1c1421f2;
-  border-bottom-color: #56394c;
+  border-bottom-color: #40434f;
   box-shadow: 0 5px 28px #08040a38;
 }
-.management-topbar > a > span:last-child { color: #bb93aa; border-left-color: #67465e; }
-.management-topbar button { color: #d9c2d0; }
-.environment-pill { background: #71436038; border-color: #a9759477; color: #efbfd8; }
+.management-topbar > a > span:last-child { color: #9ca0b2; border-left-color: #4d5160; }
+.management-topbar button { color: #c7cad4; }
+.environment-pill { background: #4d526738; border-color: #81869d77; color: #cacfe4; }
 .management-sidebar {
   background: linear-gradient(180deg, #26192c, #1c1422 70%);
-  border-right-color: #573b51;
+  border-right-color: #414451;
 }
 .sidebar-caption,
-.sidebar-group-label { color: #b98fa9; }
-.management-sidebar nav button { color: #cab4c4; border-radius: 11px; }
-.management-sidebar nav button:hover { background: #a45b8324; color: #fff0f8; }
+.sidebar-group-label { color: #989db0; }
+.management-sidebar nav button { color: #b9bbc5; border-radius: 11px; }
+.management-sidebar nav button:hover { background: #6b739424; color: #f3f5fc; }
 .management-sidebar nav button.active {
-  background: linear-gradient(100deg, #9e5a8138, #854a7130);
-  color: #ffe4f2;
-  box-shadow: inset 3px 0 #e6a5c9, inset 0 0 0 1px #c078a442;
+  background: linear-gradient(100deg, #69718f38, #575e7830);
+  color: #eaedf9;
+  box-shadow: inset 3px 0 #bfc2e0, inset 0 0 0 1px #8890b042;
 }
-.management-sidebar nav i { color: #30172b; }
-.sidebar-footer { border-top: 1px solid #66455e; }
+.management-sidebar nav i { color: #1d1f2a; }
+.sidebar-footer { border-top: 1px solid #4c505f; }
 .sidebar-footer p,
-.sidebar-profile-details small { color: #b99aac; }
-.management-breadcrumb { color: #bda6b5; }
+.sidebar-profile-details small { color: #a1a4b2; }
+.management-breadcrumb { color: #abaeb8; }
 .management-layout .studio-header {
   position: relative;
   padding: 29px 32px;
-  border: 1px solid #71485f;
+  border: 1px solid #515668;
   border-radius: 20px;
-  background: linear-gradient(110deg, #503047, #2e2033 70%, #271c2b);
-  box-shadow: 0 18px 40px #0e071037;
+  background: linear-gradient(110deg, #373b49, #2e2033 70%, #271c2b);
+  box-shadow: 0 18px 40px #090a0e37;
   overflow: hidden;
 }
 .management-layout .studio-header::after {
@@ -211,55 +211,55 @@ body { background: #100b13; }
   position: absolute;
   right: 25px;
   bottom: -11px;
-  color: #f1bad315;
+  color: #c6cce515;
   font: 700 52px/1 'Noto Serif KR Variable', serif;
   letter-spacing: 4px;
   pointer-events: none;
 }
 .management-layout .studio-header > * { position: relative; z-index: 1; }
-.management-layout .studio-header h1 { font-family: 'Noto Serif KR Variable', serif; color: #fff3f9; }
-.management-layout .studio-header p { color: #d9bfcd; }
-.management-layout .studio-header .eyebrow { color: #e9abc9; }
+.management-layout .studio-header h1 { font-family: 'Noto Serif KR Variable', serif; color: #f6f7fc; }
+.management-layout .studio-header p { color: #c5c8d3; }
+.management-layout .studio-header .eyebrow { color: #b9c0db; }
 .management-layout .stat-card {
   background: linear-gradient(145deg, #322338, #241b2b);
-  border: 1px solid #62475f;
+  border: 1px solid #4d505c;
   border-radius: 16px;
   box-shadow: 0 12px 26px #0c06102b;
 }
 .management-layout .stat-card:nth-child(2) { background: linear-gradient(145deg, #342a40, #251e30); }
-.management-layout .stat-card:nth-child(3) { background: linear-gradient(145deg, #432d3e, #291e2d); }
-.management-layout .stat-card:nth-child(4) { background: linear-gradient(145deg, #38263a, #241b2c); }
-.management-layout .stat-card > strong { color: #fff0f7; }
+.management-layout .stat-card:nth-child(3) { background: linear-gradient(145deg, #32343e, #291e2d); }
+.management-layout .stat-card:nth-child(4) { background: linear-gradient(145deg, #2b2d35, #241b2c); }
+.management-layout .stat-card > strong { color: #f3f5fc; }
 .management-layout .stat-card > div,
 .management-layout .stat-card > small,
 .management-layout .chart-column small,
-.management-layout .chart-column > span { color: #d5b9ca; }
+.management-layout .chart-column > span { color: #bfc2cf; }
 .management-layout .content-row,
 .management-layout .user-row,
-.management-panel { background: #271d2c; border-color: #544053; }
+.management-panel { background: #271d2c; border-color: #44474f; }
 .management-panel { border-radius: 17px; }
 .management-layout .studio-callout {
-  background: linear-gradient(105deg, #573148, #302138);
-  border-color: #82536e;
+  background: linear-gradient(105deg, #3a3e4e, #302138);
+  border-color: #5e6377;
 }
 .management-layout .panel-heading p,
 .management-layout .panel-footnote,
-.management-layout .panel-heading .eyebrow { color: #bca5b5; }
+.management-layout .panel-heading .eyebrow { color: #aaadb7; }
 .management-layout .chart-track,
-.management-layout .pipeline-list > div > div { background: #463146; }
+.management-layout .pipeline-list > div > div { background: #363841; }
 .management-layout .chart-track > span,
-.management-layout .pipeline-list > div > div i { background: linear-gradient(#f2c6dd, #ae638f); }
+.management-layout .pipeline-list > div > div i { background: linear-gradient(#d0d5e8, #747c9d); }
 .management-layout .pipeline-list > div > span,
 .management-layout .audit-row,
-.management-layout .content-row small { color: #c5abbb; }
-.management-layout .sidebar-profile { background: #352438; border-color: #694b64; }
-.management-layout .sidebar-profile-details strong { color: #f9e5f0; }
-.management-layout .sidebar-profile-details > span { color: #bd9eaf; }
-.management-layout .sidebar-home { background: #af6b91; color: #291827; }
-.management-layout .sidebar-logout { color: #c6a5b8; }
+.management-layout .content-row small { color: #b1b4bf; }
+.management-layout .sidebar-profile { background: #282b34; border-color: #525562; }
+.management-layout .sidebar-profile-details strong { color: #e9ecf5; }
+.management-layout .sidebar-profile-details > span { color: #a5a8b6; }
+.management-layout .sidebar-home { background: #7a82a0; color: #1c1e25; }
+.management-layout .sidebar-logout { color: #acb0bf; }
 .management-layout input,
 .management-layout select,
-.management-layout textarea { accent-color: #e6a5c9; }
+.management-layout textarea { accent-color: #bfc2e0; }
 @media (max-width: 620px) {
   .bellama-my-heading { margin-left: -18px; margin-right: -18px; padding-left: 18px; padding-right: 18px; }
   .bellama-my-page .profile-card { padding: 16px; gap: 12px; }
@@ -445,3 +445,12 @@ footer .brand.small > img.brand-wordmark {
   .app-header { padding-left: 18px; padding-right: 18px; }
   .brand.small > img.brand-wordmark { width: 112px; }
 }
+
+/* 아이폰 홈 막대(안전 영역): 하단 메뉴 높이를 안전 영역만큼 늘려 아이콘·글자가 넘치지 않게 하고,
+   본문 끝 여백과 알림(토스트)도 같은 만큼 올립니다. 안전 영역이 없는 기기에서는 이전과 같은 크기예요. */
+.bottom-nav { height: calc(62px + max(11px, env(safe-area-inset-bottom))); }
+@media (max-width: 620px) {
+  .bottom-nav { height: calc(61px + max(11px, env(safe-area-inset-bottom))); }
+}
+.app-shell { padding-bottom: calc(78px + max(0px, env(safe-area-inset-bottom) - 11px)); }
+.toast { bottom: calc(92px + max(0px, env(safe-area-inset-bottom) - 11px)); }

@@ -27,14 +27,14 @@
 }
 .style-pick small {
   font-size: 10px;
-  color: #8a9a90;
+  color: #868d9e;
   padding: 0 4px 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .style-pick.on {
-  border-color: #e6a5c9;
+  border-color: #bfc2e0;
 }
 .style-pick.on img {
   opacity: 1;
@@ -48,7 +48,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #e6a5c9;
+  background: #bfc2e0;
   color: #111;
 }
 
@@ -78,7 +78,7 @@
 
 /* 컷 리듬 진단 */
 .rhythm {
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 10px;
   margin: 8px 0;
   font-size: 12px;
@@ -94,10 +94,10 @@
   text-align: left;
 }
 .rhythm-head small {
-  color: #8a9a90;
+  color: #868d9e;
 }
 .rhythm.good .rhythm-head b {
-  color: #e6a5c9;
+  color: #bfc2e0;
 }
 .rhythm.mid .rhythm-head b {
   color: #ffcf8a;
@@ -112,13 +112,13 @@
   flex-direction: column;
   gap: 4px;
   line-height: 1.5;
-  color: #cfd6d1;
+  color: #cdd0d8;
 }
 .rhythm li.warn {
   color: #ffcf8a;
 }
 .rhythm li b {
-  color: #8a9a90;
+  color: #868d9e;
   font-weight: 600;
   margin-right: 4px;
 }
@@ -135,8 +135,8 @@
   background: #ffffff0d;
 }
 .verify-badge.ok {
-  color: #e6a5c9;
-  background: #e6a5c91a;
+  color: #bfc2e0;
+  background: #bfc2e01a;
 }
 .verify-badge.bad {
   color: #ffcf8a;
@@ -197,7 +197,7 @@
   gap: 10px;
   padding: 8px;
   border-radius: 10px;
-  border: 1px solid #262f2a;
+  border: 1px solid #242831;
 }
 .lib-thumb {
   width: 44px;
@@ -207,7 +207,7 @@
   display: grid;
   place-items: center;
   background: #0d1214;
-  color: #8a9a90;
+  color: #868d9e;
 }
 .lib-thumb img {
   width: 100%;
@@ -225,7 +225,7 @@
 }
 .lib-info small {
   font-size: 11px;
-  color: #8a9a90;
+  color: #868d9e;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -260,7 +260,7 @@
   .rel-row {
     grid-template-columns: 1fr auto 1fr;
     padding: 8px;
-    border: 1px solid #262f2a;
+    border: 1px solid #242831;
     border-radius: 10px;
   }
   .rel-row > input,

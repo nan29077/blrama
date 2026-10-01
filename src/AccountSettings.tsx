@@ -72,7 +72,7 @@ function AccountOverview({ user }: { user: User }) {
           if (active)
             setTiles([
               { label: '소장 작품', value: lib.purchases.length + '편' },
-              { label: '구매 회차', value: lib.episodes.length + '화' },
+              { label: '연 회차', value: lib.episodes.length + '화' },
               { label: '찜한 작품', value: lib.favorites.length + '편' },
               {
                 label: 'B엘라마 패스',
@@ -384,7 +384,7 @@ function WithdrawDialog({
               </label>
               <label>
                 떠나시는 이유 (선택)
-                <textarea maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="더 나은 B엘라마을 만드는 데 참고할게요." />
+                <textarea maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="더 나은 B엘라마를 만드는 데 참고할게요." />
               </label>
             </>
           )}

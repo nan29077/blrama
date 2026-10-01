@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { prepareTestDb } from './_db.mjs';
+const EXPORT_CONFIRMS = { bl_confirmed: true, rights_confirmed: true, likeness_confirmed: true };
 
 const port = 5233,
   base = `http://127.0.0.1:${port}`,
@@ -293,7 +294,7 @@ test('compose v2 through the render queue with cards and music, trailer, metadat
   const exp = await request(`/studio/ai/projects/${pid}/export`, {
     method: 'POST',
     cookie: seller.cookie,
-    body: { title: meta.titles[0], tagline: meta.tagline, synopsis: meta.synopsis, hashtags: meta.hashtags, episode_pings: 5, free_episodes: 1, image: thumbs[0], variants: [thumbs[1]], submit: true },
+    body: { ...EXPORT_CONFIRMS, title: meta.titles[0], tagline: meta.tagline, synopsis: meta.synopsis, hashtags: meta.hashtags, episode_pings: 5, free_episodes: 1, image: thumbs[0], variants: [thumbs[1]], submit: true },
   });
   assert.equal(exp.status, 200, JSON.stringify(exp.data));
   const dramaId = exp.data.dramaId;
@@ -324,7 +325,7 @@ test('compose v2 through the render queue with cards and music, trailer, metadat
   p = await waitJobs(pid);
   ok(await request(`/studio/ai/projects/${pid}/episodes/${ep3.id}/compose`, { method: 'POST', cookie: seller.cookie }));
   p = await waitJobs(pid, 120000);
-  const serial = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { tagline: '연재', submit: true } });
+  const serial = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { ...EXPORT_CONFIRMS, tagline: '연재', submit: true } });
   assert.equal(serial.status, 200, JSON.stringify(serial.data));
   assert.equal(serial.data.serial, true);
   assert.deepEqual(serial.data.numbers, [3]);

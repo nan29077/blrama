@@ -6,15 +6,15 @@
   gap: 32px;
   padding: 36px;
   margin-bottom: 24px;
-  border: 1px solid #3a4941;
+  border: 1px solid #363d4d;
   border-radius: 22px;
   background:
-    radial-gradient(ellipse at 94% 2%, #546a303f, transparent 60%),
+    radial-gradient(ellipse at 94% 2%, #4143593f, transparent 60%),
     linear-gradient(125deg, #1b2a28, #151d23);
   overflow: hidden;
 }
 .creator-welcome .eyebrow {
-  color: #c7ed96;
+  color: #c7cae1;
   letter-spacing: 2px;
 }
 .creator-welcome h2 {
@@ -24,7 +24,7 @@
   margin: 14px 0;
 }
 .creator-welcome p {
-  color: #bec9c6;
+  color: #bbc0cc;
   line-height: 1.85;
   font-size: 14px;
   margin-bottom: 23px;
@@ -96,10 +96,10 @@
   justify-content: flex-start;
   text-align: left;
   padding: 23px;
-  border: 1px solid #344039;
+  border: 1px solid #313643;
   border-radius: 16px;
   background: linear-gradient(145deg, #1c2826, #172022);
-  color: #f2f5f2;
+  color: #f1f3f6;
   transition:
     border-color 0.2s,
     transform 0.2s;
@@ -111,7 +111,7 @@
   background: linear-gradient(145deg, #292438, #172022);
 }
 .creator-start-grid > button:hover {
-  border-color: #aacb77;
+  border-color: #b1b3ca;
   transform: translateY(-2px);
 }
 .creator-card-icon {
@@ -122,14 +122,14 @@
   border-radius: 12px;
   background: #ffffff0a;
   margin-bottom: 16px;
-  color: #c6e39d;
+  color: #c9cbdd;
 }
 .creator-start-grid strong {
   font-size: 16px;
   display: block;
 }
 .creator-start-grid p {
-  color: #b2c0bc;
+  color: #aeb5c3;
   line-height: 1.8;
   font-size: 13px;
   margin: 9px 0 20px;
@@ -139,7 +139,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #d4efb7;
+  color: #d8dae8;
 }
 .creator-project-toolbar {
   display: flex;
@@ -153,7 +153,7 @@
   font-size: 19px;
 }
 .creator-project-toolbar h3 small {
-  color: #acc282;
+  color: #b4b6c7;
   margin-left: 8px;
 }
 .creator-project-toolbar > select {
@@ -165,11 +165,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #3c4843;
+  border: 1px solid #393e4b;
   border-radius: 12px;
   padding: 0 14px;
   background: #121c1d;
-  color: #a9b6ae;
+  color: #a6acb9;
   min-width: 0;
   margin: 0;
 }
@@ -185,7 +185,7 @@
 .creator-search button {
   background: none;
   border: 0;
-  color: #d4ecb9;
+  color: #d8dae7;
   white-space: nowrap;
 }
 .creator-project-toolbar .creator-search {
@@ -198,13 +198,13 @@
   gap: 14px;
   align-items: center;
   padding: 20px;
-  border: 1px solid #344039;
+  border: 1px solid #313643;
   background: #182221;
   border-radius: 13px;
   text-align: left;
 }
 .guide-routes > button > svg:first-child {
-  color: #c5e992;
+  color: #c4c7de;
   flex-shrink: 0;
 }
 .guide-routes > button > svg:last-child {
@@ -216,7 +216,7 @@
   display: block;
 }
 .guide-routes small {
-  color: #adb8b2;
+  color: #aaafbb;
   margin-top: 6px;
   font-size: 12px;
 }
@@ -245,7 +245,7 @@
 .guide-layout nav button > span {
   font-size: 12px;
   font-weight: 700;
-  color: #899b8d;
+  color: #848d9f;
 }
 .guide-layout nav button strong {
   display: block;
@@ -254,7 +254,7 @@
 }
 .guide-layout nav button small {
   display: block;
-  color: #9eafa7;
+  color: #9aa1b3;
   font-size: 11px;
   margin-bottom: 3px;
 }
@@ -263,11 +263,11 @@
   flex-shrink: 0;
 }
 .guide-layout nav button[aria-current='page'] {
-  border-color: #96b66f;
-  background: #29392a;
+  border-color: #a9abbd;
+  background: #252c3d;
 }
 .guide-lesson {
-  border: 1px solid #37423e;
+  border: 1px solid #343945;
   background: #1a2425;
   border-radius: 18px;
   padding: 30px;
@@ -278,7 +278,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #bfdb99;
+  color: #c5c7d8;
 }
 .guide-lesson h3 {
   font-size: 24px;
@@ -288,7 +288,7 @@
 }
 .guide-intro {
   line-height: 1.9;
-  color: #bdc9c4;
+  color: #babfcc;
   font-size: 14px;
 }
 .guide-lesson ol {
@@ -304,8 +304,8 @@
 }
 .guide-lesson li b {
   border-radius: 50%;
-  background: #303f32;
-  color: #ceeaaa;
+  background: #2c3343;
+  color: #d0d2e3;
   width: 28px;
   height: 28px;
   flex-shrink: 0;
@@ -321,29 +321,29 @@
 .guide-lesson aside {
   display: flex;
   gap: 12px;
-  background: #cfebac09;
-  border: 1px solid #b3d18433;
+  background: #d2d4e409;
+  border: 1px solid #b9bbcf33;
   border-radius: 12px;
   padding: 18px;
   margin: 24px 0;
 }
 .guide-lesson aside > svg {
-  color: #c5e992;
+  color: #c4c7de;
   flex-shrink: 0;
 }
 .guide-lesson aside p {
   margin: 0;
   line-height: 1.8;
-  color: #bdcbb5;
+  color: #b0b9d0;
   font-size: 13px;
 }
 .guide-lesson aside strong {
   display: block;
-  color: #e0ebd7;
+  color: #e7e8ed;
   margin-bottom: 6px;
 }
 .guide-sample {
-  border: 1px dashed #718167;
+  border: 1px dashed #606c88;
   border-radius: 12px;
   padding: 18px;
   margin: 22px 0;
@@ -358,7 +358,7 @@
 .guide-sample p {
   font-size: 13px;
   line-height: 1.9;
-  color: #c3ccc8;
+  color: #c1c5ce;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;
@@ -388,18 +388,18 @@
 .ai-quick-policies input {
   width: 18px;
   height: 18px;
-  accent-color: #e6a5c9;
+  accent-color: #bfc2e0;
   flex-shrink: 0;
 }
 .guide-bottom small {
   display: flex;
   gap: 7px;
   align-items: center;
-  color: #b3c995;
+  color: #bfc1cf;
   line-height: 1.8;
 }
 .guide-bottom details {
-  border-bottom: 1px solid #34403b;
+  border-bottom: 1px solid #313643;
   padding: 16px 0;
 }
 .guide-bottom summary {
@@ -411,7 +411,7 @@
 .guide-help {
   font-size: 13px;
   line-height: 1.9;
-  color: #b9c7c0;
+  color: #b5bccb;
 }
 .guide-help li {
   margin-bottom: 14px;
@@ -426,7 +426,7 @@
 }
 .workspace-mode > span {
   font-size: 11px;
-  color: #9aada3;
+  color: #959eb2;
 }
 .workspace-mode label {
   margin: 0;
@@ -436,20 +436,20 @@
   display: flex;
   gap: 18px;
   align-items: flex-start;
-  border: 1px solid #4c624544;
+  border: 1px solid #3e4b6944;
   border-radius: 16px;
   padding: 22px;
   margin: 18px 0;
-  background: linear-gradient(115deg, #243a2d, #182426);
+  background: linear-gradient(115deg, #222a3c, #182426);
 }
 .coach-badge {
-  background: #c5e99214;
+  background: #c4c7de14;
   padding: 12px;
   border-radius: 14px;
-  color: #c5e992;
+  color: #c4c7de;
 }
 .step-coach .eyebrow {
-  color: #b8d593;
+  color: #c1c3d4;
   font-size: 10px;
 }
 .step-coach h3 {
@@ -459,7 +459,7 @@
 .step-coach p {
   font-size: 13px;
   line-height: 1.8;
-  color: #b6c8bd;
+  color: #b2bacc;
   margin: 0;
 }
 .step-coach > .text-link {
@@ -477,18 +477,18 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #d4dfd6;
+  color: #d1d6e2;
 }
 .coach-checks b {
-  border: 1px solid #879d6155;
+  border: 1px solid #5b71a355;
   padding: 2px 6px;
   border-radius: 5px;
-  color: #c5e992;
+  color: #c4c7de;
 }
 .creator-model-settings {
   margin: 16px 0;
   background: #111a1c;
-  border: 1px solid #34413c;
+  border: 1px solid #313744;
   padding: 14px 16px;
   border-radius: 10px;
 }
@@ -499,7 +499,7 @@
 }
 .creator-model-settings summary small {
   font-weight: 400;
-  color: #a1b3a8;
+  color: #9ca5b7;
   margin-left: 12px;
 }
 .creator-model-settings .picker-bar {
@@ -512,15 +512,15 @@
   flex-wrap: wrap;
   gap: 12px;
   padding: 18px 0 30px;
-  border-top: 1px solid #34443a;
+  border-top: 1px solid #303748;
   margin-top: 24px;
 }
 .workflow-footer small {
-  color: #9dac9f;
+  color: #99a0b0;
   font-size: 11px;
 }
 .episode-navigator {
-  border: 1px solid #344039;
+  border: 1px solid #313643;
   border-radius: 12px;
   margin: 16px 0;
   background: #172121;
@@ -543,7 +543,7 @@
   font-size: 12px;
 }
 .episode-navigator-heading small {
-  color: #a0b1a5;
+  color: #9ca3b5;
 }
 .episode-navigator-grid {
   display: grid;
@@ -556,14 +556,14 @@
   align-items: center;
   text-align: left;
   gap: 12px;
-  border: 1px solid #35443a;
+  border: 1px solid #313848;
   background: #131c1c;
   border-radius: 9px;
   padding: 12px;
   min-width: 0;
 }
 .episode-navigator-grid button.selected {
-  border-color: #b4d486;
+  border-color: #babcd1;
 }
 .episode-navigator-grid button > span:nth-child(2) {
   min-width: 0;
@@ -578,7 +578,7 @@
 }
 .episode-navigator-grid small {
   font-size: 10px;
-  color: #aabdac;
+  color: #a5aec2;
   display: block;
   margin-top: 5px;
 }
@@ -597,7 +597,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-left: 1px solid #9eae713d;
+  border-left: 1px solid #7083af3d;
 }
 .modal.template-picker-modal { width:min(780px,100%); }
 .template-picker-modal .studio-template-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
@@ -606,7 +606,7 @@
   .template-picker-modal .studio-template-grid .template-card { padding:14px; }
 }
 .template-intro .eyebrow {
-  color: #bbdc97;
+  color: #c4c6d8;
   font-size: 10px;
   letter-spacing: 1.8px;
 }
@@ -641,11 +641,11 @@
 }
 .studio-template-grid .template-card:hover,
 .studio-template-grid .template-card:focus-visible {
-  border-color: #bedf8f;
-  background: linear-gradient(140deg, #2a3830, #1a2522);
+  border-color: #c1c3d8;
+  background: linear-gradient(140deg, #262d3c, #171c28);
 }
 .studio-template-grid .template-card:focus-visible {
-  outline: 2px solid #c6ed95;
+  outline: 2px solid #c7c9e1;
   outline-offset: 3px;
 }
 .studio-template-grid .template-card strong {
@@ -657,11 +657,11 @@
 }
 .studio-template-grid .template-length {
   font-size: 10px;
-  color: #9bae9f;
+  color: #969fb3;
   padding-top: 5px;
 }
 .studio-template-icon {
-  --icon-tint: #cef78d;
+  --icon-tint: #c5c8e4;
   width: 47px;
   height: 47px;
   display: grid;
@@ -674,7 +674,7 @@
   flex-shrink: 0;
 }
 .studio-template-icon.rose {
-  --icon-tint: #efb5c5;
+  --icon-tint: #c2c8e2;
 }
 .studio-template-icon.amber {
   --icon-tint: #ebc38f;
@@ -690,17 +690,17 @@
 }
 .connection-score > strong {
   font-size: 60px;
-  color: #d1f1a7;
+  color: #d0d3e6;
   font-weight: 500;
   line-height: 1;
 }
 .connection-score strong small {
   font-size: 24px;
-  color: #90a58b;
+  color: #8490ac;
 }
 .connection-score > small {
   font-size: 11px;
-  color: #a8b7ac;
+  color: #a4abbb;
 }
 .ai-quick-policies {
   display: grid;
@@ -712,14 +712,14 @@
   display: flex;
   align-items: center;
   gap: 13px;
-  border: 1px solid #34443a;
+  border: 1px solid #303748;
   border-radius: 13px;
   padding: 22px;
   background: #192725;
   margin: 0;
 }
 .ai-quick-policies label > svg {
-  color: #bbd59b;
+  color: #c5c6d6;
   flex-shrink: 0;
 }
 .ai-quick-policies strong {
@@ -728,7 +728,7 @@
 }
 .ai-quick-policies small {
   font-size: 11px;
-  color: #a8b9af;
+  color: #a4abbd;
   display: block;
   margin-top: 7px;
   line-height: 1.6;
@@ -747,16 +747,16 @@
   text-align: left;
   gap: 14px;
   padding: 19px;
-  border: 1px solid #39483d;
+  border: 1px solid #353c4c;
   border-radius: 12px;
   background: #152120;
 }
 .ai-setup-grid svg {
   flex-shrink: 0;
-  color: #8d9f8f;
+  color: #8891a4;
 }
 .ai-setup-grid small {
-  color: #a4b496;
+  color: #8e9cbc;
   font-size: 11px;
 }
 .ai-setup-grid strong {
@@ -766,7 +766,7 @@
 }
 .ai-setup-grid p {
   font-size: 12px;
-  color: #a3b5aa;
+  color: #9ea7ba;
   line-height: 1.8;
   margin: 6px 0 0;
 }
@@ -785,15 +785,15 @@
   gap: 12px;
   padding: 18px 12px;
   background: #152020;
-  border: 1px solid #36423b;
+  border: 1px solid #333845;
   border-radius: 11px;
   text-align: left;
 }
 .ai-capability-grid svg {
-  color: #c0df98;
+  color: #c5c7da;
 }
 .ai-capability-grid small {
-  color: #a6b7a9;
+  color: #a2a9bb;
   font-size: 11px;
   line-height: 1.7;
   overflow-wrap: anywhere;
@@ -803,7 +803,7 @@
   align-items: center;
   gap: 14px;
   padding: 16px 0;
-  border-bottom: 1px solid #344039;
+  border-bottom: 1px solid #313643;
 }
 .ai-provider-readiness article > div {
   flex: 1;
@@ -814,14 +814,14 @@
 .ai-provider-readiness small {
   display: block;
   font-size: 11px;
-  color: #a4b5ab;
+  color: #a0a7b9;
   margin-top: 6px;
 }
 .creator-start-grid button:focus-visible,
 .guide-routes button:focus-visible,
 .guide-layout button:focus-visible,
 .ai-readiness button:focus-visible {
-  outline: 2px solid #c6ed95;
+  outline: 2px solid #c7c9e1;
   outline-offset: 3px;
 }
 @media (max-width: 1100px) {
@@ -921,7 +921,7 @@
   }
   .connection-score {
     border-left: 0;
-    border-top: 1px solid #9eae713d;
+    border-top: 1px solid #7083af3d;
     padding: 20px 0 0;
     min-width: 0;
   }

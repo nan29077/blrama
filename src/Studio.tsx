@@ -43,9 +43,11 @@ import {
   Mail,
 } from 'lucide-react';
 import {
+  AGE_RATINGS,
   api,
   count,
   orderRevenue,
+  type AgeRating,
   won,
   type Drama,
   type HomeAppearance as Appearance,
@@ -132,6 +134,7 @@ const initialForm = {
   bl_confirmed: false,
   likeness_confirmed: false,
   ai_usage: 'none' as 'none' | 'partial' | 'full',
+  age_rating: '15' as AgeRating,
 };
 export default function Studio({
   user,
@@ -927,6 +930,7 @@ function DramaEditor({
             bl_confirmed: Number(drama.bl_confirmed) === 1,
             likeness_confirmed: Number(drama.likeness_confirmed) === 1,
             ai_usage: drama.ai_usage || 'none',
+            age_rating: drama.age_rating || '15',
           },
     ),
     [busy, setBusy] = useState(false),
@@ -1054,14 +1058,20 @@ function DramaEditor({
         <label>작품 포스터</label>
         <img className="editor-poster-preview" src={asset(f.image)} alt="선택한 작품 포스터 미리보기" />
         <div className="poster-picker">
-          {['hero', 'spring', 'shadow', 'moon'].map((i) => (
+          {/* 숏핑 시절 기본 포스터(hero·moon 등)는 지웠으므로 B엘라마 기본 포스터만 고를 수 있어요. */}
+          {[
+            ['bellama-midnight', '자정'],
+            ['bellama-spring', '봄 바다'],
+            ['bellama-shadow', '골목 우산'],
+            ['bellama-moon', '달빛 궁궐'],
+          ].map(([i, label]) => (
             <button
               type="button"
               key={i}
               className={f.image === `/images/${i}.webp` ? 'selected' : ''}
               onClick={() => setF({ ...f, image: `/images/${i}.webp` })}
             >
-              <img src={asset('/images/' + i + '.webp')} alt={i + ' 포스터 선택'} />
+              <img src={asset('/images/' + i + '.webp')} alt={label + ' 기본 포스터 선택'} />
               {f.image === `/images/${i}.webp` && <Check size={20} />}
             </button>
           ))}
@@ -1079,6 +1089,19 @@ function DramaEditor({
             disabled={uploading}
             onChange={(e) => void upload(e.target.files?.[0])}
           />
+        </label>
+        <label>
+          관람 등급
+          <select
+            value={f.age_rating}
+            onChange={(e) => setF({ ...f, age_rating: e.target.value as AgeRating })}
+          >
+            {AGE_RATINGS.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
         </label>
         <fieldset className="declaration">
           <legend>BL 장르 · 권리 · AI 사용 확인 (심사 요청 전 필수)</legend>

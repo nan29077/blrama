@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Clapperboard, Eye, Film, ImageIcon, LayoutTemplate, Megaphone, Send, Sparkles, Tags, Trash2, Wand2 } from 'lucide-react';
-import { api, ApiError, jobKindLabel, lama, parseJson, studioMedia, won, type StudioEpisode } from '../../api';
+import { AGE_RATINGS, api, ApiError, jobKindLabel, lama, parseJson, studioMedia, won, type StudioEpisode } from '../../api';
 import { navigate } from '../../App';
 import { changedFields, useSyncedForm } from '../hooks';
 import { JobBadge, Versions, isBusy } from '../parts';
@@ -516,9 +516,13 @@ function ExportSection({ ws, meta, variants }: { ws: WS; meta: Meta | null; vari
     free_episodes: Number(drama?.free_episodes || (season.paywall_from ? Math.max(1, season.paywall_from - 1) : 1)),
     attachTrailer: true,
     publish_at: '',
+    age_rating: String((drama as { age_rating?: string } | null)?.age_rating || '15'),
   };
   const [f, setF] = useSyncedForm(initial);
   const [busy, setBusy] = useState(false);
+  // 작품 등록과 같은 확인 3가지. 내보낼 때마다 PD가 직접 체크해요(기억하지 않음).
+  const [confirms, setConfirms] = useState({ bl_confirmed: false, rights_confirmed: false, likeness_confirmed: false });
+  const confirmed = confirms.bl_confirmed && confirms.rights_confirmed && confirms.likeness_confirmed;
   // 입력한 공개 설정은 이 기기에 임시로 기억해요(화면을 옮겨도 유지).
   const key = `bellama.export.${p.id}`;
   // 고친 칸만, 그때의 서버 값과 함께 기억해요. 그사이 서버 값이 바뀐 칸(예: AI 제목 적용)은 되살리지 않아요.
@@ -568,6 +572,8 @@ function ExportSection({ ws, meta, variants }: { ws: WS; meta: Meta | null; vari
         attachTrailer: f.attachTrailer,
         publish_at: f.publish_at ? new Date(f.publish_at).toISOString() : null,
         submit,
+        ...(serial ? {} : { age_rating: f.age_rating }),
+        ...confirms,
         ...(forceApproval ? { forceApproval: true } : {}),
       });
       try {
@@ -646,6 +652,16 @@ function ExportSection({ ws, meta, variants }: { ws: WS; meta: Meta | null; vari
             무료 회차 수 {season.paywall_from ? <small className="muted">(시즌 설계: {season.paywall_from}화부터 유료)</small> : null}
             <NumberInput min={1} max={50} value={f.free_episodes} onChange={(e) => setF({ ...f, free_episodes: Math.min(50, Math.max(1, Number(e.target.value) || 1)) })} />
           </label>
+          <label>
+            관람 등급
+            <select value={f.age_rating} onChange={(e) => setF({ ...f, age_rating: e.target.value })}>
+              {AGE_RATINGS.map((a) => (
+                <option key={a.value} value={a.value}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="inline-check">
             <input type="checkbox" checked={f.free} onChange={(e) => setF({ ...f, free: e.target.checked })} />전 회차 무료
           </label>
@@ -661,16 +677,34 @@ function ExportSection({ ws, meta, variants }: { ws: WS; meta: Meta | null; vari
           <input type="datetime-local" value={f.publish_at} min={toLocal(new Date(Date.now() + 5 * 60000).toISOString())} onChange={(e) => setF({ ...f, publish_at: e.target.value })} />
         </label>
       </div>
+      <fieldset className="declaration">
+        <legend>BL 장르 · 권리 · 출연자 동의 확인 (내보내기 전 필수)</legend>
+        <label className="check-row">
+          <input type="checkbox" checked={confirms.bl_confirmed} onChange={(e) => setConfirms({ ...confirms, bl_confirmed: e.target.checked })} />
+          <span>
+            이 작품은 성인 남성 주인공 두 사람의 관계를 중심으로 한 <strong>BL 장르 드라마</strong>입니다. 등장인물은 모두 성인이며, 미성년자를 연애 대상으로 그리지 않았습니다.
+          </span>
+        </label>
+        <label className="check-row">
+          <input type="checkbox" checked={confirms.rights_confirmed} onChange={(e) => setConfirms({ ...confirms, rights_confirmed: e.target.checked })} />
+          <span>이 작품의 영상·음악·글·이미지에 대한 저작권 또는 이용 권리를 가지고 있으며, 제3자의 권리를 침해하지 않습니다.</span>
+        </label>
+        <label className="check-row">
+          <input type="checkbox" checked={confirms.likeness_confirmed} onChange={(e) => setConfirms({ ...confirms, likeness_confirmed: e.target.checked })} />
+          <span>실존 인물의 얼굴·목소리를 쓰지 않았거나, 사용 동의를 받았습니다.</span>
+        </label>
+      </fieldset>
       <div className="form-actions start">
         {!serial && (
-          <button className="secondary" disabled={busy || locked || !composed.length || !valid} onClick={() => void go(false)}>
+          <button className="secondary" disabled={busy || locked || !composed.length || !valid || !confirmed} onClick={() => void go(false)}>
             작품으로 내보내기
           </button>
         )}
-        <button className="primary" disabled={busy || locked || !composed.length || !valid} onClick={() => void go(true)}>
+        <button className="primary" disabled={busy || locked || !composed.length || !valid || !confirmed} onClick={() => void go(true)}>
           <Send size={15} /> {serial ? '새 회차 검수 신청' : '내보내고 바로 검수 신청'}
         </button>
       </div>
+      {!confirmed && !locked && <p className="muted settings-note">위의 확인 3가지에 모두 체크하면 내보낼 수 있어요.</p>}
       {locked && <p className="muted settings-note">{drama?.status === 'pending' ? '검수 중이라 다시 내보낼 수 없어요. 결과가 나오면 알림으로 알려 드려요.' : '관리자가 노출을 멈춘 작품이에요. 고객센터로 문의해 주세요.'}</p>}
     </Section>
   );

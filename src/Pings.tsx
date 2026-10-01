@@ -219,7 +219,7 @@ export default function PingsPage({
               : '실제 결제 연동을 준비하고 있어요.'}
           </div>
           <button className="primary full" disabled={busy || !demo} onClick={charge}>
-            {busy ? '처리 중…' : '테스트 결제로 충전하기'}
+            {busy ? '처리 중…' : demo ? '테스트 결제로 충전하기' : '결제 준비 중'}
           </button>
         </Modal>
       )}

@@ -100,7 +100,7 @@ export function ModelPicker({
   );
 }
 
-// 모델 고르는 방식: 자동(B엘라마이 작업마다 가장 알맞은 모델) / 직접(내가 고른 모델). 처음에는 자동.
+// 모델 고르는 방식: 자동(B엘라마가 작업마다 가장 알맞은 모델) / 직접(내가 고른 모델). 처음에는 자동.
 export type ModelMode = 'auto' | 'manual';
 const MODE_KEY = 'bellama.studio.modelmode';
 export function loadMode(): ModelMode {

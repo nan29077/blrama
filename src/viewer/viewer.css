@@ -61,8 +61,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: #0b120ecc;
-  border: 1px solid #e6a5c966;
+  background: #0a0d13cc;
+  border: 1px solid #bfc2e066;
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -121,9 +121,9 @@
   font-size: 11px;
   padding: 6px 11px;
   border-radius: 999px;
-  border: 1px solid #33473a;
-  background: #1a2320;
-  color: #cfe8b2;
+  border: 1px solid #2e374c;
+  background: #181c25;
+  color: #d4d6e4;
 }
 .viewer-hashtags > button:hover {
   border-color: var(--lime);
@@ -168,7 +168,7 @@
 .viewer-trailer-error {
   padding: 50px 20px;
   text-align: center;
-  color: #9caf9e;
+  color: #97a0b4;
   font-size: 12px;
 }
 
@@ -278,7 +278,7 @@
   max-height: min(460px, 70dvh);
   overflow-y: auto;
   background: #171d22;
-  border: 1px solid #39423e;
+  border: 1px solid #373b44;
   border-radius: 14px;
   box-shadow: 0 16px 60px #000a;
   z-index: 90;
@@ -311,7 +311,7 @@
   justify-content: space-between;
   padding: 14px 16px;
   background: #171d22;
-  border-bottom: 1px solid #2a3330;
+  border-bottom: 1px solid #282c35;
 }
 .viewer-bell-head strong {
   font-size: 14px;
@@ -329,7 +329,7 @@
   padding: 0;
 }
 .viewer-bell-list li + li {
-  border-top: 1px solid #232b28;
+  border-top: 1px solid #21252d;
 }
 .viewer-bell-list button {
   width: 100%;
@@ -339,14 +339,14 @@
   gap: 5px;
   padding: 13px 16px;
   text-align: left;
-  color: #9aa89f;
+  color: #969dac;
 }
 .viewer-bell-list button:hover {
   background: #1d2529;
 }
 .viewer-bell-list button.unread {
-  color: #eef3ea;
-  background: #1a2320;
+  color: #eaedf3;
+  background: #181c25;
 }
 .viewer-bell-title {
   display: flex;
@@ -365,7 +365,7 @@
 .viewer-bell-body {
   font-size: 11px;
   line-height: 1.5;
-  color: #8f9d94;
+  color: #8b92a1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -373,13 +373,13 @@
 }
 .viewer-bell-list time {
   font-size: 10px;
-  color: #6d7c73;
+  color: #697080;
 }
 .viewer-bell-empty {
   padding: 30px 16px;
   text-align: center;
   font-size: 12px;
-  color: #8b9b90;
+  color: #878e9f;
   display: flex;
   flex-direction: column;
   align-items: center;

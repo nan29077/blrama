@@ -2430,3 +2430,32 @@ test('chunked resumable upload, prechecks, poster frames, subtitles and rights d
   // 공개 후 1화(무료)는 누구나 자막을 받는다.
   assert.equal((await fetch(`${base}/api/subtitles/${drama}/1`)).status, 200);
 });
+
+test('age rating: PD sets it, admin can correct it at review, viewers see it', async () => {
+  const id = await publishWithEpisodes(1, { title: '관람 등급 검수', age_rating: '12' });
+  assert.equal((await request('/dramas/' + id)).data.age_rating, '12');
+  // 관리자가 심사하면서 등급을 바꾸면 그 값이 공개된다.
+  const draft = await request('/studio/dramas', { method: 'POST', cookie: pd, body: { ...draftBody, title: '등급 정정 검수', age_rating: '15' } });
+  assert.equal(draft.status, 200);
+  const did = draft.data.id;
+  assert.equal((await request('/studio/dramas/' + did + '/episodes', { method: 'POST', cookie: pd, body: { number: 1, title: '1화', duration: 12, video: '/demo/preview.mp4' } })).status, 200);
+  assert.equal((await request('/studio/dramas/' + did + '/submit', { method: 'POST', cookie: pd })).status, 200);
+  assert.equal((await request('/admin/dramas/' + did + '/review', { method: 'POST', cookie: admin, body: { status: 'published', age_rating: '18' } })).status, 200);
+  assert.equal((await request('/dramas/' + did)).data.age_rating, '18');
+  // 잘못된 등급 값은 거절
+  assert.equal((await request('/studio/dramas', { method: 'POST', cookie: pd, body: { ...draftBody, age_rating: '19' } })).status, 400);
+});
+
+test('dev server never serves the database, secrets, uploads or server source', async () => {
+  for (const p of ['/data/bellama.sqlite', '/data/.ai-secret', '/server/index.mjs', '/%64ata/x.sqlite', '/dev-server.out.log', '/CLAUDE.md'])
+    assert.equal((await fetch(base + p)).status, 404, p);
+  // 화면 코드가 가져오는 공용 기준표는 그대로 열린다.
+  assert.equal((await fetch(base + '/server/genres.json')).status, 200);
+});
+
+test('admin demo login is refused through a Cloudflare tunnel but viewer demo still works', async () => {
+  const tunnel = { 'cf-ray': 'test-ray', 'cf-connecting-ip': '203.0.113.1' };
+  assert.equal((await request('/auth/demo', { method: 'POST', body: { role: 'admin' }, headers: tunnel })).status, 403);
+  assert.equal((await request('/auth/demo', { method: 'POST', body: { role: 'viewer' }, headers: tunnel })).status, 200);
+  assert.notEqual((await request('/auth/demo', { method: 'POST' })).status, 500);
+});

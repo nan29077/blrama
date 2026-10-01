@@ -38,7 +38,7 @@ export const providers = {
       const body = JSON.stringify(message);
       const headers = { 'Content-Type': 'application/json', 'User-Agent': 'bellama-messaging/1' };
       if (config.secret) {
-        // 중계 서버는 비밀값 머리글이나 본문 서명(HMAC-SHA256)으로 B엘라마이 보낸 요청인지 확인할 수 있어요.
+        // 중계 서버는 비밀값 머리글이나 본문 서명(HMAC-SHA256)으로 B엘라마가 보낸 요청인지 확인할 수 있어요.
         headers['X-Bellama-Secret'] = config.secret;
         headers['X-Bellama-Signature'] = 'sha256=' + createHmac('sha256', config.secret).update(body).digest('hex');
       }

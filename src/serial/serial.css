@@ -8,12 +8,12 @@
   font-size: 9px;
   font-weight: 600;
   white-space: nowrap;
-  color: #c3e595;
-  background: #e6a5c914;
-  border: 1px solid #e6a5c930;
+  color: #c5c7dd;
+  background: #bfc2e014;
+  border: 1px solid #bfc2e030;
 }
 .serial-chip.draft {
-  color: #a9b8ae;
+  color: #a5acbc;
   background: #ffffff0a;
   border-color: #ffffff1a;
 }
@@ -45,8 +45,8 @@
   padding: 0 6px;
   margin-left: 4px;
   border-radius: 999px;
-  background: var(--lime, #e6a5c9);
-  color: #121712;
+  background: var(--lime, #bfc2e0);
+  color: #111318;
   font-size: 11px;
   font-weight: 700;
   vertical-align: middle;
@@ -59,7 +59,7 @@
   min-width: 0;
 }
 .serial-info b {
-  color: #dfeccf;
+  color: #e3e4ec;
 }
 .serial-note {
   display: flex;
@@ -101,7 +101,7 @@
   display: grid;
   gap: 5px;
   font-size: 11px;
-  color: #a8b5aa;
+  color: #a5abb8;
 }
 .serial-form label.check-row {
   display: flex;
@@ -144,13 +144,13 @@
   margin-top: 12px;
 }
 .serial-queue-item {
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 12px;
   overflow: hidden;
   background: #ffffff04;
 }
 .serial-queue-item.open {
-  border-color: #e6a5c940;
+  border-color: #bfc2e040;
 }
 .serial-queue-head {
   display: flex;
@@ -186,7 +186,7 @@
 }
 .serial-queue-title > small {
   font-size: 11px;
-  color: #93a298;
+  color: #8f96a6;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -199,7 +199,7 @@
 }
 .serial-queue-tags small {
   font-size: 10px;
-  color: #7f9589;
+  color: #7a839b;
 }
 .serial-queue-tags .source-chip {
   display: inline-flex;
@@ -240,7 +240,7 @@
 .serial-queue-decision dt {
   flex: none;
   width: 96px;
-  color: #7f9589;
+  color: #7a839b;
 }
 .serial-queue-decision dd {
   margin: 0;
@@ -251,7 +251,7 @@
   display: grid;
   gap: 5px;
   font-size: 11px;
-  color: #a8b5aa;
+  color: #a5abb8;
 }
 .serial-queue-decision textarea {
   width: 100%;
@@ -274,7 +274,7 @@
 .thumb-ab {
   margin: 16px 0;
   padding: 14px;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 12px;
   background: #ffffff04;
 }
@@ -305,13 +305,13 @@
   display: grid;
   gap: 6px;
   padding: 8px;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 10px;
   min-width: 0;
 }
 .thumb-ab-grid article.leading {
-  border-color: var(--lime, #e6a5c9);
-  box-shadow: 0 0 0 1px #e6a5c933;
+  border-color: var(--lime, #bfc2e0);
+  box-shadow: 0 0 0 1px #bfc2e033;
 }
 .thumb-ab-img {
   position: relative;
@@ -345,8 +345,8 @@
   gap: 3px;
   padding: 2px 7px;
   border-radius: 999px;
-  background: var(--lime, #e6a5c9);
-  color: #121712;
+  background: var(--lime, #bfc2e0);
+  color: #111318;
   font-size: 10px;
   font-weight: 700;
 }
@@ -362,14 +362,14 @@
   gap: 6px;
 }
 .thumb-ab-grid dt {
-  color: #7f9589;
+  color: #7a839b;
 }
 .thumb-ab-grid dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
 .thumb-ab-grid article.leading dl div:first-child dd {
-  color: var(--lime, #e6a5c9);
+  color: var(--lime, #bfc2e0);
   font-weight: 700;
 }
 .thumb-ab-grid small {
@@ -388,7 +388,7 @@
 }
 .thumb-ab-add > small {
   font-size: 11px;
-  color: #a8b5aa;
+  color: #a5abb8;
 }
 .thumb-ab-offer {
   display: flex;
@@ -400,7 +400,7 @@
   position: relative;
   width: 64px;
   padding: 0;
-  border: 1px solid #2c3832;
+  border: 1px solid #292e3b;
   border-radius: 8px;
   overflow: hidden;
   background: none;
@@ -422,11 +422,11 @@
   padding: 2px 0;
   background: #000b;
   font-size: 9px;
-  color: #dfeccf;
+  color: #e3e4ec;
 }
 .thumb-ab-offer button:hover,
 .thumb-ab-offer button:focus-visible {
-  border-color: var(--lime, #e6a5c9);
+  border-color: var(--lime, #bfc2e0);
 }
 
 /* 관리자 AI · 가격이 필요한 새 기능 */

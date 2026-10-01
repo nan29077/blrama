@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { prepareTestDb } from './_db.mjs';
+const EXPORT_CONFIRMS = { bl_confirmed: true, rights_confirmed: true, likeness_confirmed: true };
 
 const port = 5261,
   base = `http://127.0.0.1:${port}`,
@@ -451,12 +452,12 @@ test('collaboration: invites, roles, payer, approvals, comments, presence and ac
   // 승인 없는 회차는 내보내기 막힘(소유자 강행 가능)
   await testDb.run("UPDATE studio_episodes SET video='/uploads/none.mp4',status='composed' WHERE id=?", [eid]);
   await testDb.run("UPDATE studio_episodes SET video='/uploads/none.mp4',status='composed' WHERE project_id=?", [cp]);
-  const exp = await request(`/studio/ai/projects/${cp}/export`, { method: 'POST', cookie: pd, body: { tagline: '비 오는 밤의 편지', image: '/images/channel-atelier.webp' } });
+  const exp = await request(`/studio/ai/projects/${cp}/export`, { method: 'POST', cookie: pd, body: { ...EXPORT_CONFIRMS, tagline: '비 오는 밤의 편지', image: '/images/channel-atelier.webp' } });
   assert.equal(exp.status, 409, JSON.stringify(exp.data));
   assert.equal(exp.data.code, 'approval_required');
-  const forced = await request(`/studio/ai/projects/${cp}/export`, { method: 'POST', cookie: pd, body: { tagline: '비 오는 밤의 편지', image: '/images/channel-atelier.webp', forceApproval: true } });
+  const forced = await request(`/studio/ai/projects/${cp}/export`, { method: 'POST', cookie: pd, body: { ...EXPORT_CONFIRMS, tagline: '비 오는 밤의 편지', image: '/images/channel-atelier.webp', forceApproval: true } });
   assert.notEqual(forced.data?.code, 'approval_required');
-  assert.equal((await request(`/studio/ai/projects/${cp}/export`, { method: 'POST', cookie: editor.cookie, body: { tagline: '비 오는 밤의 편지' } })).status, 403, '내보내기는 소유자만');
+  assert.equal((await request(`/studio/ai/projects/${cp}/export`, { method: 'POST', cookie: editor.cookie, body: { ...EXPORT_CONFIRMS, tagline: '비 오는 밤의 편지' } })).status, 403, '내보내기는 소유자만');
 
   // 활동 기록
   const act = (await request(`/studio/ai/projects/${cp}/activity`, { cookie: reviewer.cookie })).data;

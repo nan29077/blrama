@@ -175,6 +175,20 @@ JSON 형식: {"scene":"","visual":"","visual_en":"","dialogue":"","speaker":"","
 }
 // BL 전문 서비스: 이미지·영상 지시문에 붙이는 공통 조건(주인공은 성인 남성 두 명, 미성년자 없음)
 export const BL_VISUAL = 'Korean BL (boys love) drama; the romantic leads are two adult Korean men in their 20s-30s; every person shown is an adult';
+// 인물 한 명을 그리는 이미지(기준 이미지·참고 포즈)에 붙이는 성인 조건
+export const ADULT_ONLY = 'the person is an adult (20 or older) with clearly adult facial features and body; every person shown is an adult';
+// 미성년으로 보이게 하는 표현(인물 외형·이미지·영상 지시문). BL 전용 서비스라 등장인물은 모두 성인으로 그립니다.
+const MINOR_KO = ['고등학생', '중학생', '초등학생', '고딩', '중딩', '초딩', '미성년', '10대', '십대', '교복'];
+const MINOR_EN = /\b(teens?|teenagers?|teenage|adolescents?|schoolboys?|schoolgirls?|school uniforms?|high ?school (?:students?|boys?|girls?)|middle ?school|junior high|underage|minors?(?= (?:boy|girl|student|character))|preteens?)\b/i;
+const MINOR_CHILD_EN = /\b(child|children|kids?|little boy|young boy)\b/i;
+// strict: 인물 외형 칸처럼 어린이 표현까지 막아야 할 때
+export function minorTerm(texts, { strict = false } = {}) {
+  const hay = texts.filter(Boolean).join('\n');
+  const ko = MINOR_KO.find((w) => hay.includes(w));
+  if (ko) return ko;
+  const en = hay.match(MINOR_EN) || (strict ? hay.match(MINOR_CHILD_EN) || (hay.match(/어린이|아동/) ?? null) : null);
+  return en ? en[0] : null;
+}
 const MALE_KO = /(남성|남자|청년|아저씨|왕자|왕세자|세자|도령|형사|기사)/;
 const MALE_EN = /\b(man|men|male|guy|prince|gentleman)\b/i;
 // 기획 결과의 첫 두 인물(주인공 커플)이 성인 남성으로 적혀 있게 보정합니다.
@@ -193,7 +207,7 @@ export function maleLeads(characters = []) {
 }
 // 캐릭터 기준 이미지(얼굴·의상 고정용)
 export const characterImagePrompt = (project, c) =>
-  `Character reference sheet, single person, front-facing portrait, neutral background, vertical 9:16. ${c.look_en && c.look_en_src === c.look ? c.look_en : c.look}. ${project.style}. Photorealistic, consistent face, no text, no watermark.`;
+  `Character reference sheet, single person, front-facing portrait, neutral background, vertical 9:16. ${c.look_en && c.look_en_src === c.look ? c.look_en : c.look}. ${project.style}. ${ADULT_ONLY}. Photorealistic, consistent face, no text, no watermark.`;
 // 컷 스토리보드 이미지(영상 첫 장면으로도 씀)
 // 화면 묘사: 영어 번역이 최신이면 그것을, 아니면 PD가 쓴 묘사를 그대로 씁니다.
 export const visualOf = (shot) => (shot.visual_en && shot.visual_en_src === shot.visual ? shot.visual_en : shot.visual);
@@ -227,13 +241,13 @@ export function relationsText(raw, characters = []) {
 // basic: 카메라 제어가 약한 모델용(궤도·크레인 같은 복잡한 움직임을 비슷한 쉬운 움직임으로 바꿈)
 // locked: 외형을 고정한 인물(영상 중에 헤어 · 옷이 바뀌지 않게 한 줄로 알려요)
 export const shotVideoPrompt = (project, shot, speaker, { basic = false, locked = [] } = {}) =>
-  `${visualOf(shot)}. Camera: ${framingText(shot) || 'medium shot'}${motionText(shot, { basic }) ? `, ${motionText(shot, { basic })}` : ''}${lightText(shot) ? `. Lighting and mood: ${lightText(shot)}` : ''}. ${project.style}. Vertical 9:16, natural motion, no text overlay.${
+  `${visualOf(shot)}. Camera: ${framingText(shot) || 'medium shot'}${motionText(shot, { basic }) ? `, ${motionText(shot, { basic })}` : ''}${lightText(shot) ? `. Lighting and mood: ${lightText(shot)}` : ''}. ${project.style}. Every person shown is an adult. Vertical 9:16, natural motion, no text overlay.${
     locked.length ? ` Keep ${locked.map((c) => `${c.name}'s ${[c.hair && `hair (${c.hair})`, c.outfit && `outfit (${c.outfit})`].filter(Boolean).join(' and ') || 'appearance'}`).join('; ')} unchanged throughout the clip.` : ''
   }${shot.dialogue && speaker ? ` ${speaker.name} speaks in Korean${shot.emotion ? ` (${shot.emotion})` : ''}: "${shot.dialogue}"` : ''}`;
 export const characterRefPrompt = (project, c, pose) =>
   `Character reference, same person as the reference image. ${lookOf(c)}${c.outfit ? `, wearing ${c.outfit}` : ''}. ${
     { front: 'front-facing portrait, neutral expression', side: 'side profile view', full: 'full body standing pose', smile: 'smiling expression close-up', angry: 'angry expression close-up', sad: 'teary sad expression close-up' }[pose] || pose
-  }. Neutral background, vertical 9:16. ${project.style}. Photorealistic, consistent face, no text.`;
+  }. Neutral background, vertical 9:16. ${project.style}. ${ADULT_ONLY}. Photorealistic, consistent face, no text.`;
 export const locationPrompt = (project, l) => `Establishing shot of a location, no people. ${lookOf(l)}. ${project.style}. Vertical 9:16, cinematic, no text, no watermark.`;
 export const posterPrompt = (project, cast) =>
   `Korean short drama poster, vertical 9:16, dramatic key art for "${project.title}" (${project.genre}). ${project.logline}. ${cast
@@ -407,7 +421,7 @@ export function blockedTerm(texts, extra = '') {
 }
 
 // ── AI 조수(작업 공간 채팅, 2026-09-24) ─────────────────────────────────
-// PD의 말을 '실행 계획'으로 바꿉니다. 바로 실행하지 않고, PD가 계획을 보고 승인하면 B엘라마이 실행합니다.
+// PD의 말을 '실행 계획'으로 바꿉니다. 바로 실행하지 않고, PD가 계획을 보고 승인하면 B엘라마가 실행합니다.
 export const ASSISTANT_ACTIONS = {
   // 라마가 드는 AI 작업
   shot_image: '컷 이미지 새로 만들기 (target: 컷)',
@@ -474,7 +488,7 @@ export function assistantPrompt({ project, characters, episodes, episode, shots,
   const talk = history.map((h) => `${h.role === 'user' ? 'PD' : '조수'}: ${String(h.content).slice(0, 300)}`).join('\n');
   return {
     system: `당신은 BL 숏폼 드라마 제작 도구 'B엘라마 스튜디오'의 AI 조수입니다. PD의 요청을 듣고, B엘라마가 실행할 수 있는 작업 목록(실행 계획)으로 바꿉니다.
-- 직접 실행하지 말고 계획만 제안합니다. PD가 승인하면 B엘라마이 실행합니다.
+- 직접 실행하지 말고 계획만 제안합니다. PD가 승인하면 B엘라마가 실행합니다.
 - 라마(비용)가 드는 AI 작업은 꼭 필요한 것만 넣고, 글만 바꾸면 되는 요청은 edit_* 작업(무료)으로 처리하세요.
 - 질문·조언만 필요한 요청이면 actions는 빈 배열로 두고 reply로 답합니다.
 - 대상은 아래 목록의 코드(E1S3=1화 3번 컷, E2=2화, C1=첫 번째 인물, L1=첫 번째 장소)로만 가리킵니다. 없는 대상을 만들지 마세요.

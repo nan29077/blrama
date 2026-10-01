@@ -7,6 +7,7 @@ import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { prepareTestDb } from './_db.mjs';
+const EXPORT_CONFIRMS = { bl_confirmed: true, rights_confirmed: true, likeness_confirmed: true };
 
 // B엘라마 스튜디오(AI 제작) · 라마 · AI 연결 통합 테스트.
 // 실제 AI 대신 개발용 가짜 AI와, 공급사 API 형식을 흉내 내는 로컬 가짜 서버를 씁니다.
@@ -384,7 +385,11 @@ test('studio production end to end with the development AI: plan, cast, script, 
   // 합성한 뒤 컷 순서를 바꾸면 옛 합성본은 내보낼 수 없고, 다시 합성해야 한다.
   assert.equal((await request('/studio/ai/shots/' + shots[0].id + '/move', { method: 'POST', cookie: seller.cookie, body: { direction: 'down' } })).status, 200);
   assert.equal((await request('/studio/ai/shots/' + shots[0].id + '/move', { method: 'POST', cookie: seller.cookie, body: { direction: 'up' } })).status, 200);
-  const staleExport = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { tagline: '한 집에 사는 두 비밀', submit: false } });
+  // BL·권리·출연자 확인을 체크하지 않으면 내보낼 수 없다(서버가 대신 체크하지 않음).
+  const unconfirmed = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { tagline: '확인 없이', submit: true } });
+  assert.equal(unconfirmed.status, 400);
+  assert.match(unconfirmed.data.error, /BL 장르 확인/);
+  const staleExport = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { ...EXPORT_CONFIRMS, tagline: '한 집에 사는 두 비밀', submit: false } });
   assert.equal(staleExport.status, 409);
   assert.match(staleExport.data.error, /다시 합성/);
   assert.equal((await request(`/studio/ai/projects/${pid}/episodes/${ep.id}/compose`, { method: 'POST', cookie: seller.cookie })).status, 202);
@@ -395,7 +400,7 @@ test('studio production end to end with the development AI: plan, cast, script, 
   }
   assert.equal(composed.status, 'composed', composed.error);
   // 1화만 합성됐으므로 내보내기는 1화만. 포스터가 없으면 인물 이미지를 쓴다.
-  const exported = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { tagline: '한 집에 사는 두 비밀', episode_pings: 5, free_episodes: 1, submit: true } });
+  const exported = await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { ...EXPORT_CONFIRMS, tagline: '한 집에 사는 두 비밀', episode_pings: 5, free_episodes: 1, submit: true } });
   assert.equal(exported.status, 200, JSON.stringify(exported.data));
   assert.equal(exported.data.submitted, true);
   const dramaId = exported.data.dramaId;
@@ -408,7 +413,7 @@ test('studio production end to end with the development AI: plan, cast, script, 
   assert.ok(provenance.models.some((m) => m.kind === 'shot_video'));
   assert.equal((await request(`/studio/dramas/${dramaId}/provenance`, { cookie: pd })).status, 404);
   // 심사 중에는 다시 내보낼 수 없다.
-  assert.equal((await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { tagline: '다시', submit: false } })).status, 409);
+  assert.equal((await request(`/studio/ai/projects/${pid}/export`, { method: 'POST', cookie: seller.cookie, body: { ...EXPORT_CONFIRMS, tagline: '다시', submit: false } })).status, 409);
   assert.equal((await request(`/admin/dramas/${dramaId}/review`, { method: 'POST', cookie: admin, body: { status: 'published' } })).status, 200);
   const pub = (await request('/dramas/' + dramaId)).data;
   assert.equal(pub.ai_label, true);

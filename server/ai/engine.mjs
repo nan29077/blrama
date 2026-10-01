@@ -8,7 +8,7 @@ import { adapters, unitOf, PRICE_REQUIRED, videoSeconds } from './providers.mjs'
 import { mockAdapter } from './mock.mjs';
 import { decrypt } from './secret.mjs';
 import { download, VendorError } from './http.mjs';
-import { blockedTerm } from './prompts.mjs';
+import { blockedTerm, minorTerm } from './prompts.mjs';
 import { familyOf, cameraLevel, endFrameFamily } from './model-guide.mjs';
 
 // AI 작업 엔진: 모델 고르기(자동/직접) → 라마 예약 → 대기열 → 공급사 호출·결과 확인 → 파일 저장 →
@@ -257,7 +257,7 @@ export function createAiEngine({ db, uploadDir, demo }) {
   // 왜 이 모델인가: 자동 선택 순위 상위 모델과 이유(PD 화면의 '왜 이 모델?' 안내)
   const WHY = {
     tier: (o) => `${{ draft: '초안', standard: '표준', premium: '고급' }[o.tier] || '표준'} 품질 등급에 맞아요`,
-    priority: () => 'B엘라마이 이 작업에 우선 추천하는 모델이에요',
+    priority: () => 'B엘라마가 이 작업에 우선 추천하는 모델이에요',
     image_input: () => '참고 이미지(인물·장면)를 받아 얼굴·구도를 이어 가요',
     fast: () => '최근 처리 속도가 빨라요',
     reliable: () => '최근 성공률이 높아요',
@@ -364,10 +364,16 @@ export function createAiEngine({ db, uploadDir, demo }) {
         return existing;
       }
     }
-    // 글 작업의 프롬프트에는 B엘라마이 넣은 지시문(예: "실존 인물 금지")이 섞여 있어, PD가 쓴 부분(userText)만 검사합니다.
+    // 글 작업의 프롬프트에는 B엘라마가 넣은 지시문(예: "실존 인물 금지")이 섞여 있어, PD가 쓴 부분(userText)만 검사합니다.
     // 이미지·영상·음성 프롬프트는 PD가 쓴 묘사로 만들어지므로 프롬프트 전체를 검사합니다.
     const banned = blockedTerm([input.userText, capability === 'text' ? '' : input.prompt, input.text], settings.ai_blocked_terms);
     if (banned) throw error(400, `사용할 수 없는 표현이 포함돼 있어요: "${banned}"`, { code: 'blocked_term' });
+    // BL 전용: 이미지·영상은 미성년으로 보이는 표현을 막습니다('never show …' 같은 금지 지시 부분은 빼고 검사).
+    if (capability === 'image' || capability === 'video') {
+      const minor = minorTerm([String(input.prompt || '').replace(/\(never show[^)]*\)/gi, '')]);
+      if (minor)
+        throw error(400, `등장인물은 모두 성인으로 그려야 해요. 미성년으로 보이는 표현을 빼 주세요: "${minor}"`, { code: 'blocked_term' });
+    }
     const list = await candidates({ capability, requested, tier, tags, seconds: input.seconds, needImage: !!(input.image || input.editImage || input.refImage || input.refImages?.length), needCamera: !!input.needCamera, needEnd: !!input.endImage, needMask: !!input.maskImage, excludeCn, exclude, requireImage: !!input._requireImage, input, units }, settings);
     const model = list[0];
     const u = units ?? unitsFor(capability, input, model);

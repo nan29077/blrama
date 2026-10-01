@@ -94,6 +94,16 @@ export type User = {
   auto_next: boolean;
   auto_unlock: boolean;
 };
+export type AgeRating = 'all' | '12' | '15' | '18';
+export const AGE_RATINGS: { value: AgeRating; label: string }[] = [
+  { value: 'all', label: '전체 관람가' },
+  { value: '12', label: '12세 이상' },
+  { value: '15', label: '15세 이상' },
+  { value: '18', label: '청소년 관람 불가' },
+];
+export const ageLabel = (r?: string | null) => AGE_RATINGS.find((a) => a.value === (r || '15'))?.label || '15세 이상';
+// 포스터 위 작은 배지: ALL · 12 · 15 · 18
+export const ageBadge = (r?: string | null) => (r === 'all' ? 'ALL' : r || '15');
 export type Drama = {
   id: string;
   owner_id: string;
@@ -123,6 +133,8 @@ export type Drama = {
   ai_usage?: 'none' | 'partial' | 'full';
   studio_episodes?: number;
   ai_label?: boolean;
+  // 관람 등급(없으면 15세 이상으로 표시)
+  age_rating?: AgeRating;
   episode_total?: number;
   pending_episodes?: number;
   trailer?: string;
@@ -526,18 +538,30 @@ export class ApiError extends Error {
 }
 // 세션이 끝났을 때(다른 기기에서 로그아웃·비밀번호 변경 등) 앱 전체가 알 수 있도록 이벤트를 올립니다.
 export const SESSION_EXPIRED_EVENT = 'bellama:session-expired';
+// 응답이 오지 않으면 화면이 '처리 중…'에 멈추지 않도록 시간 제한을 둡니다(파일 업로드는 제외).
+const API_TIMEOUT_MS = 45000;
 export async function api<T = unknown>(url: string, method = 'GET', body?: unknown): Promise<T> {
   let res: Response;
+  const timed = !(body instanceof FormData) && typeof AbortController !== 'undefined';
+  const ctrl = timed ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), API_TIMEOUT_MS) : null;
   try {
     res = await fetch(apiUrl(url), {
       method,
       credentials: fetchCredentials,
       headers: { ...authHeaders(), ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }) },
       body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
+      ...(ctrl ? { signal: ctrl.signal } : {}),
     });
   } catch {
+    if (timer) clearTimeout(timer);
+    if (ctrl?.signal.aborted)
+      throw new ApiError('응답이 늦어지고 있어요. 잠시 후 다시 시도해 주세요.', {
+        code: 'timeout',
+      });
     throw new ApiError('서버에 연결할 수 없습니다. 네트워크 상태를 확인해 주세요.', { code: 'network' });
   }
+  if (timer) clearTimeout(timer);
   const data = await res.json().catch(() => ({ error: '서버에 연결할 수 없습니다.' }));
   // 앱: 로그인 · 가입 응답의 토큰을 기억하고, 로그아웃하거나 세션이 끝나면 지웁니다.
   if (isNativeApp && url.startsWith('/auth/')) {

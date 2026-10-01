@@ -1,5 +1,5 @@
-import { Fragment, lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { apiUrl, authHeaders, fetchCredentials, publicUrl } from './platform';
+import { Fragment, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { apiUrl, authHeaders, fetchCredentials, isNativeApp, publicUrl, refreshMediaToken } from './platform';
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -37,6 +37,8 @@ import {
   Megaphone,
 } from 'lucide-react';
 import {
+  ageBadge,
+  ageLabel,
   api,
   ApiError,
   count,
@@ -92,17 +94,30 @@ const readRoute = (): Route => {
   return { page: p[0] || 'home', id: p[1], episode: Number(p[2]) || 1 };
 };
 // ── 앱 안 이동 기록 ─────────────────────────────────────────────
-// 각 기록 항목의 history.state에 앱 안에서 몇 번째 화면인지(spIdx)와 직전 화면(spPrev)을 남깁니다.
+// 각 기록 항목의 history.state에 앱 안에서 몇 번째 화면인지(blIdx)와 직전 화면(blPrev)을 남깁니다.
 // 앱 안의 ‘뒤로’ 버튼은 이 값으로 브라우저 뒤로 가기를 쓸지, 상위 화면으로 대체 이동할지 정합니다.
-type NavState = { spIdx: number; spPrev?: string };
+type NavState = { blIdx: number; blPrev?: string };
 const currentHash = () => location.hash.replace(/^#\/?/, '');
 const readNavState = (): NavState | null => {
   const s = history.state as NavState | null;
-  return s && typeof s.spIdx === 'number' ? s : null;
+  return s && typeof s.blIdx === 'number' ? s : null;
 };
-let navIdx = readNavState()?.spIdx ?? 0;
+let navIdx = readNavState()?.blIdx ?? 0;
 let lastHash = currentHash();
-if (!readNavState()) history.replaceState({ ...(history.state || {}), spIdx: navIdx }, '');
+if (!readNavState()) history.replaceState({ ...(history.state || {}), blIdx: navIdx }, '');
+// 뒤로·앞으로 가기로 돌아온 화면은 떠날 때의 스크롤 위치로 되돌립니다(새로 연 화면은 맨 위부터).
+const scrollByIdx = new Map<number, number>();
+let pendingScroll: number | null = null;
+export const takePendingScroll = () => {
+  const v = pendingScroll;
+  pendingScroll = null;
+  return v;
+};
+try {
+  history.scrollRestoration = 'manual';
+} catch {
+  // 지원하지 않는 브라우저는 그대로 둡니다.
+}
 // ── 떠나기 전 확인(저장하지 않은 변경) ─────────────────────────────
 // 편집 화면이 setLeaveGuard로 안내 문구를 돌려주는 함수를 걸어 두면, 앱 안 이동(navigate·링크·뒤로 가기) 전에 묻습니다.
 let leaveGuard: (() => string | null) | null = null;
@@ -124,11 +139,15 @@ window.addEventListener('hashchange', () => {
     return;
   }
   const s = readNavState();
-  if (s) navIdx = s.spIdx; // 뒤로·앞으로 이동이거나 replace로 바꾼 항목
+  const prevIdx = navIdx;
+  scrollByIdx.set(prevIdx, window.scrollY);
+  // 다른 기록 항목으로 이동(뒤로·앞으로)했을 때만 저장해 둔 위치를 씁니다. replace(회차 이동 등)는 맨 위로.
+  pendingScroll = s && s.blIdx !== prevIdx ? (scrollByIdx.get(s.blIdx) ?? null) : null;
+  if (s) navIdx = s.blIdx; // 뒤로·앞으로 이동이거나 replace로 바꾼 항목
   else {
     // 새로 쌓인 항목(링크·navigate·주소창 입력)
     navIdx += 1;
-    history.replaceState({ ...(history.state || {}), spIdx: navIdx, spPrev: lastHash }, '');
+    history.replaceState({ ...(history.state || {}), blIdx: navIdx, blPrev: lastHash }, '');
   }
   lastHash = currentHash();
 });
@@ -137,7 +156,7 @@ export const navigate = (page: string, opts: { replace?: boolean } = {}) => {
   if (opts.replace) {
     // 현재 기록 항목을 바꿉니다(회차 이동 등). 뒤로 가기가 회차마다 쌓이지 않습니다.
     const prev = readNavState();
-    history.replaceState({ spIdx: navIdx, spPrev: prev?.spPrev }, '', '#/' + page);
+    history.replaceState({ blIdx: navIdx, blPrev: prev?.blPrev }, '', '#/' + page);
     window.dispatchEvent(new HashChangeEvent('hashchange'));
     return;
   }
@@ -150,7 +169,7 @@ export const goBack = (fallback: string) => {
 };
 // 직전 화면이 정확히 target일 때만 뒤로 가기를 쓰고, 아니면 target으로 현재 항목을 바꿉니다.
 export const backTo = (target: string) => {
-  if (navIdx > 0 && readNavState()?.spPrev === target) history.back();
+  if (navIdx > 0 && readNavState()?.blPrev === target) history.back();
   else navigate(target, { replace: true });
 };
 // 로그인 후 돌아올 곳. 앱 안의 해시 경로만 허용합니다.
@@ -193,6 +212,17 @@ const markAutoplay = (id: string, n: number) => {
     sessionStorage.setItem(AUTOPLAY_KEY, JSON.stringify({ key: `${id}/${n}`, at: Date.now() }));
   } catch {
     /* 자동 재생 표시를 못 남기면 일시정지 상태로 열립니다. */
+  }
+};
+// 표시를 지우지 않고 확인만 합니다(자동 열기는 '앞 회차가 끝나서 넘어온 경우'에만 핑을 씁니다).
+const peekAutoplay = (id: string, n: number) => {
+  try {
+    const raw = sessionStorage.getItem(AUTOPLAY_KEY);
+    if (!raw) return false;
+    const v = JSON.parse(raw) as { key: string; at: number };
+    return v.key === `${id}/${n}` && Date.now() - v.at < 60000;
+  } catch {
+    return false;
   }
 };
 const takeAutoplay = (id: string, n: number) => {
@@ -322,6 +352,8 @@ export default function App() {
     [checkout, setCheckout] = useState<Purchase | null>(null),
     [busy, setBusy] = useState(false);
   const shell = useRef<HTMLDivElement>(null);
+  // 같은 결제 창에서 다시 누르면(응답 지연·시간 초과 후 재시도) 같은 멱등키를 써서 두 번 결제되지 않게 합니다.
+  const payKey = useRef<{ for: Purchase | null; key: string }>({ for: null, key: '' });
   // 알림 띠: 오류 문구는 빨간 느낌표로 보여 줍니다. tone을 주지 않으면 문구로 짐작합니다.
   const notify = useCallback((s: string, tone?: ToastTone) => setToast({ text: s, tone: tone || toneOf(s) }), []);
   const reloadLibrary = useCallback(async () => {
@@ -381,7 +413,10 @@ export default function App() {
       setRoute(next);
       // 검색어는 검색·탐색 화면에서만 유효합니다. 홈으로 돌아오면 피드가 검색어로 걸러지지 않게 합니다.
       if (!['search', 'explore'].includes(next.page)) setQuery('');
-      window.scrollTo({ top: 0, behavior: 'instant' });
+      const restore = takePendingScroll();
+      if (restore === null) window.scrollTo({ top: 0, behavior: 'instant' });
+      // 새 화면이 그려진 다음(두 프레임 뒤)에 이전 위치로 돌립니다.
+      else requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: restore, behavior: 'instant' })));
     };
     window.addEventListener('hashchange', fn);
     return () => window.removeEventListener('hashchange', fn);
@@ -469,6 +504,11 @@ export default function App() {
       loginWithReturn();
       return;
     }
+    // 운영 모드에서 아직 실제 결제(PG)가 연결되지 않았으면 결제 창 대신 안내만 보여 줍니다.
+    if (d === 'subscription' && !config.demo) {
+      info('B엘라마 패스 준비 중', 'B엘라마 패스 결제를 준비하고 있어요. 지금은 핑으로 회차를 열어 볼 수 있어요.');
+      return;
+    }
     setCheckout(d);
   };
   // 충전 화면에서 돌아올 곳(지금 보던 작품·회차)을 주소에 담아 보냅니다.
@@ -484,16 +524,22 @@ export default function App() {
   };
   const pay = async () => {
     if (!checkout || busy) return;
+    if (payKey.current.for !== checkout) payKey.current = { for: checkout, key: uuid() };
+    const idempotencyKey = payKey.current.key;
     setBusy(true);
     try {
       if (checkout === 'subscription') {
         await api('/checkout', 'POST', {
           kind: 'subscription',
-          idempotencyKey: uuid(),
+          idempotencyKey,
         });
         await reloadLibrary();
         setCheckout(null);
-        notify('테스트 결제가 완료됐어요. 모든 작품을 마음껏 보세요!');
+        notify(
+          config.demo
+            ? '테스트 결제가 완료됐어요. 모든 작품을 마음껏 보세요!'
+            : '결제가 완료됐어요. 모든 작품을 마음껏 보세요!',
+        );
       } else {
         const r = await api<{ pings: number; unlocked: number; wallet: { total: number } }>(
           '/pings/unlock',
@@ -502,7 +548,7 @@ export default function App() {
             dramaId: checkout.drama.id,
             episode: checkout.episode,
             all: !checkout.episode,
-            idempotencyKey: uuid(),
+            idempotencyKey,
           },
         );
         await reloadLibrary();
@@ -796,7 +842,9 @@ export default function App() {
                       <span>
                         <Zap size={12} fill="currentColor" /> BELLAMA ORIGINAL
                       </span>
-                      <span className="hero-age">15</span>
+                      <span className="hero-age" aria-label={ageLabel(hero.age_rating)}>
+                        {ageBadge(hero.age_rating)}
+                      </span>
                     </div>
                     <div className="hero-content">
                       <span className="hero-kicker">{homeLayout.hero.kicker || 'B엘라마 오리지널 · 두 사람의 이야기'}</span>
@@ -1196,7 +1244,7 @@ export default function App() {
                   <ul>
                     {[
                       '모든 드라마 · 모든 회차 무제한',
-                      '광고 없이 몰입하는 시청 경험',
+                      '잠긴 회차도 핑 없이 바로 이어보기',
                       'PC와 모바일에서 끊김 없이',
                       '새롭게 공개되는 오리지널 포함',
                     ].map((s) => (
@@ -1208,10 +1256,14 @@ export default function App() {
                   </ul>
                   <button
                     className="primary full"
-                    disabled={!!lib.subscription}
+                    disabled={!!lib.subscription || !config.demo}
                     onClick={() => buy('subscription')}
                   >
-                    {lib.subscription ? 'B엘라마 패스 이용 중' : 'B엘라마 패스 시작하기'}{' '}
+                    {lib.subscription
+                      ? 'B엘라마 패스 이용 중'
+                      : config.demo
+                        ? 'B엘라마 패스 시작하기'
+                        : 'B엘라마 패스 준비 중'}{' '}
                     <ArrowRight size={17} />
                   </button>
                   <small>
@@ -1225,7 +1277,7 @@ export default function App() {
                     이용 기간: {new Date(lib.subscription.expires_at).toLocaleDateString('ko-KR')}
                     까지
                     <br />
-                    테스트 구독은 자동 갱신되지 않아요.
+                    {config.demo ? '테스트 구독은 자동 갱신되지 않아요.' : '구독은 자동 갱신되지 않아요.'}
                     <button
                       className="text-link"
                       onClick={() =>
@@ -1243,8 +1295,8 @@ export default function App() {
                   <h3>궁금한 점이 있나요?</h3>
                   {[
                     [
-                      '개별 구매와 구독은 어떻게 다른가요?',
-                      '개별 구매는 해당 작품 전체 회차를 소장하는 방식이고, 구독은 이용 기간 동안 모든 공개 작품을 시청하는 방식이에요.',
+                      '핑으로 여는 것과 B엘라마 패스는 어떻게 다른가요?',
+                      '핑으로 연 회차는 기간 제한 없이 다시 볼 수 있어요(작품 전체 열기는 그때 공개된 회차까지 열려요). B엘라마 패스는 이용 기간 동안 모든 공개 작품의 모든 회차를 볼 수 있어요.',
                     ],
                     [
                       '무료로도 볼 수 있나요?',
@@ -1252,7 +1304,9 @@ export default function App() {
                     ],
                     [
                       '어디서 시청할 수 있나요?',
-                      '지금은 PC와 모바일 웹에서 시청할 수 있어요. Android와 iOS 앱도 준비 중이에요.',
+                      isNativeApp
+                        ? '앱과 PC · 모바일 웹에서 같은 계정으로 이어서 볼 수 있어요.'
+                        : '지금은 PC와 모바일 웹에서 시청할 수 있어요. Android와 iOS 앱도 준비 중이에요.',
                     ],
                   ].map(([q, a]) => (
                     <details key={q}>
@@ -1502,7 +1556,9 @@ export default function App() {
                                 {new Date(o.created_at).toLocaleString('ko-KR')} ·{' '}
                                 {o.kind.startsWith('ping_') && o.kind !== 'ping_charge'
                                   ? '핑 사용'
-                                  : '테스트 결제'}{' '}
+                                  : config.demo
+                                    ? '테스트 결제'
+                                    : '결제'}{' '}
                                 · 주문번호 {o.id.slice(0, 8)}
                               </span>
                             </div>
@@ -1518,8 +1574,8 @@ export default function App() {
                       )}
                       <p className="order-note">
                         결제 취소·환불이 필요하면 문의하기로 알려 주세요. 사용하지 않은 충전 핑은
-                        환불 기준에 따라 처리됩니다. 현재는 개발용 테스트 결제라 실제 청구가
-                        발생하지 않습니다.
+                        환불 기준에 따라 처리됩니다.
+                        {config.demo && ' 현재는 개발용 테스트 결제라 실제 청구가 발생하지 않습니다.'}
                       </p>
                       {lib.subscription && (
                         <button
@@ -1751,7 +1807,7 @@ export default function App() {
           <p>
             언제 어디서든 짧고 강렬하게.
             <br />
-            B엘라마을 앱으로 만나보세요.
+            B엘라마를 앱으로 만나보세요.
           </p>
           <div className="app-icon">
             <img src="/icon.svg" alt="B엘라마 앱 아이콘" />
@@ -1773,9 +1829,12 @@ export default function App() {
             </span>
             <ArrowDownToLine size={17} />
           </button>
-          <span className="coming-soon">
-            <span /> Android · iOS 출시 준비 중
-          </span>
+          {!(config.androidUrl && config.iosUrl) && (
+            <span className="coming-soon">
+              <span />{' '}
+              {config.androidUrl ? 'iOS 출시 준비 중' : config.iosUrl ? 'Android 출시 준비 중' : 'Android · iOS 출시 준비 중'}
+            </span>
+          )}
         </div>
         <div className="right-divider" />
         <div className="mini-benefit">
@@ -1864,7 +1923,7 @@ export default function App() {
                 : '실제 결제 연동을 준비하고 있어요.'}
             </div>
             <button className="primary full" disabled={busy || !config.demo} onClick={pay}>
-              {busy ? '처리 중…' : '테스트 결제하고 시청하기'}
+              {busy ? '처리 중…' : config.demo ? '테스트 결제하고 시청하기' : '결제 준비 중'}
             </button>
           </Modal>
         ) : (
@@ -1927,6 +1986,7 @@ export default function App() {
                 <div className="info-box">
                   <Coins size={18} />
                   보너스 핑부터 먼저 사용돼요. 연 회차는 마이페이지에서 언제든 다시 볼 수 있어요.
+                  {!checkout.episode && ' 지금 공개된 회차만 열리고, 앞으로 공개되는 회차는 따로 열 수 있어요.'}
                 </div>
                 {short ? (
                   <button className="primary full" onClick={() => goCharge(checkout)}>
@@ -2397,7 +2457,7 @@ function LoginPage({
         <div className="test-login">
           <span>DEVELOPMENT ACCESS</span>
           <h3>개발용 테스트 로그인</h3>
-          <p>계정 유형별로 B엘라마을 미리 경험해 보세요.</p>
+          <p>계정 유형별로 B엘라마를 미리 경험해 보세요.</p>
           <div>
             {(
               [
@@ -2491,7 +2551,7 @@ function DramaPage({
         <div className="detail-meta">
           {d.genre}
           <i />
-          15세 이상
+          {ageLabel(d.age_rating)}
           <i />
           {d.episode_count}부작
           <i />
@@ -2685,6 +2745,14 @@ function WatchPage({
     saved = useRef<{ pos: number; reloaded: boolean } | null>(null),
     autoTried = useRef(false);
   const playSrc = '/api/play/' + id + '/' + number;
+  // 영상·자막 주소는 화면을 열 때(또는 다시 시도할 때) 한 번만 정합니다.
+  // 앱의 미디어 토큰(?mt=)이 40분마다 바뀌어도, 다시 그려질 때마다 주소가 바뀌어 영상이 처음부터 다시 불러와지지 않게 합니다.
+  const [srcKey, setSrcKey] = useState(0);
+  const tokenRetried = useRef(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const videoSrc = useMemo(() => asset(playSrc), [playSrc, srcKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const subtitleSrc = useMemo(() => asset(`/api/subtitles/${id}/${number}`), [id, number, srcKey]);
   const loadDetail = useCallback(
     () =>
       api<ViewerDetail>('/dramas/' + id)
@@ -2699,6 +2767,8 @@ function WatchPage({
   // 자동 열기: 사용자가 켜 두었고 핑이 충분하면 잠긴 회차를 바로 엽니다(화면마다 한 번만 시도).
   useEffect(() => {
     if (!d || !user?.auto_unlock || !current?.locked || autoTried.current) return;
+    // 앞 회차를 끝까지 보고 넘어온 경우에만 씁니다. 목록·공유 링크로 들어온 잠긴 회차는 확인 화면을 보여 줘요.
+    if (!peekAutoplay(id, number)) return;
     if (lib.wallet.total < d.episode_pings) return;
     autoTried.current = true;
     setAutoBusy(true);
@@ -2713,7 +2783,7 @@ function WatchPage({
       })
       .catch((e) => notify((e as Error).message, 'error'))
       .finally(() => setAutoBusy(false));
-  }, [d, current, user, lib.wallet.total, number, notify, reloadLibrary]);
+  }, [d, current, user, lib.wallet.total, id, number, notify, reloadLibrary]);
   const toggleAutoUnlock = async (enabled: boolean) => {
     if (!user) return;
     // 지금 보고 있는 잠긴 회차는 켜는 순간 몰래 열지 않습니다. 다음에 들어가는 회차부터 적용됩니다.
@@ -2787,8 +2857,9 @@ function WatchPage({
     let status = -1;
     try {
       // 처음 바이트가 아닌 구간을 요청해 시청 기록이 따로 남지 않게 합니다.
-      const r = await fetch(asset(playSrc), {
-        headers: { ...authHeaders(), Range: 'bytes=1-1' },
+      // 앱은 영상 태그와 똑같이 미디어 토큰(?mt=)만으로 확인해야 토큰 만료를 구분할 수 있어요.
+      const r = await fetch(videoSrc, {
+        headers: isNativeApp ? { Range: 'bytes=1-1' } : { ...authHeaders(), Range: 'bytes=1-1' },
         credentials: fetchCredentials,
         cache: 'no-store',
       });
@@ -2796,6 +2867,13 @@ function WatchPage({
       void r.body?.cancel().catch(() => {});
     } catch {
       status = -1;
+    }
+    // 앱에서 로그인은 살아 있는데 미디어 토큰만 만료된 경우: 토큰을 새로 받아 보던 위치에서 한 번 자동으로 다시 불러옵니다.
+    if (isNativeApp && status === 401 && user && !tokenRetried.current) {
+      tokenRetried.current = true;
+      await refreshMediaToken();
+      setSrcKey((k) => k + 1);
+      return;
     }
     const owner = !!user && (user.role === 'admin' || user.id === d?.owner_id);
     setVideoError(
@@ -2821,7 +2899,9 @@ function WatchPage({
       if (kind === 'login') loginWithReturn();
       return;
     }
-    video.current?.load();
+    // 주소(미디어 토큰 포함)를 새로 만들어 다시 불러옵니다. 위치는 onLoadedMetadata에서 마지막 위치로 돌려요.
+    await refreshMediaToken();
+    setSrcKey((k) => k + 1);
   };
   if (error)
     return (
@@ -2927,8 +3007,10 @@ function WatchPage({
           <>
             <video
               ref={video}
-              src={asset(playSrc)}
+              src={videoSrc}
               poster={asset(d.image)}
+              // 앱에서는 영상·자막이 다른 출처(운영 서버)라 crossOrigin이 있어야 자막(<track>)이 표시돼요.
+              crossOrigin={isNativeApp ? 'anonymous' : undefined}
               controls
               playsInline
               preload="metadata"
@@ -2937,7 +3019,9 @@ function WatchPage({
                 const v = video.current;
                 if (!v) return;
                 const h = lib.history.find((x) => x.drama_id === id && x.episode === number);
-                if (h && h.progress < v.duration - 2) v.currentTime = h.progress;
+                // 다시 불러온 경우(오류 후 재시도·토큰 갱신)는 이 화면에서 마지막으로 본 위치를 우선합니다.
+                const resumeAt = lastPos.current > 0 ? lastPos.current : h?.progress;
+                if (resumeAt && resumeAt < v.duration - 2) v.currentTime = resumeAt;
                 // 앞 회차가 끝나서 넘어온 경우에만 이어서 재생합니다.
                 if (takeAutoplay(id, number)) startPlayback();
               }}
@@ -2966,7 +3050,7 @@ function WatchPage({
               }}
             >
               {ep.has_subtitles ? (
-                <track kind="subtitles" srcLang="ko" label="한국어" default src={asset(`/api/subtitles/${id}/${number}`)} />
+                <track kind="subtitles" srcLang="ko" label="한국어" default src={subtitleSrc} />
               ) : null}
             </video>
             {needTap && !videoError && (

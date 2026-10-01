@@ -8,7 +8,7 @@
   margin-bottom: 14px;
   padding: 6px;
   border-radius: 14px;
-  border: 1px solid #22302a;
+  border: 1px solid #1e2533;
   background: #0e1516;
 }
 .ws-rail .ws-tabs {
@@ -46,12 +46,12 @@
   font-size: 9.5px;
 }
 .ws-rail .ws-tabs button.active {
-  border-color: #3f5a3c;
-  background: #c4f56213;
+  border-color: #364360;
+  background: #afb3da13;
 }
 .ws-rail .ws-tabs button.active > b {
   background: var(--lime);
-  color: #101710;
+  color: #0e1119;
 }
 .ws-rail .ws-progress {
   flex: 1;
@@ -71,10 +71,10 @@
   gap: 4px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid #2c3a33;
+  border: 1px solid #292f3e;
   background: #ffffff06;
   font-size: 11px;
-  color: #c9d8cd;
+  color: #c5ccdc;
   white-space: nowrap;
 }
 .ws-rail .next-action span {
@@ -82,7 +82,7 @@
 }
 .ws-rail .next-action.here,
 .ws-rail .next-action.done {
-  color: #8ea592;
+  color: #8893ab;
   border-style: dashed;
 }
 .ws-rail .next-action.done {
@@ -126,15 +126,15 @@
   gap: 8px;
   padding: 16px;
   border-radius: 14px;
-  border: 1px solid #27322c;
+  border: 1px solid #242935;
   background: #ffffff05;
   text-align: left;
-  color: #dbe6dd;
+  color: #d8dde9;
   min-height: 140px;
 }
 .ws-start-card:hover:not(:disabled) {
-  border-color: #c4f56266;
-  background: #c4f5620a;
+  border-color: #afb3da66;
+  background: #afb3da0a;
 }
 .ws-start-card > svg {
   color: var(--lime);
@@ -143,13 +143,13 @@
   font-size: 13px;
 }
 .ws-start-card small {
-  color: #8ea592;
+  color: #8893ab;
   font-size: 11px;
   line-height: 1.6;
 }
 .ws-start-card:first-child {
-  border-color: #3f5a3c;
-  background: #c4f5620d;
+  border-color: #364360;
+  background: #afb3da0d;
 }
 @media (max-width: 760px) {
   .ws-start-options {
@@ -178,7 +178,7 @@
   display: flex;
   flex-direction: column;
   background: #0f1516;
-  border-left: 1px solid #2c3a33;
+  border-left: 1px solid #292f3e;
   box-shadow: -20px 0 60px #000000aa;
   animation: ws-drawer-in 0.2s ease-out;
 }
@@ -187,7 +187,7 @@
   align-items: center;
   gap: 10px;
   padding: 12px 10px 12px 16px;
-  border-bottom: 1px solid #22302a;
+  border-bottom: 1px solid #1e2533;
 }
 .ws-drawer-head strong {
   display: inline-flex;
@@ -248,11 +248,11 @@
   margin-top: 16px;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid #2c3a33;
+  border: 1px solid #292f3e;
   background: #0e1516;
 }
 .ws-finishbar.done {
-  border-color: #3f5a3c;
+  border-color: #364360;
 }
 .ws-finishbar-info {
   display: flex;
@@ -304,7 +304,7 @@
 .ready-list {
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid #2c3a33;
+  border: 1px solid #292f3e;
   background: #ffffff05;
   margin-bottom: 14px;
 }
@@ -340,7 +340,7 @@
   gap: 8px;
   font-size: 12px;
   padding: 5px 0;
-  border-bottom: 1px dashed #1f2b26;
+  border-bottom: 1px dashed #1c212e;
 }
 .ready-list li:last-child {
   border-bottom: 0;
@@ -356,10 +356,10 @@
   font-size: 11px;
   font-weight: 700;
   background: #ffffff10;
-  color: #8ea592;
+  color: #8893ab;
 }
 .ready-list li.ok i {
-  background: #c4f56222;
+  background: #afb3da22;
   color: var(--lime);
 }
 .ready-list li.must i {
@@ -367,7 +367,7 @@
   color: #f5d38e;
 }
 .ready-list li.ok span {
-  color: #8ea592;
+  color: #8893ab;
 }
 .ready-list li span {
   flex: 1;

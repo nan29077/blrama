@@ -239,6 +239,8 @@ export async function migrate(db) {
   await ensureColumn(db, 'dramas', 'likeness_confirmed', 'INTEGER NOT NULL DEFAULT 0');
   await ensureColumn(db, 'dramas', 'ai_usage', "TEXT NOT NULL DEFAULT 'none'");
   await ensureColumn(db, 'dramas', 'declared_at', 'TEXT');
+  // 관람 등급(all·12·15·18). PD가 등록할 때 정하고, 관리자가 심사할 때 바꿀 수 있어요.
+  await ensureColumn(db, 'dramas', 'age_rating', "TEXT NOT NULL DEFAULT '15'");
   await ensureColumn(db, 'episodes', 'source', "TEXT NOT NULL DEFAULT 'upload'");
   await ensureColumn(db, 'episodes', 'subtitles', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'episodes', 'studio_episode_id', 'TEXT');
