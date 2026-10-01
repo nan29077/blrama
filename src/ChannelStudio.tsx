@@ -17,6 +17,8 @@ import { Empty, navigate } from './App';
 import { ChannelBanner, ChannelLogo, channelStyle, channelThemes } from './Channels';
 import { asset } from './platform';
 import { GENRES, SHELVES } from './genres';
+import { useConfirm } from './confirm';
+import { useLeaveGuard } from './useLeaveGuard';
 
 type StudioChannel = { channel: Channel | null; categories: ChannelCategory[]; dramas: Drama[] };
 const channelBannerPresets = [
@@ -110,6 +112,14 @@ export default function ChannelStudio({
     [busy, setBusy] = useState(false),
     [uploading, setUploading] = useState(''),
     [category, setCategory] = useState('');
+  const [ask, confirmUi] = useConfirm();
+  // 마지막으로 저장(또는 불러온) 값. 지금 입력과 다르면 떠나기 전에 묻습니다.
+  const [savedForm, setSavedForm] = useState<Form | null>(null);
+  const applyForm = (f: Form) => {
+    setForm(f);
+    setSavedForm(f);
+  };
+  useLeaveGuard(!!savedForm && JSON.stringify(form) !== JSON.stringify(savedForm), '저장하지 않은 방송국 정보가 있어요. 저장하지 않고 이 화면을 떠날까요?');
   // keepForm: 카테고리·진열처럼 폼과 무관한 작업 뒤에는 편집 중인 배너·문구를 서버 값으로 덮어쓰지 않습니다.
   const load = useCallback(async (keepForm = false) => {
     try {
@@ -118,7 +128,7 @@ export default function ChannelStudio({
       if (r.channel && keepForm) {
         /* 편집 중인 폼 유지 */
       } else if (r.channel)
-        setForm({
+        applyForm({
           name: r.channel.name,
           slug: r.channel.slug,
           tagline: r.channel.tagline,
@@ -133,7 +143,7 @@ export default function ChannelStudio({
           status: r.channel.status,
         });
       else
-        setForm({
+        applyForm({
           ...blank,
           name: user.name + ' 스튜디오',
           slug: 'studio-' + user.id.slice(0, 6),
@@ -203,6 +213,7 @@ export default function ChannelStudio({
   } as unknown as Channel;
   return (
     <>
+      {confirmUi}
       {data.channel && (
         <div className="stats-grid">
           <div className="stat-card">
@@ -513,12 +524,18 @@ export default function ChannelStudio({
                   <button
                     aria-label={c.name + ' 삭제'}
                     disabled={busy}
-                    onClick={() =>
-                      void act(
-                        () => api('/studio/channel/categories/' + c.id, 'DELETE'),
-                        '카테고리를 삭제했어요.',
+                    onClick={async () => {
+                      if (
+                        !(await ask({
+                          title: `'${c.name}' 카테고리를 삭제할까요?`,
+                          text: '이 카테고리에 넣어 둔 작품은 방송국 진열에서 카테고리 없이 보여요. 작품 자체는 지워지지 않아요.',
+                          ok: '삭제',
+                          danger: true,
+                        }))
                       )
-                    }
+                        return;
+                      void act(() => api('/studio/channel/categories/' + c.id, 'DELETE'), '카테고리를 삭제했어요.');
+                    }}
                   >
                     <Trash2 size={13} />
                   </button>

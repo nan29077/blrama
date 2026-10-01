@@ -1,8 +1,7 @@
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import App from './App';
+import App, { navigate } from './App';
 import '@fontsource-variable/noto-sans-kr';
-import '@fontsource-variable/noto-serif-kr';
 import './style.css';
 import './brand.css';
 import './admin-mobile.css';
@@ -27,6 +26,11 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
   }
 }
 installTableLabels();
+// 제목용 명조체(Noto Serif KR)는 첫 화면을 그린 뒤에 불러옵니다(첫 로드에서 글꼴·CSS 용량을 줄이기 위해).
+// 불러오기 전에는 기본 글꼴로 보이다가 바뀝니다.
+const loadSerif = () => void import('@fontsource-variable/noto-serif-kr').catch(() => {});
+if ('requestIdleCallback' in window) (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(loadSerif);
+else setTimeout(loadSerif, 600);
 const root: Root = import.meta.hot?.data.root ?? createRoot(document.getElementById('root')!);
 if (import.meta.hot)
   import.meta.hot.dispose((data) => {
@@ -47,17 +51,35 @@ if (isNativeApp) {
   // 패키지를 불러오지 않고 앱이 넣어 주는 플러그인(Capacitor.Plugins.App)을 바로 씁니다
   // (웹 개발 서버에서 @capacitor/app 설치 여부와 상관없이 화면이 뜨도록).
   type BackEvent = { canGoBack: boolean };
-  type NativeAppPlugin = { addListener: (e: 'backButton', cb: (ev: BackEvent) => void) => unknown; exitApp: () => Promise<void> };
+  type NativeAppPlugin = {
+    addListener: ((e: 'backButton', cb: (ev: BackEvent) => void) => unknown) & ((e: 'appUrlOpen', cb: (ev: { url: string }) => void) => unknown);
+    exitApp: () => Promise<void>;
+  };
   const NativeApp = (window as unknown as { Capacitor?: { Plugins?: { App?: NativeAppPlugin } } }).Capacitor?.Plugins?.App;
   NativeApp?.addListener('backButton', ({ canGoBack }) => {
     // 열린 창(팝업)이 있으면 먼저 닫습니다.
-    const open = document.querySelector('.modal-backdrop, .ws-overlay, .preview-overlay');
+    const open = document.querySelector('.modal-backdrop, .ws-overlay, .preview-overlay, .viewer-bell-panel');
     if (open) {
       (document.activeElement || document.body).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       return;
     }
-    if (canGoBack || history.length > 1) history.back();
-    else void NativeApp.exitApp();
+    // 홈에서는 앱을 닫고, 그 밖의 화면은 뒤로(앱 안 기록이 없으면 홈으로) 갑니다.
+    // (history.length는 '앞으로' 기록까지 세므로 기준으로 쓰지 않습니다.)
+    const here = location.hash.replace(/^#\/?/, '');
+    if (!here || here === 'home') void NativeApp.exitApp();
+    else if (canGoBack) history.back();
+    else navigate('home', { replace: true });
+  });
+  // 공유 링크(https://…/share/drama/ID 등)로 앱이 열리면 해당 화면으로 이동합니다(App Link·Universal Link 설정 시).
+  NativeApp?.addListener('appUrlOpen', ({ url }) => {
+    try {
+      const u = new URL(url);
+      const share = /^\/share\/(drama|channel)\/([^/]+)/.exec(u.pathname);
+      if (share) navigate(`${share[1]}/${decodeURIComponent(share[2])}`);
+      else if (u.hash.startsWith('#/')) navigate(u.hash.slice(2));
+    } catch {
+      // 알 수 없는 주소는 무시합니다.
+    }
   });
 } else {
   render();

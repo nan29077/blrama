@@ -372,7 +372,7 @@ export function createAiEngine({ db, uploadDir, demo }) {
     if (capability === 'image' || capability === 'video') {
       const minor = minorTerm([String(input.prompt || '').replace(/\(never show[^)]*\)/gi, '')]);
       if (minor)
-        throw error(400, `등장인물은 모두 성인으로 그려야 해요. 미성년으로 보이는 표현을 빼 주세요: "${minor}"`, { code: 'blocked_term' });
+        throw error(400, `등장인물은 모두 성인으로 그려야 해요. 미성년으로 보이는 표현을 빼 주세요: "${minor}" (회상 장면이나 과거 설정도 이미지에는 성인 모습으로 그려야 해요.)`, { code: 'blocked_term' });
     }
     const list = await candidates({ capability, requested, tier, tags, seconds: input.seconds, needImage: !!(input.image || input.editImage || input.refImage || input.refImages?.length), needCamera: !!input.needCamera, needEnd: !!input.endImage, needMask: !!input.maskImage, excludeCn, exclude, requireImage: !!input._requireImage, input, units }, settings);
     const model = list[0];

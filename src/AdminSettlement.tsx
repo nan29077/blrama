@@ -33,6 +33,7 @@ import { entryStatus, payoutStatus } from './Settlement';
 import { RevealAccount } from './AdminOps';
 import NumberInput from './NumberInput';
 import { useConfirm } from './confirm';
+import { useLeaveGuard } from './useLeaveGuard';
 
 const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 // setMonth(-1)은 31일에 달을 건너뛰므로(5/31 → 4/31 → 5/1) 1일로 고정해 계산합니다.
@@ -55,7 +56,8 @@ export function AdminSettlementPanel({
     [closing, setClosing] = useState(lastMonth()),
     [payout, setPayout] = useState<Payout | null>(null),
     [memo, setMemo] = useState(''),
-    [filter, setFilter] = useState('requested');
+    [filter, setFilter] = useState('requested'),
+    [entryLimit, setEntryLimit] = useState(120);
   const [ask, confirmUi] = useConfirm();
   const load = useCallback(async (key: string) => {
     try {
@@ -93,6 +95,7 @@ export function AdminSettlementPanel({
     const payouts = data.payouts.filter((p) => filter === 'all' || p.status === filter);
     return (
       <>
+        {confirmUi}
         <div className="stats-grid two">
           <div className="stat-card">
             <div>
@@ -292,27 +295,44 @@ export function AdminSettlementPanel({
                   <button
                     className="secondary"
                     disabled={busy}
-                    onClick={() =>
+                    onClick={async () => {
+                      if (
+                        !(await ask({
+                          title: '출금 요청을 반려할까요?',
+                          text: `${payout.pd_name} · ${won(payout.amount)}. 반려하면 정산 금액이 PD에게 다시 출금 가능 금액으로 돌아가요.`,
+                          ok: '반려',
+                          danger: true,
+                        }))
+                      )
+                        return;
                       void act(async () => {
                         await api('/admin/payouts/' + payout.id, 'POST', {
                           action: 'rejected',
                           memo,
                         });
                         setPayout(null);
-                      }, '출금을 반려했어요. 정산 금액이 복구됩니다.')
-                    }
+                      }, '출금을 반려했어요. 정산 금액이 복구됩니다.');
+                    }}
                   >
                     반려
                   </button>
                   <button
                     className="primary"
                     disabled={busy}
-                    onClick={() =>
+                    onClick={async () => {
+                      if (
+                        !(await ask({
+                          title: '지급 완료로 처리할까요?',
+                          text: `${payout.pd_name}님(예금주 ${payout.account_holder})에게 ${won(payout.amount)}을 실제로 이체했는지 확인해 주세요. 지급 완료는 되돌릴 수 없어요.`,
+                          ok: '지급 완료',
+                        }))
+                      )
+                        return;
                       void act(async () => {
                         await api('/admin/payouts/' + payout.id, 'POST', { action: 'paid', memo });
                         setPayout(null);
-                      }, '지급 완료로 처리했어요.')
-                    }
+                      }, '지급 완료로 처리했어요.');
+                    }}
                   >
                     지급 완료
                   </button>
@@ -367,8 +387,8 @@ export function AdminSettlementPanel({
           <div>
             <h3>구독 매출 월 마감</h3>
             <p>
-              B엘라마 패스 매출을 해당 월 시청 회차 비중으로 PD에게 배분합니다. 한 달은 한 번만 마감할 수
-              있으니, 가중치·배분 제외·상한 설정을 먼저 확인한 뒤 실행해 주세요.
+              B엘라마 패스 매출을 해당 월 시청 회차 비중으로 PD에게 배분합니다. 마감한 달을 다시 마감하려면
+              아래 목록에서 '마감 취소'를 먼저 해야 하니, 가중치·배분 제외·상한 설정을 확인한 뒤 실행해 주세요.
             </p>
           </div>
         </div>
@@ -387,7 +407,7 @@ export function AdminSettlementPanel({
               void (async () => {
                 const go = await ask({
                   title: `${closing} 구독 정산을 마감할까요?`,
-                  text: '마감한 달은 다시 마감할 수 없어요. PD 가중치·배분 제외·상한 설정이 맞는지 먼저 확인해 주세요.',
+                  text: "다시 마감하려면 '마감 취소'를 먼저 해야 해요. PD 가중치·배분 제외·상한 설정이 맞는지 확인해 주세요.",
                   ok: '월 마감 실행',
                 });
                 if (!go) return;
@@ -414,6 +434,24 @@ export function AdminSettlementPanel({
             {data.closed.map((c) => (
               <span key={c.period}>
                 {c.period} · {c.creators}개 방송국 · {won(c.gross)}
+                <button
+                  className="text-link"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (
+                      !(await ask({
+                        title: `${c.period} 마감을 취소할까요?`,
+                        text: '이 달의 구독 배분 항목을 지우고 다시 마감할 수 있게 해요. 이미 출금 신청·지급되었거나 라마로 바꾼 배분이 있으면 취소할 수 없어요.',
+                        ok: '마감 취소',
+                        danger: true,
+                      }))
+                    )
+                      return;
+                    void act(() => api('/admin/settlements/reopen', 'POST', { period: c.period }), `${c.period} 마감을 취소했어요. 설정을 확인한 뒤 다시 마감해 주세요.`);
+                  }}
+                >
+                  마감 취소
+                </button>
               </span>
             ))}
           </div>
@@ -516,7 +554,7 @@ export function AdminSettlementPanel({
                 </tr>
               </thead>
               <tbody>
-                {data.entries.slice(0, 120).map((e) => (
+                {data.entries.slice(0, entryLimit).map((e) => (
                   <tr key={e.id}>
                     <td className="nowrap">{day(e.created_at)}</td>
                     <td>{e.pd_name}</td>
@@ -535,6 +573,16 @@ export function AdminSettlementPanel({
                 ))}
               </tbody>
             </table>
+            <p className="panel-footnote">
+              {data.entries.length > entryLimit ? (
+                <button className="text-link" onClick={() => setEntryLimit(data.entries.length)}>
+                  {data.entries.length - entryLimit}건 더 보기
+                </button>
+              ) : null}{' '}
+              {data.entries.length >= 400
+                ? '최근 400건까지 보여요. 이전 내역은 위에서 월을 골라 확인하세요(CSV도 같은 범위).'
+                : `${data.entries.length}건`}
+            </p>
           </div>
         ) : (
           <Empty title="정산 내역이 없어요" text="테스트 구매가 발생하면 원장이 생성됩니다." />
@@ -837,12 +885,15 @@ export function AdminTaxPanel({ notify }: { notify: (s: string) => void }) {
 
 export function AdminSettingsPanel({ notify }: { notify: (s: string) => void }) {
   const [form, setForm] = useState<PlatformSettings | null>(null),
+    [saved, setSaved] = useState<PlatformSettings | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  useLeaveGuard(!!saved && !!form && JSON.stringify(form) !== JSON.stringify(saved), '저장하지 않은 요금·정산 정책이 있어요. 저장하지 않고 이 화면을 떠날까요?');
   const load = useCallback(async () => {
     try {
       const r = await api<{ settings: PlatformSettings }>('/admin/settings');
       setForm(r.settings);
+      setSaved(r.settings);
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -891,6 +942,7 @@ export function AdminSettingsPanel({ notify }: { notify: (s: string) => void }) 
               'payout_notice',
             ] as const;
             await api('/admin/settings', 'PUT', Object.fromEntries(keys.map((k) => [k, form[k]])));
+            setSaved(form);
             notify('플랫폼 설정을 저장했어요.');
           } catch (err) {
             notify((err as Error).message);

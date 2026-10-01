@@ -1,3 +1,6 @@
+# 로컬 개발: `docker compose up db` 로 PostgreSQL만 띄웁니다.
+# 운영과 같은 구성 확인: `docker compose --profile app up --build` (웹 서버 + 합성 worker + DB)
+#   필요한 환경변수: POSTGRES_PASSWORD, AI_SECRET_KEY(32자 이상), APP_ORIGIN(https://…)
 services:
   db:
     image: postgres:17-alpine
@@ -14,5 +17,37 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  app:
+    profiles: ['app']
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bellama:${POSTGRES_PASSWORD}@db:5432/bellama
+      APP_ORIGIN: ${APP_ORIGIN:-https://localhost}
+      AI_SECRET_KEY: ${AI_SECRET_KEY:?Set AI_SECRET_KEY (32+ characters)}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      COMPOSE_WORKER: external
+    ports:
+      - '127.0.0.1:3036:3036'
+    volumes:
+      - bellama-uploads:/app/uploads
+      - bellama-data:/app/data
+  worker:
+    profiles: ['app']
+    build: .
+    command: ['node', 'server/worker.mjs']
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bellama:${POSTGRES_PASSWORD}@db:5432/bellama
+      AI_SECRET_KEY: ${AI_SECRET_KEY:?Set AI_SECRET_KEY (32+ characters)}
+    volumes:
+      - bellama-uploads:/app/uploads
+      - bellama-data:/app/data
 volumes:
   bellama-postgres:
+  bellama-uploads:
+  bellama-data:

@@ -240,7 +240,7 @@ export function ChannelPage({
     return (
       <Empty
         title="방송국을 찾을 수 없어요"
-        text={error}
+        text={/찾을 수 없/.test(error) ? '주소가 바뀌었거나 비공개로 전환된 방송국이에요.' : error}
         action={() => navigate('channels')}
         label="방송국 목록"
       />

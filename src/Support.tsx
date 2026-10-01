@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MessageCircle, Send, Search } from 'lucide-react';
 import { api, type User } from './api';
 import { Empty, loginWithReturn } from './App';
+import { useLeaveGuard } from './useLeaveGuard';
 
 type Ticket = {
   id: string;
@@ -33,10 +34,11 @@ export default function Support({
     [query, setQuery] = useState(''),
     [status, setStatus] = useState('all');
   const [replies, setReplies] = useState<Record<string, string>>({});
+  useLeaveGuard(!!(title.trim() || body.trim()), '작성 중인 문의가 있어요. 보내지 않고 이 화면을 떠날까요?');
   async function reload() {
     try {
       // 시청자 화면의 '문의하기'는 관리자라도 본인 문의만 보여 줍니다(전체 문의는 관리자 화면에서).
-      setTickets(await api<Ticket[]>(managing ? '/support' : '/support?mine=1'));
+      setTickets(await api<Ticket[]>(managing ? '/support' + (status !== 'all' ? '?status=' + status : '') : '/support?mine=1'));
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -47,7 +49,9 @@ export default function Support({
   useEffect(() => {
     if (user) void reload();
     else setLoading(false);
-  }, [user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, status]);
+  const [followups, setFollowups] = useState<Record<string, string>>({});
   if (!user)
     return (
       <div className="page-content">
@@ -165,12 +169,13 @@ export default function Support({
             />
           </label>
           <select aria-label="문의 상태" value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="all">전체 {tickets.length}건</option>
-            <option value="open">
-              답변 대기 {tickets.filter((t) => t.status === 'open').length}건
-            </option>
+            <option value="all">전체</option>
+            <option value="open">답변 대기</option>
             <option value="answered">답변 완료</option>
           </select>
+          <small className="muted">
+            {filtered.length}건{tickets.length >= 300 ? ' · 최근 300건까지 보여요' : ''}
+          </small>
         </div>
       )}
       {error ? (
@@ -215,6 +220,46 @@ export default function Support({
                   <p>{t.reply}</p>
                   <small>{t.replied_at && new Date(t.replied_at).toLocaleString('ko-KR')}</small>
                 </div>
+              )}
+              {!managing && t.status === 'answered' && (
+                <form
+                  className="ticket-followup"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const text = (followups[t.id] || '').trim();
+                    if (busy) return;
+                    if (text.length < 2) {
+                      notify('추가로 궁금한 점을 2자 이상 입력해 주세요.');
+                      return;
+                    }
+                    setBusy(true);
+                    try {
+                      await api('/support/' + t.id + '/followup', 'POST', { body: text });
+                      setFollowups({ ...followups, [t.id]: '' });
+                      await reload();
+                      notify('추가 문의를 남겼어요. 답변이 오면 알림으로 알려 드려요.');
+                    } catch (e) {
+                      notify((e as Error).message);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  <label>
+                    추가 문의
+                    <textarea
+                      rows={3}
+                      maxLength={2000}
+                      value={followups[t.id] || ''}
+                      onChange={(e) => setFollowups({ ...followups, [t.id]: e.target.value })}
+                      placeholder="답변에 대해 더 궁금한 점이 있으면 남겨 주세요"
+                    />
+                  </label>
+                  <button className="secondary compact" disabled={busy}>
+                    <Send size={15} />
+                    추가 문의 남기기
+                  </button>
+                </form>
               )}
               {managing && (
                 <form

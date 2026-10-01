@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { hostname } from 'node:os';
 import { composeEpisode, composeTrailer } from './compose.mjs';
 import { notify } from '../notify.mjs';
 import { publicError } from './engine.mjs';
@@ -27,7 +28,21 @@ export function subtitleStyleOf(raw) {
   };
 }
 export function createRenderWorker({ db, uploadDir }) {
-  const workerId = randomUUID();
+  // 같은 컴퓨터에서 다시 시작한 경우를 알아볼 수 있게 컴퓨터 이름을 앞에 붙입니다.
+  const host = hostname();
+  const workerId = `${host}:${process.pid}:${randomUUID().slice(0, 8)}`;
+  // 살아 있는 작업 프로세스는 맡은 합성에 주기적으로 표시(heartbeat_at)를 남기고,
+  // 이 표시가 2분 넘게 끊긴 합성만 다른 프로세스가 되찾아 다시 대기열에 넣습니다(여러 대 운영 시 중복 합성 방지).
+  const STALE_MS = 2 * 60_000;
+  let lastBeat = 0,
+    lastReclaim = 0;
+  async function reclaim({ sameHost = false } = {}) {
+    const cutoff = new Date(Date.now() - STALE_MS).toISOString();
+    await db.run(
+      `UPDATE studio_renders SET status='queued',claimed_by=NULL,progress=0 WHERE status='running' AND (claimed_by IS NULL OR claimed_by<>?) AND (claimed_by IS NULL OR heartbeat_at IS NULL OR heartbeat_at<?${sameHost ? ' OR claimed_by LIKE ?' : ''})`,
+      sameHost ? [workerId, cutoff, `${host}:%`] : [workerId, cutoff],
+    );
+  }
   const subsDir = path.join(uploadDir, 'subtitles');
   const running = new Set();
   let timer = null;
@@ -161,10 +176,19 @@ export function createRenderWorker({ db, uploadDir }) {
     }
   }
   async function tick() {
+    const t = Date.now();
+    if (running.size && t - lastBeat > 15_000) {
+      lastBeat = t;
+      await db.run("UPDATE studio_renders SET heartbeat_at=? WHERE claimed_by=? AND status='running'", [iso(), workerId]);
+    }
+    if (t - lastReclaim > 60_000) {
+      lastReclaim = t;
+      await reclaim();
+    }
     if (running.size >= concurrency) return;
     const next = await db.all("SELECT * FROM studio_renders WHERE status='queued' AND claimed_by IS NULL ORDER BY created_at LIMIT ?", [concurrency - running.size]);
     for (const job of next) {
-      const r = await db.run("UPDATE studio_renders SET status='running',claimed_by=?,started_at=? WHERE id=? AND status='queued' AND claimed_by IS NULL", [workerId, iso(), job.id]);
+      const r = await db.run("UPDATE studio_renders SET status='running',claimed_by=?,started_at=?,heartbeat_at=? WHERE id=? AND status='queued' AND claimed_by IS NULL", [workerId, iso(), iso(), job.id]);
       if (Number(r?.rowCount ?? r?.changes ?? 0) === 0) continue;
       running.add(job.id);
       void run(job).finally(() => running.delete(job.id));
@@ -195,8 +219,12 @@ export function createRenderWorker({ db, uploadDir }) {
     },
     // 서버가 합성 중에 꺼졌다면, 하던 합성을 처음부터 다시 대기열에 넣습니다.
     async recover() {
-      await db.run("UPDATE studio_renders SET status='queued',claimed_by=NULL,progress=0 WHERE status='running'");
-      await db.run("UPDATE studio_episodes SET compose_progress=0 WHERE status='composing'");
+      // 다른 서버·작업 프로세스가 지금 처리 중인 합성은 건드리지 않고, 같은 컴퓨터의 이전 프로세스 것과 표시가 끊긴 것만 되찾습니다.
+      await reclaim({ sameHost: true });
+      lastReclaim = Date.now();
+      await db.run(
+        "UPDATE studio_episodes SET compose_progress=0 WHERE status='composing' AND NOT EXISTS (SELECT 1 FROM studio_renders r WHERE r.target_id=studio_episodes.id AND r.status='running')",
+      );
       // 예전 방식으로 멈춘 회차(대기열에 없음)는 실패로 표시해 다시 합성할 수 있게 합니다.
       await db.run(
         "UPDATE studio_episodes SET status='compose_failed',compose_error='서버가 다시 시작돼 합성을 멈췄어요. 다시 합성해 주세요.' WHERE status='composing' AND NOT EXISTS (SELECT 1 FROM studio_renders r WHERE r.target_id=studio_episodes.id AND r.status='queued')",

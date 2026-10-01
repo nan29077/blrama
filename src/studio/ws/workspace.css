@@ -31,7 +31,7 @@
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #292e3b;
-  background: #121a1c;
+  background: #12151c;
   text-align: left;
   min-width: 0;
 }
@@ -310,7 +310,7 @@ button.job-badge {
   padding: 14px;
   border: 1px solid #232834;
   border-radius: 14px;
-  background: #121a1c;
+  background: #12151c;
   min-width: 0;
 }
 .ws-cast-media {
@@ -325,7 +325,7 @@ button.job-badge {
   aspect-ratio: 9 / 16;
   object-fit: cover;
   border-radius: 10px;
-  background: #0d1214;
+  background: #0d0f14;
 }
 .ws-cast-media > svg {
   padding: 40px;
@@ -452,7 +452,7 @@ button.job-badge {
   width: 96px;
   aspect-ratio: 9 / 16;
   border-radius: 8px;
-  background: #0d1214;
+  background: #0d0f14;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -603,7 +603,7 @@ button.job-badge {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #232834;
-  background: #121a1c;
+  background: #12151c;
 }
 .ws-line.selected {
   border-color: #b28cff;
@@ -781,7 +781,7 @@ button.job-badge {
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid transparent;
-  background: #0d1214;
+  background: #0d0f14;
   padding: 0;
 }
 .ws-clip img {
@@ -849,7 +849,7 @@ button.job-badge {
   border: 1px solid #292e3b;
   border-radius: 14px;
   padding: 14px;
-  background: #11181a;
+  background: #11141a;
 }
 .ws-detail-nav {
   display: flex;
@@ -881,7 +881,7 @@ button.job-badge {
   aspect-ratio: 9 / 16;
   border-radius: 12px;
   overflow: hidden;
-  background: #0b1012;
+  background: #0b0d12;
   display: grid;
   place-items: center;
   color: #5c6270;
@@ -1002,7 +1002,7 @@ button.job-badge {
   aspect-ratio: 9 / 16;
   border-radius: 12px;
   overflow: hidden;
-  background: #0b1012;
+  background: #0b0d12;
 }
 .ws-sub-preview img {
   width: 100%;
@@ -1165,7 +1165,7 @@ button.job-badge {
   border: 2px solid transparent;
   border-radius: 8px;
   overflow: hidden;
-  background: #0d1214;
+  background: #0d0f14;
 }
 .ws-pick-grid button.selected {
   border-color: var(--lime);
@@ -1195,7 +1195,7 @@ button.job-badge {
   border: 2px solid transparent;
   border-radius: 10px;
   overflow: hidden;
-  background: #0d1214;
+  background: #0d0f14;
 }
 .ws-poster-grid figure.main {
   border-color: var(--lime);
@@ -1251,7 +1251,7 @@ button.job-badge {
   position: fixed;
   inset: 0;
   z-index: 70;
-  background: #020608e0;
+  background: #040406e0;
   overflow-y: auto;
   padding: 24px 16px;
 }
@@ -1454,7 +1454,7 @@ button.job-badge {
   border: 1px solid #232834;
   border-radius: 12px;
   margin: 0 0 10px;
-  background: #0f1517;
+  background: #0f1117;
 }
 .ws-fold-head {
   display: flex;
@@ -1517,7 +1517,7 @@ button.job-badge {
     z-index: 15;
     margin: -14px -14px 10px;
     padding: 10px 14px;
-    background: #11181af2;
+    background: #11141af2;
     backdrop-filter: blur(8px);
     border-bottom: 1px solid #232834;
     border-radius: 14px 14px 0 0;

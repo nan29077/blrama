@@ -9,7 +9,7 @@
   padding: 6px;
   border-radius: 14px;
   border: 1px solid #1e2533;
-  background: #0e1516;
+  background: #0e1016;
 }
 .ws-rail .ws-tabs {
   display: flex;
@@ -177,7 +177,7 @@
   width: min(640px, 100vw);
   display: flex;
   flex-direction: column;
-  background: #0f1516;
+  background: #0f1116;
   border-left: 1px solid #292f3e;
   box-shadow: -20px 0 60px #000000aa;
   animation: ws-drawer-in 0.2s ease-out;
@@ -249,7 +249,7 @@
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid #292f3e;
-  background: #0e1516;
+  background: #0e1016;
 }
 .ws-finishbar.done {
   border-color: #364360;

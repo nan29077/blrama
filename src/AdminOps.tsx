@@ -3,6 +3,7 @@ import { AlertTriangle, Eye, Info, Mail, MessageSquare, Scale, Send, ShieldAlert
 import { api, moment, won } from './api';
 import { Empty } from './App';
 import NumberInput from './NumberInput';
+import { useLeaveGuard } from './useLeaveGuard';
 
 // 최고 관리자 운영 화면 모음(2026-09-29)
 //  - MessagingPanel: 이메일·문자 발송 방식(사용 안 함·기록만·웹훅) 설정, 테스트 발송, 최근 발송 기록
@@ -129,7 +130,7 @@ export function MessagingPanel({ notify }: { notify: Notify }) {
           </div>
           {data.production && (form.email_provider === 'log' || form.sms_provider === 'log') && (
             <p className="review-alert" role="alert">
-              ‘기록만 남기기’는 실제로 메일·문자를 보내지 않아요. 운영 환경에서는 웹훅이나 업체 연결을 골라 주세요.
+              ‘기록만 남기기’는 실제로 메일·문자를 보내지 않아 운영 환경에서는 저장할 수 없어요. 웹훅이나 업체 연결을 골라 주세요.
             </p>
           )}
           <h4 className="spaced-title">웹훅 (외부 발송 중계)</h4>
@@ -358,16 +359,20 @@ export function SubscriptionRulesPanel({ notify }: { notify: Notify }) {
     [preview, setPreview] = useState<Preview | null>(null),
     [period, setPeriod] = useState(thisMonth),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [savedRules, setSavedRules] = useState<SubSettings | null>(null);
+  useLeaveGuard(!!savedRules && !!form && JSON.stringify(form) !== JSON.stringify(savedRules), '저장하지 않은 구독 배분 설정이 있어요. 저장하지 않고 이 화면을 떠날까요?');
   const load = useCallback(async () => {
     try {
       const r = await api<{ settings: SubSettings }>('/admin/settings');
-      setForm({
+      const next = {
         sub_view_rules_enabled: Number(r.settings.sub_view_rules_enabled ?? 1),
         sub_min_progress_pct: Number(r.settings.sub_min_progress_pct ?? 30),
         sub_cap_per_drama: Number(r.settings.sub_cap_per_drama ?? 20),
         sub_cap_per_user: Number(r.settings.sub_cap_per_user ?? 200),
-      });
+      };
+      setForm(next);
+      setSavedRules(next);
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -405,6 +410,7 @@ export function SubscriptionRulesPanel({ notify }: { notify: Notify }) {
           setBusy(true);
           try {
             await api('/admin/settings', 'PUT', form);
+            setSavedRules(form);
             await loadPreview(period);
             notify('구독 배분 규칙을 저장했어요.');
           } catch (err) {

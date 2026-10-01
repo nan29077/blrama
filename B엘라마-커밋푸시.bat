@@ -16,7 +16,15 @@ echo %ORIGIN% | findstr /I "nan29077/blrama" >nul
 if errorlevel 1 ( echo [ERROR] origin is not nan29077/blrama. Stopped. & pause & exit /b 1 )
 
 if exist ".git\index.lock" (
-  echo [WARN] Removing stale .git\index.lock
+  rem 다른 git 작업(Codex·IDE 등)이 실행 중이면 잠금 파일을 지우지 않고 멈춥니다(저장소 손상 방지).
+  tasklist /FI "IMAGENAME eq git.exe" 2>nul | findstr /I "git.exe" >nul
+  if not errorlevel 1 (
+    echo [ERROR] git is running in another program. Close it and run again.
+    pause & exit /b 1
+  )
+  echo [WARN] .git\index.lock exists but no git process is running.
+  choice /C YN /M "Remove the stale lock file"
+  if errorlevel 2 ( echo Stopped. & pause & exit /b 1 )
   del /q ".git\index.lock"
 )
 

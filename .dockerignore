@@ -8,3 +8,12 @@ docs
 test-results
 dist
 *.log
+.github
+tests
+Claude outputs
+android
+ios
+playwright-report
+*.bat
+*.ps1
+.claude

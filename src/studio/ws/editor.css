@@ -50,7 +50,7 @@
   pointer-events: none;
 }
 .se-status span {
-  background: #0b1012cc;
+  background: #0b0d12cc;
   backdrop-filter: blur(4px);
   border-radius: 999px;
   padding: 3px 8px;
@@ -68,7 +68,7 @@
   padding: 12px;
   border: 1px solid #292f3e;
   border-radius: 16px;
-  background: linear-gradient(180deg, #131b1a, #0f1516);
+  background: linear-gradient(180deg, #13151b, #0f1116);
   box-shadow: 0 12px 34px #00000045;
   min-width: 0;
 }
@@ -155,7 +155,7 @@
   max-width: calc(100vw - 260px); /* 왼쪽 메뉴 폭만큼 빼서 오른쪽으로 넘치지 않게 */
   border-radius: 14px;
   border: 1px solid #2f384b;
-  background: #101716;
+  background: #101217;
   box-shadow: 0 18px 50px #000000aa;
   overflow: hidden;
 }
@@ -209,7 +209,7 @@
   font-size: 13px;
   line-height: 1.7;
   border-color: transparent;
-  background: #0b1113;
+  background: #0b0d13;
 }
 .se-input textarea:focus {
   outline: none;
@@ -224,7 +224,7 @@
   padding: 6px;
   border-radius: 12px;
   border: 1px solid #2f384b;
-  background: #101716;
+  background: #101217;
   box-shadow: 0 14px 40px #000000aa;
   display: flex;
   flex-direction: column;
@@ -332,7 +332,7 @@
   margin: 0;
   padding: 9px 10px;
   font-size: 12px;
-  background: #0b1113;
+  background: #0b0d13;
   border-color: transparent;
 }
 .se-dialogue select:focus,
@@ -468,7 +468,7 @@
   display: inline-flex;
   padding: 3px;
   border-radius: 11px;
-  background: #0b1113;
+  background: #0b0d13;
   border: 1px solid #272e3e;
 }
 .se-target button {
@@ -612,7 +612,7 @@
   .se-stage .ws-frame img,
   .se-stage .ws-frame video {
     object-fit: contain;
-    background: #0b1012;
+    background: #0b0d12;
   }
 }
 @media (max-width: 760px) {

@@ -46,6 +46,7 @@ export function serialRoutes({ app, db, fail, now, roles, owned, mediaPath, demo
   app.patch('/api/studio/dramas/:id/episodes/:number/schedule', roles('pd', 'admin'), async (req, res) => {
     const b = z.object({ publish_at: z.string().datetime().nullable() }).parse(req.body);
     const number = z.coerce.number().int().min(1).parse(req.params.number);
+    let released = null;
     await db.transaction(async () => {
       const d = await owned(req, true);
       const e = await epOf(d, number);
@@ -55,7 +56,19 @@ export function serialRoutes({ app, db, fail, now, roles, owned, mediaPath, demo
       // 승인되어 예약 대기 중인데 예약을 지우면 바로 공개합니다.
       const next = e.review_status === 'scheduled' && !b.publish_at ? 'approved' : e.review_status;
       await db.run('UPDATE episodes SET publish_at=?,review_status=? WHERE id=?', [b.publish_at, next, e.id]);
+      if (next === 'approved' && e.review_status === 'scheduled') {
+        await audit(req.user.id, 'episode:published-now', e.id);
+        released = { owner: d.owner_id, title: d.title, number };
+      }
     });
+    // 관리자가 예약을 지워 바로 공개했다면 PD에게 알립니다(PD 본인이 한 경우는 화면에서 이미 확인함).
+    if (released && released.owner !== req.user.id)
+      await notify(db, released.owner, {
+        kind: 'episode_published',
+        title: `${released.title} ${released.number}화가 바로 공개됐어요`,
+        body: '관리자가 공개 예약을 지워 지금 시청자에게 공개됐어요.',
+        link: 'studio/contents',
+      }).catch(() => {});
     res.json({ ok: true });
   });
   // 관리자: 회차 심사 대기 목록

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -71,11 +71,13 @@ import AccountSettings, { Avatar } from './AccountSettings';
 import HomeAppearance from './HomeAppearance';
 import ChannelStudio from './ChannelStudio';
 import Settlement from './Settlement';
-import AdminMembers from './AdminMembers';
-import AdminPoints from './AdminPoints';
-import AdminAiPanel from './AdminAi';
-import AdminLamaPanel from './AdminLama';
-import AdminStorage from './AdminStorage';
+import { lazyRetry } from './lazyRetry';
+// 관리자 전용 큰 화면은 관리자가 열 때만 따로 받아 옵니다(PD는 이 코드를 받지 않아요).
+const AdminMembers = lazyRetry(() => import('./AdminMembers'));
+const AdminPoints = lazyRetry(() => import('./AdminPoints'));
+const AdminAiPanel = lazyRetry(() => import('./AdminAi'));
+const AdminLamaPanel = lazyRetry(() => import('./AdminLama'));
+const AdminStorage = lazyRetry(() => import('./AdminStorage'));
 import LamaWalletPanel from './Lama';
 import AiStudio from './studio/AiStudio';
 import ProductionGuide from './studio/Guide';
@@ -96,7 +98,10 @@ import NumberInput from './NumberInput';
 
 export type StudioData = {
   dramas: Drama[];
+  // 최근 8일 주문(대시보드 7일 그래프용). 전체 주문은 /studio/orders에서 나눠 받아요.
   orders: Order[];
+  order_count?: number;
+  revenue_total?: number;
   users: User[];
   logs: { id: string; name: string; action: string; target_id: string; created_at: string }[];
   subscriptions: {
@@ -113,6 +118,26 @@ export type StudioData = {
     androidReady: boolean;
     iosReady: boolean;
   } | null;
+};
+// 메뉴별 한 줄 설명(대시보드 외 화면의 머리 영역). 없으면 설명 줄을 숨겨 내용이 바로 보이게 해요.
+const tabDesc: Record<string, string> = {
+  operations: '서버·DB·발송·결제 연결 상태를 확인해요.',
+  contents: '작품과 회차를 등록하고 심사 상태를 관리해요.',
+  pricing: '작품별 회차 가격과 무료 회차를 정해요.',
+  channels: '방송국 노출과 추천 순서를 관리해요.',
+  channel: '내 방송국의 소개·배너·카테고리를 꾸며요.',
+  members: '회원 정보와 이용 상태를 확인하고 관리해요.',
+  subscriptions: 'B엘라마 패스 이용 현황이에요.',
+  support: '회원 문의를 확인하고 답변해요. 답변하면 작성자에게 알림이 가요.',
+  points: '핑 충전 상품, 지급·회수, 분배 비율을 관리해요.',
+  settlement: '판매·구독 배분 정산 내역이에요.',
+  payouts: '출금 요청을 확인하고 처리해요.',
+  tax: '원천징수·세금계산서 자료를 확인해요.',
+  orders: '결제·핑 사용 주문을 기간별로 조회해요.',
+  policy: '구독료·수수료·정산 주기를 정해요.',
+  messaging: '이메일·문자 발송 방식을 설정해요.',
+  storage: '쓰지 않는 업로드 파일을 정리해요.',
+  audit: '관리자 작업 기록이에요.',
 };
 const statusLabel: Record<string, string> = {
   published: '공개 중',
@@ -327,17 +352,31 @@ export default function Studio({
     setMenuOpen(false);
     navigate('studio/' + next);
   };
+  // 스튜디오 공통 데이터. 메뉴를 옮길 때마다 다시 받지 않고(15초 안에는 기존 데이터 사용),
+  // 이미 화면에 데이터가 있으면 다시 받기에 실패해도 작성 중인 화면을 지우지 않고 알림만 띄웁니다.
+  const loadedAt = useRef(0);
+  const hasData = useRef(false);
   async function reload() {
     try {
       setData(await api<StudioData>('/studio'));
+      loadedAt.current = Date.now();
+      hasData.current = true;
       setError('');
     } catch (e) {
-      setError((e as Error).message);
+      if (hasData.current) notify((e as Error).message);
+      else setError((e as Error).message);
     }
   }
   useEffect(() => {
+    hasData.current = false;
+    loadedAt.current = 0;
     void reload();
-  }, [user.id, section]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
+  useEffect(() => {
+    if (loadedAt.current && Date.now() - loadedAt.current > 15_000) void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section]);
   async function act(fn: () => Promise<unknown>, message: string) {
     setBusy(true);
     try {
@@ -376,7 +415,7 @@ export default function Studio({
   const pending = data.dramas.filter((d) => d.status === 'pending'),
     pendingEpisodes = data.dramas.reduce((sum, d) => sum + Number(d.pending_episodes || 0), 0),
     pendingCount = data.dramas.filter(needsReview).length,
-    revenue = data.orders.reduce((sum, o) => sum + orderRevenue(o, admin), 0);
+    revenue = data.revenue_total ?? data.orders.reduce((sum, o) => sum + orderRevenue(o, admin), 0);
   return (
     <>
       <header className="management-topbar">
@@ -441,7 +480,7 @@ export default function Studio({
             </span>
             <span className="sidebar-profile-details">
               <strong>{user.name}</strong>
-              <small>{admin ? '슈퍼관리자' : '업로더 (PD)'}</small>
+              <small>{admin ? '슈퍼관리자' : 'PD'}</small>
               <span title={user.email}>{user.email}</span>
             </span>
             <ChevronRight size={14} />
@@ -479,11 +518,15 @@ export default function Studio({
                   : '나의 크리에이터 스튜디오'
                 : tabs.find((t) => t.id === tab)?.name}
             </h1>
-            <p>
-              {admin
-                ? '콘텐츠, 시청자, 운영 흐름을 한곳에서 관리하세요.'
-                : `${user.name}님, 다음 이야기를 기다리는 시청자를 만나보세요.`}
-            </p>
+            {tab === 'overview' ? (
+              <p>
+                {admin
+                  ? '콘텐츠, 시청자, 운영 흐름을 한곳에서 관리하세요.'
+                  : `${user.name}님, 다음 이야기를 기다리는 시청자를 만나보세요.`}
+              </p>
+            ) : tabDesc[tab] ? (
+              <p>{tabDesc[tab]}</p>
+            ) : null}
           </div>
           <div className="studio-avatar">
             <Avatar user={user} />
@@ -738,7 +781,11 @@ export default function Studio({
           ) : (
             <Settlement user={user} section="tax" notify={notify} />
           ))}
-        {tab === 'members' && admin && <AdminMembers user={user} notify={notify} />}
+        {tab === 'members' && admin && (
+          <Suspense fallback={<div className="loading"><span className="spinner" /></div>}>
+            <AdminMembers user={user} notify={notify} />
+          </Suspense>
+        )}
         {tab === 'channels' && admin && (
           <AdminChannelsPanel notify={notify} reloadChannels={reloadChannels} />
         )}
@@ -759,13 +806,21 @@ export default function Studio({
           </>
         )}
         {tab === 'messaging' && admin && <MessagingPanel notify={notify} />}
-        {tab === 'points' && admin && <AdminPoints notify={notify} />}
+        {tab === 'points' && admin && (
+          <Suspense fallback={<div className="loading"><span className="spinner" /></div>}>
+            <AdminPoints notify={notify} />
+          </Suspense>
+        )}
         {tab === 'ai' && <AiStudio notify={notify} goLama={() => setTab('lama')} />}
         {tab === 'production-guide' && <ProductionGuide go={setTab} notify={notify} />}
         {tab === 'lama' && <LamaWalletPanel notify={notify} />}
-        {tab === 'ai-admin' && admin && <AdminAiPanel notify={notify} />}
-        {tab === 'lama-admin' && admin && <AdminLamaPanel notify={notify} />}
-        {tab === 'storage' && admin && <AdminStorage notify={notify} />}
+        {admin && ['ai-admin', 'lama-admin', 'storage'].includes(tab) && (
+          <Suspense fallback={<div className="loading"><span className="spinner" /></div>}>
+            {tab === 'ai-admin' && <AdminAiPanel notify={notify} />}
+            {tab === 'lama-admin' && <AdminLamaPanel notify={notify} />}
+            {tab === 'storage' && <AdminStorage notify={notify} />}
+          </Suspense>
+        )}
         {tab === 'orders' && <StudioOrders orders={data.orders} admin={admin} />}
         {tab === 'support' && admin && <Support user={user} managing notify={notify} />}
         {tab === 'subscriptions' && admin && (

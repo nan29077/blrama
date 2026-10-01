@@ -13,6 +13,7 @@ import {
   createHmac,
 } from 'node:crypto';
 import { mkdirSync, openSync, readSync, closeSync, unlinkSync, existsSync, readFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { openDb, migrate } from './db.mjs';
@@ -56,6 +57,7 @@ import { migrateAccountNumbers } from './bank-secret.mjs';
 import { publicDrama } from './public-fields.mjs';
 import { looksInternal, zodMessage } from './errors.mjs';
 import { GENRES } from './genres.mjs';
+import { resolveUploadDir } from './paths.mjs';
 
 const production = process.argv.includes('--production') || process.env.NODE_ENV === 'production';
 const demo = !production && process.env.ENABLE_DEMO !== 'false';
@@ -63,6 +65,9 @@ const port = Number(process.env.PORT || 3036);
 const origin = process.env.APP_ORIGIN || `http://localhost:${port}`;
 if (production && (!process.env.DATABASE_URL || !origin.startsWith('https://')))
   throw new Error('Production requires DATABASE_URL and HTTPS APP_ORIGIN');
+// 운영에서는 계좌번호·AI 키·발송 비밀값 암호화 키가 꼭 있어야 합니다(없으면 계좌번호가 평문으로 저장됨).
+if (production && String(process.env.AI_SECRET_KEY || '').length < 32)
+  throw new Error('Production requires AI_SECRET_KEY (32+ characters) to encrypt bank accounts and API keys');
 const db = await openDb();
 await migrate(db);
 if (demo) await seed(db);
@@ -131,12 +136,26 @@ app.use(
   }),
 );
 app.use(express.json({ limit: '256kb' }));
+// API JSON 응답 압축(2KB 이상, 브라우저가 gzip을 받을 때만). 별도 패키지 없이 Node 내장 zlib을 씁니다.
+app.use('/api', (req, res, next) => {
+  if (!/\bgzip\b/.test(String(req.get('accept-encoding') || ''))) return next();
+  const json = res.json.bind(res);
+  res.json = (body) => {
+    const str = JSON.stringify(body);
+    if (typeof str !== 'string' || str.length < 2048 || res.headersSent) return json(body);
+    res.vary('Accept-Encoding');
+    res.set('Content-Encoding', 'gzip').type('json');
+    return res.send(gzipSync(str));
+  };
+  next();
+});
 // 모바일 앱(안드로이드 · iOS)은 앱 안의 화면(capacitor://localhost, https://localhost)에서 운영 서버로 요청합니다.
 // 앱은 쿠키 대신 Authorization: Bearer 토큰을 쓰므로, 이 출처에는 쿠키 없이(credentials 없이) CORS를 허용합니다.
 const appOrigins = new Set([
   'capacitor://localhost',
   'https://localhost',
-  'http://localhost',
+  // Capacitor 7은 https://localhost·capacitor://localhost만 써요. http://localhost(사용자 PC의 다른 로컬 페이지)는 개발에서만 허용합니다.
+  ...(production ? [] : ['http://localhost']),
   ...String(process.env.APP_CLIENT_ORIGINS || '').split(',').map((x) => x.trim()).filter(Boolean),
 ]);
 const bearerOf = (req) => {
@@ -180,6 +199,8 @@ app.use(
     limit: testing ? 20_000 : 240,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
+    // 화면이 '서버에 연결할 수 없음' 대신 이유를 보여 줄 수 있게 JSON으로 답합니다.
+    message: { error: '요청이 너무 많아요. 잠시 후 다시 시도해 주세요.', code: 'rate_limited' },
     // 영상 재생(구간 요청이 많음)·자막·스튜디오 미디어는 한 편을 볼 때도 요청이 수십 번 생겨 일반 한도에서 뺍니다.
     skip: (req) => req.method === 'GET' && /^\/(play\/|dramas\/[^/]+\/trailer$|studio\/media\/|subtitles\/|studio\/ai\/episodes\/[^/]+\/subtitles$|studio\/ai\/voices\/sample\/)/.test(req.path),
   }),
@@ -255,10 +276,11 @@ async function mediaUser(req) {
   } catch {
     return null;
   }
-  if (!claim || typeof claim.s !== 'string' || claim.s.length !== 32 || !(Number(claim.e) > Date.now())) return null;
+  if (!claim || typeof claim.s !== 'string' || !/^[a-f0-9]{32}$/.test(claim.s) || !(Number(claim.e) > Date.now())) return null;
   return db.get(
-    'SELECT u.*,p.avatar,p.bio,p.auto_next,p.auto_unlock FROM users u JOIN sessions s ON s.user_id=u.id LEFT JOIN user_profiles p ON p.user_id=u.id WHERE substr(s.token,1,32)=? AND s.expires_at>? AND u.status=?',
-    [claim.s, now(), 'active'],
+    'SELECT u.*,p.avatar,p.bio,p.auto_next,p.auto_unlock FROM users u JOIN sessions s ON s.user_id=u.id LEFT JOIN user_profiles p ON p.user_id=u.id WHERE s.token>? AND s.token<? AND substr(s.token,1,32)=? AND s.expires_at>? AND u.status=?',
+    // 앞 32자리가 같은 토큰을 기본키 범위로 찾습니다(영상 구간 요청마다 세션 표 전체를 훑지 않게).
+    [claim.s, claim.s + 'g', claim.s, now(), 'active'],
   );
 }
 app.use('/api', async (req, res, next) => {
@@ -506,7 +528,7 @@ app.get('/api/dramas', async (req, res) =>
   // 썸네일 A/B 비교 중인 작품은 시청자마다 정해진 후보 이미지를 보여 줍니다.
   // 공개 목록에는 시청자 화면에 필요한 칸만 보냅니다(심사 의견·소유자 ID 등 내부 정보 제외).
   res.json(
-    (await applyThumbs(db, await db.all(catalogSql + " WHERE d.status='published' ORDER BY d.views DESC"), req.user?.id || req.ip)).map(
+    (await applyThumbs(db, await db.all(catalogSql + " WHERE d.status='published' ORDER BY d.views DESC LIMIT 1000"), req.user?.id || req.ip)).map(
       publicDrama,
     ),
   ),
@@ -646,7 +668,7 @@ async function hasAccess(user, d) {
     ]))
   );
 }
-const uploadDir = path.resolve(process.env.UPLOAD_DIR || 'uploads/bellama');
+const uploadDir = resolveUploadDir();
 mkdirSync(uploadDir, { recursive: true });
 app.get('/api/play/:id/:number', async (req, res) => {
   const d = await db.get('SELECT * FROM dramas WHERE id=?', [req.params.id]);
@@ -685,11 +707,13 @@ app.get('/api/library', requireAuth, async (req, res) => {
     favorites: (await db.all('SELECT drama_id FROM favorites WHERE user_id=?', [u])).map(
       (x) => x.drama_id,
     ),
-    history: await db.all('SELECT * FROM history WHERE user_id=? ORDER BY updated_at DESC', [u]),
+    // 이용 기간이 길어도 응답이 커지지 않게 최근 기록만 보냅니다(이어보기 200편, 구매 내역 100건).
+    history: await db.all('SELECT * FROM history WHERE user_id=? ORDER BY updated_at DESC LIMIT 200', [u]),
     orders: await db.all(
-      "SELECT o.*,d.title,CASE WHEN o.kind='ping_episode' THEN (SELECT MIN(e.episode) FROM episode_entitlements e WHERE e.order_id=o.id) END AS episode FROM orders o LEFT JOIN dramas d ON d.id=o.drama_id WHERE o.user_id=? ORDER BY o.created_at DESC",
+      "SELECT o.*,d.title,CASE WHEN o.kind='ping_episode' THEN (SELECT MIN(e.episode) FROM episode_entitlements e WHERE e.order_id=o.id) END AS episode FROM orders o LEFT JOIN dramas d ON d.id=o.drama_id WHERE o.user_id=? ORDER BY o.created_at DESC LIMIT 100",
       [u],
     ),
+    order_count: Number((await db.get('SELECT COUNT(*) AS n FROM orders WHERE user_id=?', [u]))?.n || 0),
     // 소장 작품: 예전 작품 단위 소장 + 핑으로 '전체 열기'한 작품(그 시점 회차를 모두 연 작품).
     purchases: (
       await db.all(
@@ -1013,28 +1037,90 @@ app.post('/api/subscription/cancel', requireAuth, async (req, res) => {
   else await db.run('UPDATE subscriptions SET auto_renew=0 WHERE user_id=?', [req.user.id]);
   res.json({ ok: true, immediate: demo });
 });
+// 주문 조회(관리자: 전체 결제, PD: 내 작품 주문). 매출 기준은 화면의 orderRevenue와 같습니다.
+const orderSelect = (isAdmin) =>
+  (isAdmin
+    ? 'SELECT o.*'
+    : 'SELECT o.id,o.drama_id,o.kind,o.amount,o.status,o.created_at,o.channel,o.pings,o.bonus_pings') +
+  ',d.title,(SELECT se.gross FROM settlement_entries se WHERE se.order_id=o.id) AS sale_value FROM orders o LEFT JOIN dramas d ON o.drama_id=d.id';
+const orderRevenueSql = (isAdmin) =>
+  isAdmin
+    ? 'o.amount'
+    : "CASE WHEN o.kind IN ('ping_episode','ping_title') THEN COALESCE((SELECT se.gross FROM settlement_entries se WHERE se.order_id=o.id),0) ELSE o.amount END";
+const kstStart = (day) => new Date(`${day}T00:00:00+09:00`).toISOString();
+app.get('/api/studio/orders', roles('pd', 'admin'), async (req, res) => {
+  const isAdmin = req.user.role === 'admin';
+  const q = z
+    .object({
+      q: z.string().trim().max(80).default(''),
+      kind: z.enum(['all', 'ping_episode', 'ping_title', 'ping_charge', 'lama_charge', 'subscription', 'episode', 'title']).default('all'),
+      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      offset: z.coerce.number().int().min(0).max(1_000_000).default(0),
+      limit: z.coerce.number().int().min(1).max(5000).default(15),
+    })
+    .parse(req.query);
+  const where = [],
+    params = [];
+  if (!isAdmin) {
+    where.push('d.owner_id=?');
+    params.push(req.user.id);
+  }
+  if (q.kind !== 'all') {
+    where.push('o.kind=?');
+    params.push(q.kind);
+  }
+  if (q.from) {
+    where.push('o.created_at>=?');
+    params.push(kstStart(q.from));
+  }
+  if (q.until) {
+    where.push('o.created_at<?');
+    params.push(new Date(new Date(kstStart(q.until)).getTime() + 86400000).toISOString());
+  }
+  if (q.q) {
+    where.push("(LOWER(COALESCE(d.title,'')) LIKE ? OR o.id LIKE ?)");
+    params.push(`%${q.q.toLowerCase()}%`, `${q.q.toLowerCase()}%`);
+  }
+  const cond = where.length ? ' WHERE ' + where.join(' AND ') : '';
+  const totals = await db.get(
+    `SELECT COUNT(*) AS n, COALESCE(SUM(${orderRevenueSql(isAdmin)}),0) AS revenue FROM orders o LEFT JOIN dramas d ON o.drama_id=d.id${cond}`,
+    params,
+  );
+  const rows = await db.all(orderSelect(isAdmin) + cond + ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?', [...params, q.limit, q.offset]);
+  res.json({ rows, total: Number(totals?.n || 0), revenue: Number(totals?.revenue || 0) });
+});
 app.get('/api/studio', roles('pd', 'admin'), async (req, res) => {
   const isAdmin = req.user.role === 'admin';
   const ds = await db.all(
     catalogSql + (isAdmin ? '' : ' WHERE d.owner_id=?') + ' ORDER BY d.created_at DESC',
     isAdmin ? [] : [req.user.id],
   );
+  // 대시보드에는 최근 8일 주문(7일 그래프용)과 전체 합계만 보냅니다. 전체 목록은 /api/studio/orders에서 나눠 받아요.
   // PD에게는 구매자 식별 정보(회원 ID·멱등키)를 보내지 않습니다.
+  const since = new Date(Date.now() - 8 * 86400000).toISOString();
   const orders = await db.all(
-    (isAdmin
-      ? 'SELECT o.*'
-      : 'SELECT o.id,o.drama_id,o.kind,o.amount,o.status,o.created_at,o.channel,o.pings,o.bonus_pings') +
-      ',d.title,(SELECT se.gross FROM settlement_entries se WHERE se.order_id=o.id) AS sale_value FROM orders o LEFT JOIN dramas d ON o.drama_id=d.id' +
-      (isAdmin ? '' : ' WHERE d.owner_id=?') +
-      ' ORDER BY o.created_at DESC',
+    orderSelect(isAdmin) + (isAdmin ? ' WHERE o.created_at>=?' : ' WHERE d.owner_id=? AND o.created_at>=?') + ' ORDER BY o.created_at DESC LIMIT 2000',
+    isAdmin ? [since] : [req.user.id, since],
+  );
+  const totals = await db.get(
+    `SELECT COUNT(*) AS n, COALESCE(SUM(${orderRevenueSql(isAdmin)}),0) AS revenue FROM orders o LEFT JOIN dramas d ON o.drama_id=d.id` +
+      (isAdmin ? '' : ' WHERE d.owner_id=?'),
     isAdmin ? [] : [req.user.id],
   );
+  const logs = isAdmin
+    ? await db.all('SELECT a.*,u.name FROM audit_logs a JOIN users u ON a.actor_id=u.id ORDER BY a.created_at DESC LIMIT 30')
+    : [];
+  // 감사 기록에 나온 회원 이름만 붙이면 되므로 전체 회원 목록은 보내지 않습니다.
+  const logUserIds = [...new Set(logs.map((l) => l.target_id).filter(Boolean))].slice(0, 30);
   res.json({
     dramas: ds,
     orders,
+    order_count: Number(totals?.n || 0),
+    revenue_total: Number(totals?.revenue || 0),
     subscriptions: isAdmin
       ? await db.all(
-          'SELECT s.user_id,s.expires_at,s.auto_renew,u.name,u.email FROM subscriptions s JOIN users u ON s.user_id=u.id ORDER BY s.expires_at DESC',
+          'SELECT s.user_id,s.expires_at,s.auto_renew,u.name,u.email FROM subscriptions s JOIN users u ON s.user_id=u.id ORDER BY s.expires_at DESC LIMIT 500',
         )
       : [],
     operations: isAdmin
@@ -1046,16 +1132,14 @@ app.get('/api/studio', roles('pd', 'admin'), async (req, res) => {
           iosReady: Boolean(process.env.IOS_STORE_URL),
         }
       : null,
-    users: isAdmin
-      ? await db.all(
-          'SELECT u.id,u.email,u.name,u.role,u.status,u.created_at,p.avatar FROM users u LEFT JOIN user_profiles p ON p.user_id=u.id ORDER BY u.created_at DESC',
-        )
-      : [],
-    logs: isAdmin
-      ? await db.all(
-          'SELECT a.*,u.name FROM audit_logs a JOIN users u ON a.actor_id=u.id ORDER BY a.created_at DESC LIMIT 30',
-        )
-      : [],
+    users:
+      isAdmin && logUserIds.length
+        ? await db.all(
+            `SELECT u.id,u.email,u.name,u.role,u.status,u.created_at,p.avatar FROM users u LEFT JOIN user_profiles p ON p.user_id=u.id WHERE u.id IN (${logUserIds.map(() => '?').join(',')})`,
+            logUserIds,
+          )
+        : [],
+    logs,
   });
 });
 const dramaSchema = z.object({
@@ -1367,7 +1451,8 @@ app.post(
 );
 app.get('/uploads/:file', (req, res) => {
   if (!/^[a-f0-9-]+\.(jpg|png|webp)$/.test(req.params.file)) return res.sendStatus(404);
-  res.sendFile(path.join(uploadDir, req.params.file));
+  // 업로드 이미지는 바뀔 때 새 이름(UUID)으로 저장되므로 오래 캐시해도 됩니다.
+  res.sendFile(path.join(uploadDir, req.params.file), { maxAge: '7d' });
 });
 app.post('/api/studio/dramas/:id/episodes', roles('pd', 'admin'), async (req, res) => {
   await db.transaction(async () => {
@@ -1402,6 +1487,7 @@ app.post('/api/studio/dramas/:id/episodes', roles('pd', 'admin'), async (req, re
 });
 app.delete('/api/studio/dramas/:id/episodes/:number', roles('pd', 'admin'), async (req, res) => {
   let subtitleFile = '';
+  let videoUrl = '';
   await db.transaction(async () => {
     const d = await owned(req, true);
     const number = z.coerce.number().int().min(1).parse(req.params.number);
@@ -1414,13 +1500,30 @@ app.delete('/api/studio/dramas/:id/episodes/:number', roles('pd', 'admin'), asyn
     ]);
     if (Number(last?.number) !== number)
       fail(409, '회차 순서를 유지하기 위해 마지막 회차부터 삭제해 주세요.');
-    const e = await db.get('SELECT subtitles FROM episodes WHERE drama_id=? AND number=?', [d.id, number]);
+    const e = await db.get('SELECT subtitles,video FROM episodes WHERE drama_id=? AND number=?', [d.id, number]);
     await db.run('DELETE FROM episodes WHERE drama_id=? AND number=?', [d.id, number]);
     subtitleFile = e?.subtitles || '';
+    videoUrl = e?.video || '';
   });
-  // 회차와 함께 그 회차의 자막 파일도 지웁니다(파일 이름은 형식 검사 후 사용).
-  if (/^[a-f0-9-]+\.vtt$/.test(subtitleFile))
-    await rm(path.join(uploadDir, 'subtitles', subtitleFile), { force: true }).catch(() => {});
+  // 회차와 함께 그 회차의 자막·영상 파일도 지웁니다. 단, 스튜디오 회차·다른 회차·예고편이 같은 파일을 쓰고 있으면 남겨 둡니다
+  // (AI 스튜디오에서 내보낸 회차는 스튜디오와 같은 파일을 함께 써요). 파일 이름은 형식 검사 후 사용합니다.
+  if (/^[a-f0-9-]+\.vtt$/.test(subtitleFile)) {
+    const shared =
+      (await db.get('SELECT id FROM episodes WHERE subtitles=?', [subtitleFile])) ||
+      (await db.get('SELECT id FROM studio_episodes WHERE subtitles=?', [subtitleFile]));
+    if (!shared) await rm(path.join(uploadDir, 'subtitles', subtitleFile), { force: true }).catch(() => {});
+  }
+  if (/^\/uploads\/[a-f0-9-]+\.mp4$/.test(videoUrl)) {
+    const shared =
+      (await db.get('SELECT id FROM episodes WHERE video=?', [videoUrl])) ||
+      (await db.get('SELECT id FROM studio_episodes WHERE video=?', [videoUrl])) ||
+      (await db.get('SELECT id FROM dramas WHERE trailer=?', [videoUrl])) ||
+      (await db.get('SELECT id FROM studio_projects WHERE trailer=?', [videoUrl]));
+    if (!shared) {
+      await rm(mediaPath(videoUrl), { force: true }).catch(() => {});
+      await db.run('DELETE FROM media_files WHERE url=?', [videoUrl]).catch(() => {});
+    }
+  }
   res.json({ ok: true });
 });
 app.post('/api/admin/dramas/:id/review', roles('admin'), async (req, res) => {
@@ -1484,14 +1587,42 @@ app.patch('/api/admin/users/:id', roles('admin'), async (req, res) => {
 app.get('/api/support', requireAuth, async (req, res) => {
   // 관리자도 시청자 화면의 '문의하기'(mine=1)에서는 본인 문의만 봅니다. 전체 문의는 관리자 화면에서 봅니다.
   const admin = req.user.role === 'admin' && req.query.mine !== '1';
+  // 관리자 목록은 상태·검색어를 서버에서 거르고 최근 300건까지만 보냅니다(문의가 쌓여도 화면이 느려지지 않게).
+  const status = ['open', 'answered'].includes(String(req.query.status)) ? String(req.query.status) : '';
+  const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 80).toLowerCase() : '';
+  const where = [],
+    params = [];
+  if (!admin) {
+    where.push('t.user_id=?');
+    params.push(req.user.id);
+  }
+  if (status) {
+    where.push('t.status=?');
+    params.push(status);
+  }
+  if (q) {
+    where.push('(LOWER(t.title) LIKE ? OR LOWER(t.body) LIKE ? OR LOWER(u.name) LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
   res.json(
     await db.all(
       'SELECT t.*,u.name FROM support_tickets t JOIN users u ON t.user_id=u.id' +
-        (admin ? '' : ' WHERE t.user_id=?') +
-        ' ORDER BY t.created_at DESC',
-      admin ? [] : [req.user.id],
+        (where.length ? ' WHERE ' + where.join(' AND ') : '') +
+        ' ORDER BY t.created_at DESC LIMIT 300',
+      params,
     ),
   );
+});
+// 답변을 받은 뒤 같은 문의에 이어서 질문합니다(문의는 다시 '답변 대기'가 돼요).
+app.post('/api/support/:id/followup', requireAuth, async (req, res) => {
+  const b = z.object({ body: z.string().trim().min(2).max(2000) }).parse(req.body);
+  const t = await db.get('SELECT id,user_id,body FROM support_tickets WHERE id=?', [req.params.id]);
+  if (!t || t.user_id !== req.user.id) fail(404, '문의를 찾을 수 없습니다.');
+  const stamp = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const next = `${t.body}\n\n[추가 문의 · ${stamp}]\n${b.body}`;
+  if (next.length > 20000) fail(400, '문의 내용이 너무 길어요. 새 문의로 남겨 주세요.');
+  await db.run("UPDATE support_tickets SET body=?,status='open' WHERE id=?", [next, t.id]);
+  res.json({ ok: true });
 });
 app.post('/api/support', requireAuth, async (req, res) => {
   const b = z
@@ -1510,8 +1641,8 @@ app.post('/api/support', requireAuth, async (req, res) => {
 });
 app.patch('/api/admin/support/:id', roles('admin'), async (req, res) => {
   const b = z.object({ reply: z.string().trim().min(2).max(5000) }).parse(req.body);
-  if (!(await db.get('SELECT id FROM support_tickets WHERE id=?', [req.params.id])))
-    fail(404, '문의를 찾을 수 없습니다.');
+  const ticket = await db.get('SELECT id,user_id,title FROM support_tickets WHERE id=?', [req.params.id]);
+  if (!ticket) fail(404, '문의를 찾을 수 없습니다.');
   await db.transaction(async () => {
     await db.run("UPDATE support_tickets SET reply=?,status='answered',replied_at=? WHERE id=?", [
       b.reply,
@@ -1522,6 +1653,13 @@ app.patch('/api/admin/support/:id', roles('admin'), async (req, res) => {
       'INSERT INTO audit_logs (id,actor_id,action,target_id,created_at) VALUES (?,?,?,?,?)',
       [randomUUID(), req.user.id, 'support:replied', req.params.id, now()],
     );
+  });
+  // 문의한 회원에게 답변이 달렸다고 알립니다(알림 종 → 문의하기 화면).
+  await notify(db, ticket.user_id, {
+    kind: 'support_reply',
+    title: '문의에 답변이 등록됐어요',
+    body: String(ticket.title || '').slice(0, 100),
+    link: 'support',
   });
   res.json({ ok: true });
 });
@@ -1625,7 +1763,10 @@ app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large') return res.status(413).json({ error: '보낸 내용이 너무 커요.' });
   const status = Number(err.status || err.statusCode) || 500;
   // 5xx는 원인 추적을 위해 서버 기록에 스택까지 남깁니다(화면에는 정리된 문구만 보냅니다).
-  if (status >= 500)
+  // 직접 정한 503(예: 발송 미설정·결제 준비 중)은 예상된 상태라 한 줄만 남기고, 그 밖의 5xx만 스택까지 남깁니다.
+  if (status === 503 && err.status && !err.detail)
+    console.warn(`[B엘라마] ${req.method} ${String(req.originalUrl || '').split('?')[0]} → 503 ${err.message}`);
+  else if (status >= 500)
     console.error(`[B엘라마] ${req.method} ${String(req.originalUrl || '').split('?')[0]} → ${status}\n${err.stack || err.message}`, err.detail ? '\n' + err.detail : '');
   else if (err.detail) console.error(err.message, '\n' + err.detail);
   // 직접 정한 안내(상태 코드가 있는 오류)만 보여 주고, 내부 경로·시스템 오류 원문은 감춥니다.
@@ -1649,8 +1790,40 @@ if (production) {
     const html = readFileSync(path.resolve('dist/index.html'), 'utf8');
     res.set('Cache-Control', 'no-store').type('html').send(injectHomeTags(html, shareBase(req)));
   });
-  app.use(express.static('dist'));
-  app.get('/{*path}', (req, res) => res.sendFile(path.resolve('dist/index.html')));
+  // 빌드 산출물(/assets): 파일 이름에 내용 해시가 붙어 있어 1년 동안 캐시하고, 미리 압축한 .br/.gz가 있으면 그것을 보냅니다.
+  // 없는 파일(배포 전 옛 화면이 찾는 예전 파일)은 index.html 대신 404로 끝내야 화면이 새로고침으로 복구할 수 있어요.
+  const assetTypes = { '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json' };
+  app.get('/assets/:file', (req, res, next) => {
+    const name = path.basename(req.params.file);
+    const file = path.resolve('dist/assets', name);
+    if (!existsSync(file)) return res.status(404).set('Cache-Control', 'no-store').end();
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    const type = assetTypes[path.extname(name)];
+    if (type) {
+      res.vary('Accept-Encoding');
+      const accept = String(req.get('accept-encoding') || '');
+      for (const [enc, ext] of [['br', '.br'], ['gzip', '.gz']])
+        if (accept.includes(enc) && existsSync(file + ext)) {
+          res.set('Content-Encoding', enc).type(type);
+          return res.sendFile(file + ext, { headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } });
+        }
+    }
+    next();
+  });
+  app.use(
+    express.static('dist', {
+      setHeaders: (res, file) => {
+        if (/[\\/]assets[\\/]/.test(file)) res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        else if (/\.(webp|png|jpg|svg|ico|woff2?|mp4)$/.test(file)) res.set('Cache-Control', 'public, max-age=86400');
+        else res.set('Cache-Control', 'no-cache');
+      },
+    }),
+  );
+  // 화면 주소(#/… 앞의 경로)만 index.html로 돌려주고, 파일처럼 보이는 없는 주소는 404로 끝냅니다.
+  app.get('/{*path}', (req, res) => {
+    if (/\.[a-z0-9]{1,5}$/i.test(req.path)) return res.status(404).end();
+    res.set('Cache-Control', 'no-store').sendFile(path.resolve('dist/index.html'));
+  });
 } else {
   const { createServer } = await import('vite');
   const vite = await createServer({
@@ -1667,12 +1840,41 @@ if (production) {
   // 개발 서버(Vite)는 프로젝트 폴더 파일을 그대로 내려주므로, DB·암호 키·업로드 원본·서버 소스·로그를 막습니다.
   // (업로드 파일은 위의 권한 확인 경로로만 내려갑니다.)
   const devBlocked =
-    /^\/(data|uploads|server|tests|scripts|docs|assets|android|ios|\.git|\.github)(\/|$)|^\/[^/]*\.(log|sqlite[^/]*|bat|ps1|md)$|^\/\.env|^\/(Dockerfile|compose\.yaml)$/i;
+    /^\/(data|uploads|server|tests|scripts|docs|assets|android|ios|\.git|\.github|\.claude)(\/|$)|^\/[^/]*\.(log|sqlite[^/]*|bat|ps1|md)$|^\/\.env|^\/(Dockerfile|compose\.yaml|\.dockerignore|\.gitignore)$/i;
+  // Vite는 /@fs/<절대경로>, /@id/<경로>, ../ 같은 여러 형태로 같은 파일을 내려줄 수 있으므로,
+  // 디코드 → 역슬래시 정리 → 경로 정규화 → 프로젝트 루트 기준 경로로 바꾼 뒤 검사합니다.
+  const projectRoot = path.resolve('.').replace(/\\/g, '/').replace(/\/+$/, '');
+  const devPath = (raw) => {
+    let p = String(raw || '/').split('?')[0].split('#')[0];
+    for (let i = 0; i < 3; i++) {
+      try {
+        const d = decodeURIComponent(p);
+        if (d === p) break;
+        p = d;
+      } catch {
+        break;
+      }
+    }
+    p = path.posix.normalize(p.replace(/\\/g, '/'));
+    for (let changed = true; changed; ) {
+      changed = false;
+      if (/^\/@id\//i.test(p)) {
+        p = p.replace(/^\/@id/i, '');
+        changed = true;
+      }
+      if (/^\/@fs\//i.test(p)) {
+        const rest = p.slice(4);
+        const lowerRest = rest.toLowerCase(),
+          lowerRoot = ('/' + projectRoot.replace(/^\//, '')).toLowerCase();
+        p = lowerRest.startsWith(lowerRoot + '/') ? rest.slice(lowerRoot.length) : rest;
+        changed = true;
+      }
+      p = path.posix.normalize(p);
+    }
+    return p;
+  };
   app.use((req, res, next) => {
-    let p = req.path;
-    try {
-      p = decodeURIComponent(p);
-    } catch {}
+    const p = devPath(req.originalUrl);
     // 화면 코드가 직접 가져오는 공용 기준표(JSON)만 예외로 둡니다.
     if (/^\/server\/(genres|ai\/direction)\.json$/.test(p)) return next();
     if (devBlocked.test(p) || /\/(data|uploads)\/|\.sqlite|\.ai-secret/i.test(p)) return res.sendStatus(404);
@@ -1681,7 +1883,7 @@ if (production) {
   app.use(vite.middlewares);
 }
 const server = app.listen(port, process.env.HOST || '127.0.0.1', () =>
-  console.log(`B엘라마 → http://localhost:${port} · ${db.engine} · demo=${demo}`),
+  console.log(`B엘라마 → ${production ? origin : `http://localhost:${port}`} · ${db.engine} · demo=${demo}${production ? ` · port ${port}` : ''}`),
 );
 // 종료 신호(SIGTERM·SIGINT): 새 연결을 받지 않고, 진행 중인 요청이 끝나길 최대 10초 기다린 뒤 DB를 닫고 끝냅니다.
 // 두 번째 신호가 오거나 10초가 지나면 바로 끝냅니다(배포 도구·테스트가 멈추지 않게).

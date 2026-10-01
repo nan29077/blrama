@@ -64,13 +64,14 @@ B엘라마는 숏핑(Shortping)을 복사해 시작했지만 **완전히 독립�
 현재 제공하는 것은 **실제 로컬 서버·DB를 갖춘 개발 버전**입니다. 정식 출시 완료 상태가 아닙니다.
 
 - 이메일 가입·로그인, 해시 비밀번호, HttpOnly 세션, 로그아웃, 역할 및 소유권 검사는 구현했습니다.
-- 문의 접수와 답변은 로컬 DB에 저장됩니다. 시청자·PD는 본인 문의만, 슈퍼관리자는 전체 문의를 조회하고 답변할 수 있습니다. 이메일·문자 알림은 발송하지 않습니다.
+- 문의 접수와 답변은 로컬 DB에 저장됩니다. 시청자·PD는 본인 문의만, 슈퍼관리자는 전체 문의를 조회하고 답변할 수 있습니다. 답변이 등록되면 작성자에게 앱 안 알림이 가고, 작성자는 같은 문의에 추가 질문을 남길 수 있습니다.
 - 결제는 `test_paid` 주문과 시청 권한을 생성하는 명확한 **가상 결제**입니다. 돈이 청구되지 않습니다. 구독은 30일·자동 갱신 없음. 테스트 종료는 즉시 권한을 해제하며 소장 작품은 유지합니다.
 - 카카오·네이버·구글 버튼은 연동 예정 안내입니다. OAuth 키, 콜백 URL, 실제 공급자 연동은 아직 없습니다.
 - 앱 다운로드 버튼은 스토어 URL이 비어 있으면 출시 준비 안내를 표시합니다. 환경변수에 실제 URL을 넣으면 해당 스토어를 엽니다.
 - 생성형 실사 4종과 브랜드 캐릭터를 사용합니다. 모든 작품 카드는 제목을 이미지 위에 조판합니다. 현재 8편은 4종 이미지를 공유합니다.
 - 영상은 자체 생성한 **12초 이미지 기반 티저**로 기능을 시연합니다. 실제 드라마 영상이나 AI 동영상 생성물이 아니며, 기본 데모 회차는 같은 티저를 사용합니다. PD가 실제 MP4로 교체할 수 있습니다.
-- 조회 수는 초기 데모 수치입니다. 실시간 시청 분석·실제 PD 정산·환불·자동 갱신·푸시·고객센터 운영·비밀번호 재설정·이메일 인증은 후속 연동 범위입니다.
+- 조회 수는 초기 데모 수치입니다. 실제 PG 결제·환불·자동 갱신·푸시 알림·소셜 로그인은 후속 연동 범위입니다.
+- 비밀번호 재설정 메일·휴대폰 인증 문자는 구현돼 있으며, 실제 발송은 관리자 '이메일 · 문자 발송'에서 웹훅(중계 서버)을 설정해야 나갑니다(운영에서는 '기록만 남기기'를 쓸 수 없음).
 - PWA 매니페스트·아이콘·오프라인 안내를 포함합니다. 오프라인 영상 다운로드 기능은 없습니다. 서비스워커는 빌드된 앱에서만 등록합니다.
 - Capacitor 앱 설정과 Android/iOS 패키지를 준비했습니다. 네이티브 앱 서명·빌드·스토어 배포는 아직 하지 않았습니다.
 
@@ -79,8 +80,11 @@ B엘라마는 숏핑(Shortping)을 복사해 시작했지만 **완전히 독립�
 ## 개발 명령
 
 ```powershell
-npm run build             # TypeScript 검사 + 배포 빌드
-npm test                  # 별도 테스트 DB를 사용하는 API 통합 테스트
+npm run build             # TypeScript 검사 + 배포 빌드(+ JS·CSS 미리 압축 .br/.gz)
+npm test                  # 별도 테스트 DB(SQLite)를 사용하는 API 통합 테스트
+npm run test:pg           # 같은 테스트를 PostgreSQL로(TEST_PG_ADMIN_URL 필요)
+npm run simulate          # 여러 PD 동시 AI 제작·정산 시뮬레이션
+node scripts/make-image-variants.mjs # 기본 포스터의 작은 크기(320·480px) 재생성
 node scripts/prepare-assets.mjs # 프로젝트 원본 이미지 → WebP, 아이콘, 데모 티저 재생성
 npm run mobile:android    # Android Studio 프로젝트 생성
 npm run mobile:ios        # macOS/Xcode 환경에서 iOS 프로젝트 생성
@@ -91,11 +95,12 @@ npm run mobile:sync       # 웹 빌드 후 생성된 네이티브 프로젝트�
 
 앱은 화면 파일을 앱 안에 담고, 운영 서버와 **로그인 토큰(Bearer)** 으로 통신합니다. 웹은 지금처럼 쿠키로 로그인합니다.
 
-- 앱 빌드 시 운영 서버 주소를 넣어 주세요: `VITE_API_ORIGIN=https://운영주소 npm run mobile:sync`
+- 앱 빌드 시 운영 서버 주소를 넣어 주세요: `VITE_API_ORIGIN=https://운영주소 npm run mobile:sync` (없으면 빌드를 멈춥니다)
 - 로그인 · 가입 응답에 토큰이 담기고(요청 머리글 `X-Client: app`일 때만), 앱은 이후 요청에 `Authorization: Bearer 토큰`을 붙입니다.
 - `<video>`·`<audio>`·자막처럼 머리글을 붙일 수 없는 주소에는 로그인 세션에 묶인 6시간짜리 미디어 토큰(`?mt=`)을 붙입니다. 로그아웃하면 함께 무효가 됩니다.
-- 서버는 앱 출처(`capacitor://localhost`, `https://localhost`)에 쿠키 없이 CORS를 허용합니다. 추가 출처는 `APP_CLIENT_ORIGINS`로 넣어요.
-- 안드로이드 뒤로 가기 버튼: 열린 창을 먼저 닫고, 없으면 이전 화면으로, 첫 화면이면 앱을 닫습니다.
+- 서버는 앱 출처(`capacitor://localhost`, `https://localhost`)에 쿠키 없이 CORS를 허용합니다(`http://localhost`는 개발에서만). 추가 출처는 `APP_CLIENT_ORIGINS`로 넣어요.
+- 안드로이드 뒤로 가기 버튼: 열린 창(알림 패널 포함)을 먼저 닫고, 홈이면 앱을 닫고, 그 밖에는 이전 화면(없으면 홈)으로 갑니다.
+- 공유 링크(`/share/drama/ID`·`/share/channel/ID`)로 앱이 열리면 해당 화면으로 이동합니다. 실제로 앱이 열리려면 Android App Links(`assetlinks.json`)·iOS Universal Links(`apple-app-site-association`)를 도메인에 배포해야 합니다.
 
 실행에 이미 생성된 WebP·아이콘·티저가 포함되어 있어 FFmpeg 재설치는 필요 없습니다. `prepare-assets` 재실행에는 ffmpeg-static 바이너리가 필요합니다.
 
@@ -108,16 +113,23 @@ src/ChannelStudio.tsx   PD 마이 방송국 관리 (배너·카테고리·작품
 src/Settlement.tsx      PD 정산 달력·출금 신청·세무 정보
 src/AdminSettlement.tsx 관리자 정산·출금 승인·세무·요금 정책·방송국 관리
 src/AdminMembers.tsx    관리자 회원 관리 (유형별 탭, 상세, 운영 메모)
-server/index.mjs        인증·작품·영상 권한·주문·스튜디오 API
+server/index.mjs        인증·작품·영상 권한·주문·스튜디오 API, 개발 서버(Vite) 파일 차단
 server/routes-studio.mjs 방송국 API, PD 정산·출금·세무 API
 server/routes-admin.mjs  관리자 정산·세무·회원·요금·방송국 API
+server/routes-account.mjs 계정(휴대폰 인증·탈퇴·세션)·발송 설정 API
+server/routes-upload.mjs 분할 업로드·자막·저장 공간 정리
+server/routes-serial.mjs 연재 회차 심사·공개 예약
+server/routes-lama.mjs  라마(AI 제작 크레딧) 지갑
+server/messaging.mjs    이메일·문자 발송(웹훅 중계)
+server/worker.mjs       합성 전용 작업 프로세스(COMPOSE_WORKER=external일 때)
+server/paths.mjs        업로드 폴더 기본값(웹 서버·worker 공통)
+server/ai/              AI 드라마 스튜디오(공급사·작업 엔진·지시문·합성 워커)
 server/settlement.mjs   정산 원장, 수수료·원천징수 계산, 출금 처리
 server/settings.mjs     구독료·수수료율 등 운영 설정값
 server/db.mjs           SQLite/PostgreSQL 어댑터, 공통 스키마, 트랜잭션
 server/seed.mjs         개발용 계정·작품·회차·방송국
 public/images/          실제 서비스 화면용 WebP 이미지
 public/demo/            권한 검사 후 API로 제공하는 시연 티저
-assets/source/          생성 이미지 원본
 tests/                  분리 DB 기반 통합 테스트
 docs/                   설계, 배포, 검증, 이미지 생성 기록
 data/ uploads/          로컬 영속 데이터 (Git 제외)

@@ -157,6 +157,7 @@ export async function subscriptionPool(db, period) {
 //  1) 인정 재생: 구독자가 유료 회차를 회차 길이의 기준 %(sub_min_progress_pct) 이상 본 기록만(작품 주인·관리자·구매 회차 제외는 기록 단계에서 처리)
 //  2) 구독자별 상한: 한 구독자가 한 달에 한 작품에서 최대 N회, 전체 최대 M회까지(먼저 본 순서대로 인정)
 //  3) PD 가중치: 인정 재생 수 × PD별 배수(기본 1). '배분 제외'인 PD는 0
+//     (탈퇴한 PD의 작품 재생은 배분에서 빼서, 받을 수 없는 몫이 생기거나 다른 PD 몫이 줄지 않게 합니다)
 //  4) 풀 × (내 가중 재생 / 전체 가중 재생). PD별 상한(cap_pct, 풀의 %)을 넘는 몫은 상한까지만 주고,
 //     넘친 금액은 상한에 걸리지 않은 PD들에게 가중 재생 비율대로 다시 나눕니다(모두 상한이면 플랫폼에 남음).
 //  5) 원 단위 절사, 절사로 남은 몇 원은 가중 재생이 가장 많은(상한에 걸리지 않은) PD에게 더합니다.
@@ -168,6 +169,7 @@ export async function subscriptionPlan(db, period, pool, settings) {
   const views = await db.all(
     `SELECT v.user_id, v.drama_id, d.owner_id AS pd_id
      FROM subscription_views v JOIN dramas d ON d.id=v.drama_id
+     JOIN users pd ON pd.id=d.owner_id AND pd.status<>'withdrawn'
      WHERE v.period=? AND v.user_id<>d.owner_id${rulesOn ? ' AND v.qualified=1' : ''}
      ORDER BY v.user_id, v.created_at, v.drama_id, v.episode`,
     [period],
@@ -252,6 +254,36 @@ export async function subscriptionPlan(db, period, pool, settings) {
     },
   };
 }
+// 마감 여부: 마감 기록이 마감 취소 기록보다 많거나, 그 달 구독 배분 항목이 남아 있으면 마감된 달입니다.
+export async function isPeriodClosed(db, period) {
+  const row = await db.get(
+    `SELECT (SELECT COUNT(*) FROM audit_logs WHERE action='settlement:closed' AND target_id=?) AS closed,
+            (SELECT COUNT(*) FROM audit_logs WHERE action='settlement:reopened' AND target_id=?) AS reopened,
+            (SELECT COUNT(*) FROM settlement_entries WHERE kind='subscription' AND period=?) AS entries`,
+    [period, period, period],
+  );
+  return Number(row?.entries || 0) > 0 || Number(row?.closed || 0) > Number(row?.reopened || 0);
+}
+// 마감 취소: 그 달 구독 배분이 아직 출금·라마 전환에 쓰이지 않았을 때만, 배분 항목을 지우고 다시 마감할 수 있게 합니다.
+export async function reopenSubscriptionPeriod(db, period, actorId) {
+  if (!(await isPeriodClosed(db, period))) throw error(409, `${period} 구독 정산은 마감되지 않았어요.`);
+  const used = await db.get(
+    "SELECT COUNT(*) AS n FROM settlement_entries WHERE kind='subscription' AND period=? AND (payout_id IS NOT NULL OR status NOT IN ('pending','available'))",
+    [period],
+  );
+  if (Number(used?.n || 0) > 0)
+    throw error(409, '이미 출금 신청·지급되었거나 라마로 바꾼 배분이 있어 마감을 취소할 수 없어요.');
+  const removed = await db.get("SELECT COUNT(*) AS n, COALESCE(SUM(gross),0) AS gross FROM settlement_entries WHERE kind='subscription' AND period=?", [period]);
+  await db.run("DELETE FROM settlement_entries WHERE kind='subscription' AND period=?", [period]);
+  await db.run('INSERT INTO audit_logs (id,actor_id,action,target_id,created_at) VALUES (?,?,?,?,?)', [
+    randomUUID(),
+    actorId,
+    'settlement:reopened',
+    period,
+    iso(),
+  ]);
+  return { period, removed: Number(removed?.n || 0), gross: Number(removed?.gross || 0) };
+}
 // Subscription revenue is shared monthly in proportion to episodes watched, the same
 // pooled model streaming services use. 한 달은 한 번만 마감합니다.
 // (다시 마감을 허용하면 설정을 바꾼 뒤 새 PD 몫이 기존 몫 위에 더해져 풀보다 많이 배분됩니다.)
@@ -259,10 +291,8 @@ export async function closeSubscriptionPeriod(db, period, settings, actorId) {
   const [, end] = periodRange(period);
   if (new Date(end).getTime() > Date.now())
     throw error(400, '아직 종료되지 않은 월은 마감할 수 없습니다.');
-  const closedBefore =
-    (await db.get("SELECT id FROM audit_logs WHERE action='settlement:closed' AND target_id=?", [period])) ||
-    (await db.get("SELECT id FROM settlement_entries WHERE kind='subscription' AND period=?", [period]));
-  if (closedBefore) throw error(409, `${period} 구독 정산은 이미 마감했어요. 한 달은 한 번만 마감할 수 있어요.`);
+  if (await isPeriodClosed(db, period))
+    throw error(409, `${period} 구독 정산은 이미 마감했어요. 다시 마감하려면 먼저 '마감 취소'를 해 주세요.`);
   const pool = await subscriptionPool(db, period);
   const plan = await subscriptionPlan(db, period, pool, settings);
   const stamp = iso();

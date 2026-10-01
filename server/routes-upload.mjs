@@ -398,10 +398,18 @@ export function uploadRoutes({
       await db.run('UPDATE episodes SET subtitles=? WHERE id=?', [file, e.id]);
       previous = e.subtitles;
     });
-    // 교체된 이전 자막 파일은 더 이상 쓰이지 않으므로 지웁니다.
-    if (/^[a-f0-9-]+\.vtt$/.test(previous || '')) await rm(path.join(subsDir, previous), { force: true }).catch(() => {});
+    // 교체된 이전 자막 파일은 다른 곳(AI 스튜디오 회차 등)에서 쓰지 않을 때만 지웁니다.
+    await removeUnusedSubtitle(previous);
     res.json({ ok: true, cues: vtt.split('-->').length - 1 });
   });
+  // AI 스튜디오에서 내보낸 회차는 스튜디오 회차와 같은 자막 파일을 함께 써요. 아무도 쓰지 않을 때만 파일을 지웁니다.
+  async function removeUnusedSubtitle(name) {
+    if (!/^[a-f0-9-]+\.vtt$/.test(name || '')) return;
+    const shared =
+      (await db.get('SELECT id FROM episodes WHERE subtitles=?', [name])) ||
+      (await db.get('SELECT id FROM studio_episodes WHERE subtitles=?', [name]));
+    if (!shared) await rm(path.join(subsDir, name), { force: true }).catch(() => {});
+  }
   app.delete('/api/studio/dramas/:id/episodes/:number/subtitles', roles('pd', 'admin'), async (req, res) => {
     const number = z.coerce.number().int().min(1).parse(req.params.number);
     let previous = '';
@@ -413,7 +421,7 @@ export function uploadRoutes({
       await db.run("UPDATE episodes SET subtitles='' WHERE drama_id=? AND number=?", [d.id, number]);
       previous = e?.subtitles || '';
     });
-    if (/^[a-f0-9-]+\.vtt$/.test(previous)) await rm(path.join(subsDir, previous), { force: true }).catch(() => {});
+    await removeUnusedSubtitle(previous);
     res.json({ ok: true });
   });
   // 시청 권한이 있는 사람만 자막을 받습니다(영상과 같은 기준).

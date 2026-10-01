@@ -15,5 +15,5 @@
 ## 검증 원칙
 
 - `npm run build`: TypeScript 검사 + Vite 빌드.
-- `npm test`: 실행마다 `data/tests/<runId>/`에 새 DB를 만들어 로컬 데모 DB를 건드리지 않음. `TEST_PG_ADMIN_URL`을 주면 PostgreSQL로 같은 테스트를 실행.
+- `npm test`: 실행마다 `data/tests/<runId>/`에 새 DB를 만들어 로컬 데모 DB를 건드리지 않음. `TEST_PG_ADMIN_URL`을 주고 `npm run test:pg`를 실행하면 PostgreSQL로 같은 테스트를 실행(값이 없으면 멈춤). CI(GitHub Actions)는 SQLite와 PostgreSQL 17에서 모두 실행.
 - 실결제·OAuth·네이티브 앱·운영 인프라는 아직 검증 범위가 아닙니다.

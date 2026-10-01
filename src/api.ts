@@ -269,6 +269,8 @@ export type Library = {
   episodes: { drama_id: string; episode: number }[];
   history: { drama_id: string; episode: number; progress: number; updated_at: string }[];
   orders: Order[];
+  // 전체 주문 수(orders는 최근 100건만 와요)
+  order_count?: number;
   wallet: Wallet;
   subscription: { expires_at: string; auto_renew: number } | null;
 };

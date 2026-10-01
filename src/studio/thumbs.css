@@ -6,7 +6,7 @@
   --ts-accent: var(--lime, #bfc2e0);
   --ts-field: #12171b;
   color: #f3f3f1;
-  background: var(--bg, #160f1b);
+  background: var(--bg, #0f131b);
   border: 1px solid var(--ts-border);
   border-radius: 18px;
   padding: 20px;
@@ -221,7 +221,7 @@
 .tstudio-bg-add {
   display: grid;
   place-items: center;
-  border: 1px dashed #4a545b;
+  border: 1px dashed #494f5c;
   color: var(--ts-muted);
 }
 .tstudio-templates {
@@ -412,7 +412,7 @@
   position: sticky;
   bottom: 0;
   padding: 10px 0 2px;
-  background: linear-gradient(transparent, var(--bg, #160f1b) 30%);
+  background: linear-gradient(transparent, var(--bg, #0f131b) 30%);
 }
 .tstudio-primary {
   display: inline-flex;

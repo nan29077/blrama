@@ -7,6 +7,21 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    # 운영 DB(PostgreSQL)와 같은 경로를 검증하도록 SQLite와 PostgreSQL에서 모두 테스트합니다.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: bellama
+          POSTGRES_PASSWORD: bellama
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bellama"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,4 +33,9 @@ jobs:
       # run in CI just as they do in local development and deployment.
       - run: npm ci
       - run: npm run build
-      - run: npm test
+      - name: Tests (SQLite)
+        run: npm test
+      - name: Tests (PostgreSQL)
+        run: npm run test:pg
+        env:
+          TEST_PG_ADMIN_URL: postgresql://bellama:bellama@127.0.0.1:5432/postgres

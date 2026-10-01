@@ -4,6 +4,7 @@ import { loadSettings, saveSettings, settingDefaults } from './settings.mjs';
 import {
   balanceOf,
   closeSubscriptionPeriod,
+  reopenSubscriptionPeriod,
   processPayout,
   refreshEntries,
   periodOf,
@@ -21,7 +22,7 @@ const memberSql = `SELECT u.id,u.email,u.name,u.role,u.status,u.created_at,u.las
   (SELECT COALESCE(w.paid_balance,0) FROM ping_wallets w WHERE w.user_id=u.id) AS ping_paid,
   (SELECT COALESCE(w.bonus_balance,0) FROM ping_wallets w WHERE w.user_id=u.id) AS ping_bonus,
   (SELECT r.platform_fee_rate FROM pd_settlement_rates r WHERE r.user_id=u.id) AS custom_rate,
-  (SELECT COUNT(*) FROM entitlements e WHERE e.user_id=u.id) AS owned,
+  (SELECT COUNT(*) FROM (SELECT e.drama_id FROM entitlements e WHERE e.user_id=u.id UNION SELECT o.drama_id FROM orders o WHERE o.user_id=u.id AND o.kind='ping_title' AND o.status='ping_paid' AND o.drama_id IS NOT NULL) owned_titles) AS owned,
   (SELECT COUNT(*) FROM favorites f WHERE f.user_id=u.id) AS favorites,
   (SELECT COUNT(*) FROM history h WHERE h.user_id=u.id) AS watched,
   (SELECT COUNT(*) FROM dramas d WHERE d.owner_id=u.id) AS drama_count,
@@ -115,13 +116,19 @@ export function adminRoutes({ app, db, fail, now, roles, catalogSql }) {
     // 앞 달 구독 매출이 남아 있는데 마감하지 않았다면 순서대로 마감하도록 안내합니다.
     const earlier = await db.get(
       `SELECT MIN(v.period) AS period FROM subscription_views v
-       WHERE v.period < ? AND NOT EXISTS (SELECT 1 FROM audit_logs a WHERE a.action='settlement:closed' AND a.target_id=v.period)`,
+       WHERE v.period < ? AND (SELECT COUNT(*) FROM audit_logs a WHERE a.action='settlement:closed' AND a.target_id=v.period)
+         <= (SELECT COUNT(*) FROM audit_logs a WHERE a.action='settlement:reopened' AND a.target_id=v.period)`,
       [b.period],
     );
     if (earlier?.period)
       fail(409, `${earlier.period} 구독 정산이 아직 마감되지 않았어요. 앞 달부터 순서대로 마감해 주세요.`);
     // 배분 항목·시청 표시·감사 기록을 한 트랜잭션으로 묶어 중간에 실패해도 절반만 남지 않게 합니다.
     res.json(await db.transaction(() => closeSubscriptionPeriod(db, b.period, settings, req.user.id)));
+  });
+  // 마감 취소(설정 실수 등으로 다시 마감해야 할 때). 출금·라마 전환에 쓰인 배분이 있으면 거절합니다.
+  app.post('/api/admin/settlements/reopen', roles('admin'), async (req, res) => {
+    const b = z.object({ period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }).parse(req.body);
+    res.json(await db.transaction(() => reopenSubscriptionPeriod(db, b.period, req.user.id)));
   });
   app.post('/api/admin/payouts/:id', roles('admin'), async (req, res) => {
     const b = z
@@ -506,6 +513,16 @@ export function adminRoutes({ app, db, fail, now, roles, catalogSql }) {
       .enum(['all', 'active', 'suspended', 'withdrawn'])
       .default('all')
       .parse(req.query.status || 'all');
+    // 화면 탭(전체·시청자·PD·관리자·이용 제한)과 검색·정렬·나눠 받기를 서버에서 처리합니다(회원이 많아도 빠르게).
+    const opt = z
+      .object({
+        tab: z.enum(['all', 'viewer', 'pd', 'admin', 'suspended']).default('all'),
+        q: z.string().trim().max(80).default(''),
+        sort: z.enum(['recent', 'spend', 'name']).default('recent'),
+        offset: z.coerce.number().int().min(0).max(1_000_000).default(0),
+        limit: z.coerce.number().int().min(1).max(5000).default(50),
+      })
+      .parse(req.query);
     const where = [];
     const params = [];
     if (role !== 'all') {
@@ -516,14 +533,36 @@ export function adminRoutes({ app, db, fail, now, roles, catalogSql }) {
       where.push('u.status=?');
       params.push(status);
     }
-    const rows = await db.all(
-      memberSql +
-        (where.length ? ' WHERE ' + where.join(' AND ') : '') +
-        ' ORDER BY u.created_at DESC',
-      params,
+    if (opt.tab === 'suspended') where.push("u.status<>'active'");
+    else if (opt.tab !== 'all') {
+      where.push("u.role=? AND u.status='active'");
+      params.push(opt.tab);
+    }
+    if (opt.q) {
+      const like = `%${opt.q.toLowerCase()}%`;
+      where.push('(LOWER(u.name) LIKE ? OR LOWER(u.email) LIKE ? OR EXISTS (SELECT 1 FROM channels c WHERE c.owner_id=u.id AND LOWER(c.name) LIKE ?))');
+      params.push(like, like, like);
+    }
+    const cond = where.length ? ' WHERE ' + where.join(' AND ') : '';
+    const order = { recent: 'u.created_at DESC', spend: 'spend DESC, u.created_at DESC', name: 'u.name ASC' }[opt.sort];
+    const rows = await db.all(memberSql + cond + ` ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, opt.limit, opt.offset]);
+    const total = Number((await db.get('SELECT COUNT(*) AS n FROM users u' + cond, params))?.n || 0);
+    // 위쪽 요약 카드(전체 기준)
+    const stats = await db.get(
+      `SELECT COUNT(*) AS all_count,
+        SUM(CASE WHEN role='viewer' AND status='active' THEN 1 ELSE 0 END) AS viewer,
+        SUM(CASE WHEN role='pd' AND status='active' THEN 1 ELSE 0 END) AS pd,
+        SUM(CASE WHEN role='admin' AND status='active' THEN 1 ELSE 0 END) AS admin,
+        SUM(CASE WHEN status<>'active' THEN 1 ELSE 0 END) AS suspended,
+        (SELECT COUNT(DISTINCT user_id) FROM subscriptions WHERE expires_at>?) AS subscribed,
+        (SELECT COALESCE(SUM(amount),0) FROM orders) AS spend
+       FROM users`,
+      [now()],
     );
     res.json({
       members: rows,
+      total,
+      stats: Object.fromEntries(Object.entries(stats || {}).map(([k, v]) => [k, Number(v || 0)])),
       counts: await db.all(
         'SELECT role, status, COUNT(*) AS count FROM users GROUP BY role,status',
       ),
@@ -540,8 +579,9 @@ export function adminRoutes({ app, db, fail, now, roles, catalogSql }) {
         [id],
       ),
       entitlements: await db.all(
-        'SELECT e.drama_id, d.title, d.image FROM entitlements e JOIN dramas d ON d.id=e.drama_id WHERE e.user_id=?',
-        [id],
+        // 소장 작품: 예전 작품 단위 소장 + 핑으로 '전체 열기'한 작품(시청자 마이페이지와 같은 기준)
+        "SELECT x.drama_id, d.title, d.image FROM (SELECT drama_id FROM entitlements WHERE user_id=? UNION SELECT drama_id FROM orders WHERE user_id=? AND kind='ping_title' AND status='ping_paid' AND drama_id IS NOT NULL) x JOIN dramas d ON d.id=x.drama_id",
+        [id, id],
       ),
       history: await db.all(
         'SELECT h.*, d.title FROM history h JOIN dramas d ON d.id=h.drama_id WHERE h.user_id=? ORDER BY h.updated_at DESC LIMIT 30',

@@ -263,7 +263,7 @@
   padding: 0 4px;
   border-radius: 999px;
   background: var(--lime);
-  color: #160f1b;
+  color: #0f131b;
   font-size: 10px;
   font-weight: 800;
   line-height: 17px;
@@ -342,7 +342,7 @@
   color: #969dac;
 }
 .viewer-bell-list button:hover {
-  background: #1d2529;
+  background: #1d2129;
 }
 .viewer-bell-list button.unread {
   color: #eaedf3;

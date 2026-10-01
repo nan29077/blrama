@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLeaveGuard } from './useLeaveGuard';
 import { ChevronRight, Save, ShieldCheck, Smartphone, TriangleAlert, Upload } from 'lucide-react';
 import {
   api,
@@ -14,7 +15,7 @@ import { asset } from './platform';
 
 const roleName: Record<string, string> = {
   admin: '슈퍼관리자',
-  pd: '업로더 (PD)',
+  pd: 'PD',
   viewer: '시청자',
 };
 
@@ -432,6 +433,16 @@ export default function AccountSettings({
   const [sessionError, setSessionError] = useState('');
   const [password, setPassword] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [confirmation, setConfirmation] = useState<'history' | 'sessions' | null>(null);
+  // 프로필·비밀번호 입력을 저장하지 않고 떠나려 하면 한 번 묻습니다.
+  useLeaveGuard(
+    form.name !== user.name ||
+      form.bio !== (user.bio || '') ||
+      form.avatar !== user.avatar ||
+      form.auto_next !== (user.auto_next !== false) ||
+      form.auto_unlock !== !!user.auto_unlock ||
+      !!(password.currentPassword || password.newPassword || password.confirm),
+    '저장하지 않은 계정 설정이 있어요. 저장하지 않고 이 화면을 떠날까요?',
+  );
   async function loadSessions() {
     try {
       setSessions(await api('/account/sessions'));
@@ -576,7 +587,7 @@ export default function AccountSettings({
           <div>
             <dt>계정 권한</dt>
             <dd>
-              {user.role === 'admin' ? '슈퍼관리자' : user.role === 'pd' ? '업로더 (PD)' : '시청자'}
+              {user.role === 'admin' ? '슈퍼관리자' : user.role === 'pd' ? 'PD' : '시청자'}
             </dd>
           </div>
         </dl>

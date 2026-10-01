@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import path from 'node:path';
+import { rm } from 'node:fs/promises';
 import { createHash, randomBytes, randomInt, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 import { hashPassword } from './seed.mjs';
 import { loadSettings } from './settings.mjs';
@@ -50,6 +52,7 @@ export function accountRoutes({
   origin,
   proxyStatus,
   production,
+  uploadDir,
 }) {
   const audit = (actorId, action, targetId) =>
     db.run('INSERT INTO audit_logs (id,actor_id,action,target_id,created_at) VALUES (?,?,?,?,?)', [
@@ -245,6 +248,7 @@ export function accountRoutes({
       .parse(req.body);
     if (req.user.id.startsWith('demo-')) fail(400, '공용 테스트 계정은 탈퇴할 수 없어요.');
     if (!passwordMatches(req.user.password, b.password)) fail(400, '비밀번호가 일치하지 않아요.');
+    let removedAvatar = '';
     await db.transaction(async () => {
       await db.lockUser(req.user.id);
       const user = await db.get('SELECT * FROM users WHERE id=?', [req.user.id]);
@@ -262,7 +266,10 @@ export function accountRoutes({
         "UPDATE users SET status='withdrawn', withdrawn_at=?, email=?, name='탈퇴한 회원', password='', phone='', phone_verified_at=NULL WHERE id=?",
         [stamp, `withdrawn+${user.id}@deleted.local`, user.id],
       );
-      await db.run("UPDATE user_profiles SET bio='' WHERE user_id=?", [user.id]);
+      // 프로필 사진(직접 올린 사진이면 기본 아바타로)과 소개도 지웁니다. 올린 사진 파일은 아래에서 지워요.
+      const profile = await db.get('SELECT avatar FROM user_profiles WHERE user_id=?', [user.id]);
+      if (/^\/uploads\/[a-f0-9-]+\.(jpg|png|webp)$/.test(profile?.avatar || '')) removedAvatar = profile.avatar;
+      await db.run("UPDATE user_profiles SET bio='', avatar='/avatars/block-01.webp' WHERE user_id=?", [user.id]);
       await db.run(
         "UPDATE pd_tax_profiles SET business_no='', business_name='', rep_name='', business_class='', business_item='', tax_email='', bank_name='', account_number='', account_holder='', contact='', address='', updated_at=? WHERE user_id=?",
         [stamp, user.id],
@@ -288,6 +295,10 @@ export function accountRoutes({
           stamp,
         ]);
     });
+    if (removedAvatar && uploadDir) {
+      await rm(path.join(uploadDir, path.basename(removedAvatar)), { force: true }).catch(() => {});
+      await db.run('DELETE FROM media_files WHERE url=?', [removedAvatar]).catch(() => {});
+    }
     res.clearCookie('bl_session', { path: '/' }).json({ ok: true, message: '탈퇴가 완료됐어요. 그동안 B엘라마를 이용해 주셔서 고마워요.' });
   });
 

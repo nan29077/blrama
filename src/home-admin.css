@@ -137,7 +137,7 @@
 .home-preview-shade {
   position: absolute;
   inset: 0;
-  background: #040807;
+  background: #040508;
   z-index: 0;
   pointer-events: none;
 }
@@ -148,7 +148,7 @@
   padding: 14px 16px;
   border: 1px solid #ffffff14;
   border-radius: 14px;
-  background: linear-gradient(135deg, #06100dcc, #08120f82);
+  background: linear-gradient(135deg, #080a0ecc, #090b1182);
   backdrop-filter: blur(6px);
 }
 .home-preview-copy.flat,
@@ -283,7 +283,7 @@
   height: 42px;
   border-radius: 5px;
   object-fit: cover;
-  background: #0b1112;
+  background: #0b0d12;
 }
 .home-picked > li > span {
   flex: 1;
@@ -315,9 +315,9 @@
   gap: 6px;
   margin: 0 !important;
   padding: 0 10px;
-  border: 1px solid #323d3d;
+  border: 1px solid #31353e;
   border-radius: 8px;
-  background: #10161a;
+  background: #10131a;
 }
 .home-picker-search input {
   border: 0 !important;
@@ -373,7 +373,7 @@
   border: 6px solid #1e2533;
   border-radius: 28px;
   padding: 12px 10px;
-  background: #0d1214;
+  background: #0d0f14;
   max-height: 640px;
   overflow-y: auto;
   display: flex;
@@ -454,7 +454,7 @@
   border: 1px solid #272e3e;
   border-radius: 14px;
   padding: 14px;
-  background: #0d1214;
+  background: #0d0f14;
 }
 .home-notice-fake {
   margin-top: 8px;
@@ -714,7 +714,7 @@
 .home-theme-picked {
   top: auto !important;
   bottom: 62px;
-  background: #0b1112d9;
+  background: #0b0d12d9;
   color: #e3d6ff;
   border: 1px solid #b28cff66;
 }

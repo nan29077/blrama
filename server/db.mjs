@@ -92,7 +92,15 @@ export async function openDb() {
   };
 }
 
+// 웹 서버·worker·관리 스크립트가 동시에 시작해도 스키마 변경이 겹치지 않게, PostgreSQL에서는 잠금을 잡고 한 트랜잭션으로 실행합니다.
 export async function migrate(db) {
+  if (db.engine !== 'postgresql') return migrateSchema(db);
+  return db.transaction(async () => {
+    await db.get('SELECT pg_advisory_xact_lock(hashtext(?))', ['bellama-migrate']);
+    return migrateSchema(db);
+  });
+}
+async function migrateSchema(db) {
   const statements = [
     `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','pd','viewer')), status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS user_profiles (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, avatar TEXT NOT NULL, bio TEXT NOT NULL DEFAULT '', auto_next INTEGER NOT NULL DEFAULT 1)`,
@@ -241,6 +249,8 @@ export async function migrate(db) {
   await ensureColumn(db, 'dramas', 'declared_at', 'TEXT');
   // 관람 등급(all·12·15·18). PD가 등록할 때 정하고, 관리자가 심사할 때 바꿀 수 있어요.
   await ensureColumn(db, 'dramas', 'age_rating', "TEXT NOT NULL DEFAULT '15'");
+  // 합성 작업 프로세스의 생존 표시(여러 대 운영 시 남의 합성을 가로채지 않게)
+  await ensureColumn(db, 'studio_renders', 'heartbeat_at', 'TEXT');
   await ensureColumn(db, 'episodes', 'source', "TEXT NOT NULL DEFAULT 'upload'");
   await ensureColumn(db, 'episodes', 'subtitles', "TEXT NOT NULL DEFAULT ''");
   await ensureColumn(db, 'episodes', 'studio_episode_id', 'TEXT');
@@ -413,6 +423,27 @@ export async function migrate(db) {
   await db.run(
     "UPDATE dramas SET published_at=created_at WHERE published_at IS NULL AND status='published'",
   );
+  // 자주 조회하는 칸의 인덱스(2026-10-01 점검: 기본키가 아닌 WHERE 조건에 인덱스가 없어 전체 탐색하던 곳)
+  for (const sql of [
+    'CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id)',
+    'CREATE INDEX IF NOT EXISTS orders_user ON orders(user_id, created_at)',
+    'CREATE INDEX IF NOT EXISTS orders_kind ON orders(kind, created_at)',
+    'CREATE INDEX IF NOT EXISTS dramas_owner ON dramas(owner_id)',
+    'CREATE INDEX IF NOT EXISTS dramas_channel ON dramas(channel_id)',
+    'CREATE INDEX IF NOT EXISTS payouts_pd ON payouts(pd_id)',
+    'CREATE INDEX IF NOT EXISTS settlement_entries_payout ON settlement_entries(payout_id)',
+    'CREATE INDEX IF NOT EXISTS episode_entitlements_order ON episode_entitlements(order_id)',
+    'CREATE INDEX IF NOT EXISTS ai_jobs_project ON ai_jobs(project_id, created_at)',
+    'CREATE INDEX IF NOT EXISTS ai_jobs_target ON ai_jobs(target_id)',
+    'CREATE INDEX IF NOT EXISTS studio_episodes_project ON studio_episodes(project_id)',
+    'CREATE INDEX IF NOT EXISTS studio_shots_episode ON studio_shots(episode_id)',
+    'CREATE INDEX IF NOT EXISTS studio_characters_project ON studio_characters(project_id)',
+    'CREATE INDEX IF NOT EXISTS studio_locations_project ON studio_locations(project_id)',
+    'CREATE INDEX IF NOT EXISTS studio_props_project ON studio_props(project_id)',
+    'CREATE INDEX IF NOT EXISTS support_tickets_user ON support_tickets(user_id)',
+    'CREATE INDEX IF NOT EXISTS media_files_owner ON media_files(owner_id)',
+  ])
+    await db.run(sql);
 }
 
 async function ensureColumn(db, table, column, type) {
@@ -420,7 +451,7 @@ async function ensureColumn(db, table, column, type) {
     db.engine === 'postgresql'
       ? (
           await db.all(
-            'SELECT column_name AS name FROM information_schema.columns WHERE table_name=?',
+            'SELECT column_name AS name FROM information_schema.columns WHERE table_name=? AND table_schema=current_schema()',
             [table],
           )
         ).map((r) => r.name)

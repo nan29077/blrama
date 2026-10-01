@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazyRetry } from './lazyRetry';
 import {
   Activity,
   Clapperboard,
@@ -48,7 +49,7 @@ import { useConfirm } from './confirm';
 import { asset } from './platform';
 import NumberInput from './NumberInput';
 // 품질 시험(6단계)은 처음 열 때만 불러와요.
-const AdminAiQuality = lazy(() => import('./AdminAiQuality'));
+const AdminAiQuality = lazyRetry(() => import('./AdminAiQuality'));
 
 // 슈퍼관리자 · AI 연결 관리: 공급사(중국 포함)와 API 키, 모델·가격·자동 선택 규칙, 비용 한도, 작업 모니터
 type Tab =

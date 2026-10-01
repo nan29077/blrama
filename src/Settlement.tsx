@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLeaveGuard } from './useLeaveGuard';
 import {
   AlertCircle,
   Banknote,
@@ -226,6 +227,11 @@ export default function Settlement({
   useEffect(() => {
     void load();
   }, [load, user.id]);
+  // 계좌·세무 정보를 고치다 저장하지 않고 다른 메뉴로 가면 한 번 묻습니다.
+  useLeaveGuard(
+    !!data && !!form && JSON.stringify(form) !== JSON.stringify(data.profile),
+    '저장하지 않은 계좌·세무 정보가 있어요. 저장하지 않고 이 화면을 떠날까요?',
+  );
   if (error)
     return (
       <Empty title="정산 정보를 불러오지 못했어요" text={error} action={() => void load()} label="다시 시도" />

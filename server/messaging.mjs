@@ -87,6 +87,9 @@ export async function saveMessagingConfig(db, patch, actorId) {
     if (patch[key] !== undefined) next[key] = patch[key];
   for (const key of ['email_provider', 'sms_provider'])
     if (!providers[next[key]]) throw statusError(400, '알 수 없는 발송 방식이에요.');
+  // 운영에서 '기록만'을 고르면 재설정 메일·인증 문자가 실제로 나가지 않는데 성공처럼 보이고, 본문이 DB에 남습니다.
+  if (production() && (next.email_provider === 'log' || next.sms_provider === 'log'))
+    throw statusError(400, "운영 환경에서는 '기록만 남기기'를 쓸 수 없어요. 웹훅 발송을 설정하거나 '보내지 않음'을 골라 주세요.");
   // secret: undefined면 그대로, ''면 지우기, 값이 있으면 암호화해 저장
   if (patch.secret !== undefined) next.secret_enc = patch.secret ? encrypt(patch.secret) : '';
   if (production() && next.webhook_url && !next.webhook_url.startsWith('https://'))
@@ -118,13 +121,14 @@ export const disabledMessage = (channel) =>
 export async function channelReady(db, channel) {
   const config = await loadMessagingConfig(db);
   const id = channel === 'sms' ? config.sms_provider : config.email_provider;
-  return Boolean(id && id !== 'none' && providers[id]);
+  return Boolean(id && id !== 'none' && providers[id] && !(production() && id === 'log'));
 }
 
 async function dispatch(db, channel, { to, subject = '', text = '', html = '', purpose = '', userId = null }) {
   const config = await loadMessagingConfig(db);
   const id = channel === 'sms' ? config.sms_provider : config.email_provider;
-  const provider = providers[id] || providers.none;
+  // 개발 때 저장해 둔 '기록만'이 운영에 남아 있어도 운영에서는 보내지 않음으로 처리합니다.
+  const provider = (production() && id === 'log' ? null : providers[id]) || providers.none;
   const outboxId = randomUUID();
   const record = (status, error = '') =>
     db

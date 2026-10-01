@@ -25,6 +25,7 @@ import {
 } from './api';
 import { Empty, Modal } from './App';
 import NumberInput from './NumberInput';
+import { useConfirm } from './confirm';
 
 // 슈퍼관리자 포인트(핑) 관리: 현황 · 충전 상품 · 가격 정책 · 분배 비율 · 지급/회수.
 type Tab = 'overview' | 'products' | 'policy' | 'rates' | 'adjust';
@@ -260,6 +261,7 @@ function Ledger({ rows }: { rows: AdminPings['ledger'] }) {
 }
 
 function Products({ data, busy, run }: { data: AdminPings; busy: boolean; run: Run }) {
+  const [ask, confirmUi] = useConfirm();
   const [channel, setChannel] = useState<PingProduct['channel']>('web'),
     [editing, setEditing] = useState<(typeof emptyProduct & { id?: string }) | null>(null);
   const list = data.products.filter((p) => p.channel === channel);
@@ -267,6 +269,7 @@ function Products({ data, busy, run }: { data: AdminPings; busy: boolean; run: R
   const unit = data.settings.ping_unit_won;
   return (
     <section className="management-panel">
+      {confirmUi}
       <div className="panel-heading">
         <div>
           <h3>충전 상품</h3>
@@ -360,12 +363,23 @@ function Products({ data, busy, run }: { data: AdminPings; busy: boolean; run: R
                         className="secondary compact"
                         aria-label={p.name + ' 삭제'}
                         disabled={busy}
-                        onClick={() =>
+                        onClick={async () => {
+                          if (
+                            !(await ask({
+                              title: `'${p.name}' 상품을 삭제할까요?`,
+                              text: n(p.sold)
+                                ? '판매 이력이 있어 삭제 대신 판매 중지로 바뀌어요.'
+                                : '삭제하면 되돌릴 수 없어요.',
+                              ok: '삭제',
+                              danger: true,
+                            }))
+                          )
+                            return;
                           void run(
                             () => api('/admin/pings/products/' + p.id, 'DELETE'),
                             n(p.sold) ? '판매 이력이 있어 판매 중지로 바꿨어요.' : '상품을 삭제했어요.',
-                          )
-                        }
+                          );
+                        }}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -724,18 +738,23 @@ function Rates({ data, busy, run }: { data: AdminPings; busy: boolean; run: Run 
 function Adjust({ data, busy, run }: { data: AdminPings; busy: boolean; run: Run }) {
   const [members, setMembers] = useState<Member[]>([]),
     [query, setQuery] = useState(''),
+    [picked, setPicked] = useState<Member | null>(null),
     [form, setForm] = useState({ userId: '', action: 'grant', pings: 10, memo: '' });
+  const [ask, confirmUi] = useConfirm();
+  // 회원 검색은 서버에서(이름·이메일) 8명까지 찾아 옵니다.
   useEffect(() => {
-    api<{ members: Member[] }>('/admin/members')
-      .then((r) => setMembers(r.members))
-      .catch(() => setMembers([]));
-  }, [data]);
-  const matched = members
-    .filter((m) => `${m.name} ${m.email}`.toLowerCase().includes(query.toLowerCase()))
-    .slice(0, 8);
-  const target = members.find((m) => m.id === form.userId);
+    const t = setTimeout(() => {
+      api<{ members: Member[] }>('/admin/members?' + new URLSearchParams({ q: query.trim(), limit: '8' }).toString())
+        .then((r) => setMembers(r.members))
+        .catch(() => setMembers([]));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [data, query]);
+  const matched = members;
+  const target = picked && picked.id === form.userId ? picked : members.find((m) => m.id === form.userId);
   return (
     <>
+      {confirmUi}
       <section className="management-panel">
         <div className="panel-heading">
           <div>
@@ -750,6 +769,18 @@ function Adjust({ data, busy, run }: { data: AdminPings; busy: boolean; run: Run
           onSubmit={async (e) => {
             e.preventDefault();
             if (!target) return;
+            const grant = form.action === 'grant';
+            if (
+              !(await ask({
+                title: `${target.name}님에게 ${pings(form.pings)}을 ${grant ? '지급' : '회수'}할까요?`,
+                text: grant
+                  ? `보너스 핑으로 쌓여요. 사용되면 기준가로 PD에게 정산돼 약 ${won(form.pings * data.settings.ping_unit_won)}의 비용이 생길 수 있어요.`
+                  : '회수는 보너스 핑부터 빼요. 회원에게 따로 안내해 주세요.',
+                ok: grant ? '지급' : '회수',
+                danger: !grant,
+              }))
+            )
+              return;
             const ok = await run(
               () => api('/admin/pings/adjust', 'POST', form),
               `${target.name}님에게 ${pings(form.pings)}을 ${form.action === 'grant' ? '지급' : '회수'}했어요.`,
@@ -772,7 +803,10 @@ function Adjust({ data, busy, run }: { data: AdminPings; busy: boolean; run: Run
                 type="button"
                 key={m.id}
                 className={form.userId === m.id ? 'active' : ''}
-                onClick={() => setForm({ ...form, userId: m.id })}
+                onClick={() => {
+                  setPicked(m);
+                  setForm({ ...form, userId: m.id });
+                }}
               >
                 <strong>{m.name}</strong>
                 <small>{m.email}</small>

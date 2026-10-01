@@ -26,7 +26,8 @@ import {
   planSchema,
   maleLeads,
   BL_VISUAL,
-  minorTerm,
+  minorLook,
+  MINOR_HINT,
   posterPrompt,
   rangePrompt,
   rangeSchema,
@@ -159,6 +160,11 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
     async onSuccess({ job, result }) {
       const plan = parseJson(result.text, planSchema);
       plan.characters = maleLeads(plan.characters);
+      // BL 전용: AI가 미성년으로 보이는 인물 외형을 만들면 반영하지 않아요(오류로 끝나 라마는 전액 돌려드려요).
+      for (const c of plan.characters) {
+        const minor = minorLook(c);
+        if (minor) throw new Error(`AI가 만든 인물 '${c.name}'의 외형에 미성년으로 보이는 표현("${minor}")이 있어 반영하지 않았어요. 다시 만들어 주세요.`);
+      }
       const p = await db.get('SELECT * FROM studio_projects WHERE id=?', [job.project_id]);
       if (!p) return { skipped: true };
       await db.run('UPDATE studio_projects SET title=?,logline=?,synopsis=?,style=?,updated_at=? WHERE id=?', [
@@ -555,6 +561,11 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
       let order = old.length;
       // 처음 인물을 만드는 경우 첫 두 명(주인공 커플)은 성인 남성으로 보정해요(BL 전문).
       if (!old.length) out.characters = maleLeads(out.characters);
+      // BL 전용: 대본의 인물 외형이 미성년으로 보이면 반영하지 않아요(오류로 끝나 라마는 전액 돌려드려요).
+      for (const c of out.characters) {
+        const minor = minorLook(c);
+        if (minor) throw new Error(`대본의 인물 '${c.name}' 외형에 미성년으로 보이는 표현("${minor}")이 있어요. 성인으로 고친 뒤 다시 불러와 주세요.`);
+      }
       for (const c of out.characters) {
         const same = old.find((o) => o.name.trim() === c.name.trim());
         const lookEn = c.look_en || (/[가-힣]/.test(c.look) ? '' : c.look);
@@ -759,16 +770,27 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
       const row = await db.get('SELECT e.id, e.subtitles AS old_subtitles, e.review_status, d.status AS drama_status FROM episodes e JOIN dramas d ON d.id=e.drama_id WHERE e.drama_id=? AND e.number=?', [dramaId, Number(number)]);
       // 작품이 임시저장·반려 상태이거나, 연재 중 작품의 아직 공개 전(초안·반려) 회차만 자막을 바꿉니다.
       const e = row && episodeEditable({ status: row.drama_status }, row) ? row : null;
+      // 반영할 수 없으면 '완료'로 끝내지 않고 오류로 끝내 라마를 전액 돌려드립니다.
       if (!e || !vtt) {
         await removeTemp(tempAudioOf(job));
-        return { skipped: true };
+        throw new Error(
+          !e
+            ? '자막을 만드는 사이 회차가 심사 중이 되었거나 지워져 반영하지 못했어요. 라마는 돌려드렸어요.'
+            : '영상에서 자막으로 만들 말소리를 찾지 못했어요. 라마는 돌려드렸어요.',
+        );
       }
       const file = randomUUID() + '.vtt';
       await mkdir(subsDir, { recursive: true });
       await writeFile(path.join(subsDir, file), vtt, 'utf8');
       await db.run('UPDATE episodes SET subtitles=? WHERE id=?', [file, e.id]);
       // 이전 자막 파일은 더 이상 쓰이지 않으므로 지웁니다.
-      if (e.old_subtitles && e.old_subtitles !== file) await rm(path.join(subsDir, path.basename(e.old_subtitles)), { force: true }).catch(() => {});
+      // (AI 스튜디오 회차가 같은 파일을 쓰고 있으면 남겨 둡니다.)
+      if (e.old_subtitles && e.old_subtitles !== file) {
+        const old = path.basename(e.old_subtitles);
+        const shared =
+          (await db.get('SELECT id FROM episodes WHERE subtitles=?', [old])) || (await db.get('SELECT id FROM studio_episodes WHERE subtitles=?', [old]));
+        if (!shared) await rm(path.join(subsDir, old), { force: true }).catch(() => {});
+      }
       // 임시 음성 파일은 자막을 다 저장한 뒤에 지워요(중간에 실패하면 다시 시도할 때 그대로 써요).
       await removeTemp(tempAudioOf(job));
       return { cues: segments.length };
@@ -1646,8 +1668,8 @@ export function studioAiRoutes({ app, db, fail, now, roles, engine, renderer, up
   // BL 전용: 인물 외형(이미지로 그려지는 칸)에 미성년으로 보이는 표현을 쓰지 못하게 합니다.
   // 소개(description)는 '고등학교 동창' 같은 과거 이야기일 수 있어 검사하지 않습니다.
   const assertAdultLook = (c) => {
-    const minor = minorTerm([c.look, c.outfit, c.hair, c.body], { strict: true });
-    if (minor) fail(400, `등장인물은 모두 성인(20세 이상)으로 그려야 해요. 외형에서 미성년으로 보이는 표현을 빼 주세요: "${minor}"`);
+    const minor = minorLook(c);
+    if (minor) fail(400, `등장인물은 모두 성인(20세 이상)으로 그려야 해요. 외형에서 미성년으로 보이는 표현을 빼 주세요: "${minor}" ${MINOR_HINT}`);
   };
   app.post('/api/studio/ai/projects/:id/characters', roles('pd', 'admin'), async (req, res) => {
     const p = await project(req, req.params.id, 'script');

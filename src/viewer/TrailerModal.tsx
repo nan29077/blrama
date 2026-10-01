@@ -41,7 +41,7 @@ export default function TrailerModal({
             muted
             playsInline
             controls
-            preload="auto"
+            preload="metadata"
             onVolumeChange={() => setMuted(!!video.current?.muted)}
             onError={() => setFailed(true)}
           />

@@ -6,10 +6,10 @@
     'Segoe UI',
     sans-serif;
   color: #f3f3f1;
-  background: #100b13;
+  background: #0b0d13;
   font-synthesis: none;
   --lime: #bfc2e0;
-  --bg: #160f1b;
+  --bg: #0f131b;
   --panel: #1b1c21;
   --muted: #8d959c;
   --border: #2a3035;
@@ -94,7 +94,7 @@ svg {
   height: 3px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3b4246;
+  background: #393d48;
   border-radius: 8px;
 }
 .lime {
@@ -130,7 +130,7 @@ svg {
   border: 1px solid #333b41;
 }
 .secondary:hover {
-  background: #30393d;
+  background: #30343d;
 }
 .compact {
   min-height: 34px;
@@ -192,7 +192,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   padding: 0 26px;
-  background: #160f1bf5;
+  background: #0f131bf5;
   position: sticky;
   top: 0;
   z-index: 40;
@@ -258,7 +258,7 @@ svg {
 }
 .login-link {
   font-size: 11px;
-  border: 1px solid #3b4145;
+  border: 1px solid #383d48;
   border-radius: 7px;
   padding: 4px 10px;
 }
@@ -339,8 +339,8 @@ svg {
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(0deg, #160f1b 0%, #160f1bde 8%, #10171a90 33%, #0b101615 74%, #0e13174a 100%),
-    linear-gradient(90deg, #07101075, transparent 65%);
+    linear-gradient(0deg, #0f131b 0%, #0f131bde 8%, #10131a90 33%, #0b101615 74%, #0e13174a 100%),
+    linear-gradient(90deg, #080a0f75, transparent 65%);
 }
 .hero-top {
   display: flex;
@@ -545,7 +545,7 @@ svg {
   border-radius: 9px;
   position: relative;
   overflow: hidden;
-  background: #29343a;
+  background: #292e3a;
   isolation: isolate;
 }
 .poster img {
@@ -589,7 +589,7 @@ svg {
 .card-meta i {
   width: 2px;
   height: 2px;
-  background: #5a646a;
+  background: #565d6e;
   border-radius: 50%;
 }
 .badge {
@@ -606,7 +606,7 @@ svg {
 }
 .badge.new {
   background: #f2f3ec;
-  color: #171c1f;
+  color: #17191f;
 }
 .poster-wordmark {
   position: absolute;
@@ -791,7 +791,7 @@ footer > div {
 }
 footer > small {
   font-size: 10px;
-  color: #535f66;
+  color: #515868;
 }
 .bottom-nav {
   position: fixed;
@@ -894,7 +894,7 @@ footer > small {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, #07141dea, transparent 75%);
+  background: linear-gradient(0deg, #0d1017ea, transparent 75%);
   z-index: -1;
 }
 .photo-back {
@@ -948,7 +948,7 @@ footer > small {
   gap: 6px;
   font-size: 10px;
   letter-spacing: 0.2px;
-  background: #273333e6;
+  background: #272b33e6;
   border: 1px solid #6879a052;
   backdrop-filter: blur(10px);
   border-radius: 20px;
@@ -987,7 +987,7 @@ footer > small {
   display: block;
   font-size: 10px;
   letter-spacing: 0.7px;
-  color: #455657;
+  color: #454a57;
   margin-top: 50px;
 }
 .right-rail {
@@ -1046,12 +1046,12 @@ footer > small {
 .store-button {
   display: flex;
   width: 218px;
-  border: 1px solid #34403f;
+  border: 1px solid #333741;
   border-radius: 10px;
   padding: 11px 17px;
   margin-top: 10px;
   text-align: left;
-  background: #161e1df0;
+  background: #16181ef0;
   gap: 12px;
 }
 .store-button > span {
@@ -1148,7 +1148,7 @@ footer > small {
   align-items: center;
   gap: 10px;
   border: 1px solid #353a46;
-  background: #1c2425;
+  background: #1c1f25;
   border-radius: 11px;
   padding: 0 16px;
   margin-bottom: 9px;
@@ -1256,7 +1256,7 @@ footer > small {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #020608b8;
+  background: #040406b8;
   backdrop-filter: blur(7px);
   z-index: 80;
   display: flex;
@@ -1695,9 +1695,9 @@ select {
   width: 100%;
   padding: 13px 14px;
   margin-top: 8px;
-  background: #10161a;
+  background: #10131a;
   color: #e2e6ee;
-  border: 1px solid #323d3d;
+  border: 1px solid #31353e;
   border-radius: 8px;
   font-size: 12px;
 }
@@ -2024,7 +2024,7 @@ details > p {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(0deg, #160f1b, transparent 90%);
+  background: linear-gradient(0deg, #0f131b, transparent 90%);
 }
 .back-button {
   position: absolute;
@@ -2033,7 +2033,7 @@ details > p {
   width: 35px;
   height: 35px;
   border-radius: 50%;
-  background: #0c171b77;
+  background: #0e111977;
 }
 .detail-original {
   position: absolute;
@@ -2131,8 +2131,8 @@ details > p {
   color: #98a1b7;
 }
 .episode-grid > button.locked {
-  background: #1a2023;
-  border-color: #2c3336;
+  background: #1a1d23;
+  border-color: #2b2f37;
   color: #7b818f;
 }
 .episode-grid > button.locked svg {
@@ -2183,7 +2183,7 @@ details > p {
 }
 .watch-shell {
   padding-bottom: 0;
-  background: #080d10;
+  background: #080b10;
 }
 .watch-top {
   height: 73px;
@@ -2209,7 +2209,7 @@ details > p {
   position: relative;
   width: 100%;
   height: min(73vh, 760px);
-  background: #030706;
+  background: #040406;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -2390,7 +2390,7 @@ details > p {
   width: 100%;
   padding: 18px 16px;
   background: #232b31;
-  border: 1px solid #39434a;
+  border: 1px solid #393e4a;
   border-radius: 11px;
   margin-top: 14px;
   font-size: 12px;
@@ -2718,7 +2718,7 @@ details > p {
   border-radius: 11px;
   padding: 0 15px;
   margin-bottom: 13px;
-  background: #171e1d;
+  background: #17191e;
 }
 .manage-content .content-row {
   border: 0;
@@ -3093,8 +3093,8 @@ details > p {
   }
   .hero-shade {
     background:
-      linear-gradient(0deg, #160f1b, #160f1bdc 10%, #10171a60 44%, #0b101600 78%, #0e13174a),
-      linear-gradient(90deg, #07101070, transparent 72%);
+      linear-gradient(0deg, #0f131b, #0f131bdc 10%, #10131a60 44%, #0b101600 78%, #0e13174a),
+      linear-gradient(90deg, #080a0f70, transparent 72%);
   }
   .genre-chips {
     padding: 16px 19px 13px;
@@ -3484,7 +3484,7 @@ details > p {
     height: 62px;
     gap: 19px;
     padding: 0 20px;
-    background: #1a1120f2;
+    background: #111620f2;
     position: sticky;
     top: 0;
     z-index: 35;
@@ -3595,7 +3595,7 @@ details > p {
     position: relative;
     border: 1px solid #262c3a;
     border-radius: 16px;
-    background: linear-gradient(140deg, #181d2a, #111a19);
+    background: linear-gradient(140deg, #181d2a, #11141a);
     padding: 16px;
     overflow: hidden;
   }
@@ -3673,7 +3673,7 @@ details > p {
     position: sticky;
     top: 76px;
     z-index: 35;
-    background: #160f1bf2;
+    background: #0f131bf2;
     backdrop-filter: blur(14px);
     box-shadow: 0 8px 24px #0002;
   }
@@ -3698,7 +3698,7 @@ details > p {
   max-width: none;
   margin: 0;
   padding: 70px 30px 40px 250px;
-  background: #1a1120;
+  background: #111620;
   border: 0;
   box-shadow: none;
   min-height: 100dvh;
@@ -3714,9 +3714,9 @@ details > p {
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
-  background: #11191bf5;
+  background: #11141bf5;
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid #283235;
+  border-bottom: 1px solid #282c35;
   gap: 16px;
 }
 .management-topbar > a,
@@ -3752,8 +3752,8 @@ details > p {
   left: 0;
   width: 220px;
   z-index: 10;
-  background: #121b1d;
-  border-right: 1px solid #283235;
+  background: #12151d;
+  border-right: 1px solid #282c35;
   padding: 26px 17px;
   overflow-y: auto;
   display: flex;
@@ -3868,7 +3868,7 @@ details > p {
 .management-layout .stat-card {
   padding: 23px;
   border-radius: 14px;
-  background: linear-gradient(125deg, #1a2725, #182121);
+  background: linear-gradient(125deg, #1a1e27, #181b21);
   border-color: #272e3f;
 }
 .management-layout .stat-card > strong {
@@ -3887,7 +3887,7 @@ details > p {
 .management-layout .content-row {
   padding: 15px;
   border-radius: 12px;
-  background: #162021;
+  background: #161921;
 }
 .management-layout .manage-content {
   padding: 0 0 14px;
@@ -3899,11 +3899,11 @@ details > p {
 }
 .management-layout .user-row {
   padding: 18px;
-  background: #162021;
+  background: #161921;
 }
 .management-panel {
   padding: 24px;
-  background: #162022;
+  background: #161a22;
   border: 1px solid #262d3c;
   border-radius: 15px;
   margin-bottom: 22px;
@@ -4369,7 +4369,7 @@ details > p {
 }
 .support-ticket {
   border: 1px solid #272e3f;
-  background: #16201f;
+  background: #161920;
   border-radius: 12px;
   margin: 13px 0;
 }
@@ -4474,7 +4474,7 @@ details > p {
     inset: 0;
     background:
       linear-gradient(0deg, rgb(4 8 7 / var(--home-shade, 0)), rgb(4 8 7 / var(--home-shade, 0))),
-      linear-gradient(180deg, #07100dc7 0%, #09111080 30%, #09121040 60%, #100b13d9 100%),
+      linear-gradient(180deg, #080a0fc7 0%, #090b1180 30%, #090c1240 60%, #0b0d13d9 100%),
       var(--home-wallpaper, url('/images/bellama-desktop.webp')) var(--home-focus, center) / cover no-repeat;
   }
   .left-rail .rail-art {
@@ -4506,7 +4506,7 @@ details > p {
     padding: 24px 26px;
     border: 1px solid #ffffff14;
     border-radius: 22px;
-    background: linear-gradient(135deg, #06100dcc, #08120f82);
+    background: linear-gradient(135deg, #080a0ecc, #090b1182);
     box-shadow: 0 18px 50px #0004;
     backdrop-filter: blur(8px);
   }
@@ -4549,7 +4549,7 @@ details > p {
     text-shadow: 0 1px 12px #000;
   }
   .right-rail .app-intro {
-    background: linear-gradient(140deg, #181d2ae0, #111a19d9);
+    background: linear-gradient(140deg, #181d2ae0, #11141ad9);
     backdrop-filter: blur(8px);
   }
   .desktop-account,
@@ -4558,7 +4558,7 @@ details > p {
   }
   .desktop-menu > button {
     color: #bec4d1;
-    background: #07100d8f;
+    background: #080a0f8f;
     border-color: #ffffff0d;
     text-shadow: 0 1px 8px #000;
     backdrop-filter: blur(6px);
@@ -4715,7 +4715,7 @@ details > p {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #06100db8 0 32%, transparent 45% 68%, #06100d4d 100%);
+  background: linear-gradient(90deg, #080a0eb8 0 32%, transparent 45% 68%, #080a0e4d 100%);
 }
 .home-preview-copy {
   position: absolute;
@@ -4765,7 +4765,7 @@ details > p {
   place-items: center;
   border: 1px solid #ffffff1a;
   border-radius: 12px;
-  background: #0b1112e8;
+  background: #0b0d12e8;
   color: #707788;
   font-size: 10px;
 }
@@ -4822,7 +4822,7 @@ details > p {
   margin-top: 0;
   padding: 18px 0 16px;
   border-top: 1px solid #2c3344;
-  background: #121b1d;
+  background: #12151d;
 }
 .sidebar-footer .sidebar-profile {
   width: 100%;
@@ -4984,7 +4984,7 @@ details > p {
   border-radius: 50%;
   border: 2px solid var(--channel-accent, #bfc2e0);
   overflow: hidden;
-  background: #1b2429;
+  background: #1b1f29;
   flex-shrink: 0;
   color: #9aa3bb;
   box-shadow: 0 6px 20px #00000055;
@@ -5000,7 +5000,7 @@ details > p {
   width: 100%;
   aspect-ratio: 3 / 1;
   overflow: hidden;
-  background: #0e1417;
+  background: #0e1117;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5062,7 +5062,7 @@ details > p {
   border: 1px solid #242935;
   border-radius: 16px;
   overflow: hidden;
-  background: #151c1f;
+  background: #15181f;
   transition:
     border-color 0.18s,
     transform 0.18s;
@@ -5086,7 +5086,7 @@ details > p {
   border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
-  color: #0b1012;
+  color: #0b0d12;
   background: var(--channel-accent, #bfc2e0);
 }
 .channel-card-head {
@@ -5099,7 +5099,7 @@ details > p {
 }
 .channel-card-head .channel-logo {
   border-width: 3px;
-  box-shadow: 0 0 0 3px #151c1f;
+  box-shadow: 0 0 0 3px #15181f;
 }
 .channel-card-title {
   flex: 1;
@@ -5134,13 +5134,13 @@ details > p {
   height: 28px;
   margin-top: 36px;
   border-radius: 50%;
-  background: #1f292d;
+  background: #1f232d;
   color: #9aa3bb;
   flex-shrink: 0;
 }
 .channel-card:hover .channel-card-go {
   background: var(--channel-accent, #bfc2e0);
-  color: #0b1012;
+  color: #0b0d12;
 }
 .channel-card-meta {
   display: flex;
@@ -5154,7 +5154,7 @@ details > p {
   gap: 4px;
   padding: 4px 9px;
   border-radius: 999px;
-  background: #1c2528;
+  background: #1c2028;
   font-size: 10.5px;
   color: #9ea7ba;
 }
@@ -5170,7 +5170,7 @@ details > p {
   aspect-ratio: 3 / 4;
   border-radius: 8px;
   overflow: hidden;
-  background: #1c2528;
+  background: #1c2028;
 }
 .channel-card-thumb img {
   width: 100%;
@@ -5185,7 +5185,7 @@ details > p {
   justify-content: center;
   gap: 2px;
   border: 1px dashed #303746;
-  background: #182023;
+  background: #181b23;
 }
 .channel-card-thumb.more b {
   font-size: 15px;
@@ -5216,7 +5216,7 @@ details > p {
   z-index: 2;
   margin: -58px 16px 0;
   padding: 24px 20px 20px;
-  background: #151c1f;
+  background: #15181f;
   border: 1px solid #242935;
   border-radius: 20px;
   text-align: center;
@@ -5261,7 +5261,7 @@ details > p {
 .channel-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  background: #10171a;
+  background: #10131a;
   border: 1px solid #242832;
   border-radius: 14px;
   overflow: hidden;
@@ -5288,7 +5288,7 @@ details > p {
   line-height: 2;
   color: #a0a6b4;
   white-space: pre-line;
-  background: #10171a;
+  background: #10131a;
   border-radius: 12px;
   padding: 14px 16px;
   margin: 0 0 16px;
@@ -5353,7 +5353,7 @@ details > p {
   top: 14px;
   left: 14px;
   z-index: 3;
-  background: #0d1215aa;
+  background: #0d0f15aa;
   backdrop-filter: blur(6px);
   width: 36px;
   height: 36px;
@@ -5365,7 +5365,7 @@ details > p {
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 20px;
-  background: #121a1c;
+  background: #12151c;
 }
 .channel-mock-intro {
   padding: 16px;
@@ -5419,7 +5419,7 @@ details > p {
   width: 100%;
   height: 18px;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--swatch), #1b2429);
+  background: linear-gradient(90deg, var(--swatch), #1b1f29);
 }
 .reset-images {
   display: flex;
@@ -5485,7 +5485,7 @@ details > p {
 }
 .inline-form input {
   flex: 1;
-  background: #10171a;
+  background: #10131a;
   border: 1px solid #282d39;
   border-radius: 9px;
   padding: 11px 13px;
@@ -5505,7 +5505,7 @@ details > p {
   padding: 12px;
   border: 1px solid #242935;
   border-radius: 13px;
-  background: #141c1e;
+  background: #14171e;
   min-width: 0;
 }
 .shelf-card img {
@@ -5586,7 +5586,7 @@ details > p {
   border: 1px solid #242935;
   border-radius: 12px;
   padding: 13px 11px;
-  background: #151c1f;
+  background: #15181f;
 }
 .my-summary span {
   display: flex;
@@ -5616,7 +5616,7 @@ details > p {
   border-radius: 13px;
   font-size: 10.5px;
   color: #b1b6c3;
-  background: #151c1f;
+  background: #15181f;
 }
 .my-shortcuts button:hover {
   border-color: #374159;
@@ -5723,7 +5723,7 @@ details > p {
   border: 1px solid #242935;
   border-radius: 12px;
   padding: 14px;
-  background: #121a1c;
+  background: #12151c;
 }
 .overview-tiles span {
   display: block;
@@ -5881,7 +5881,7 @@ details > p {
   gap: 9px;
   padding: 12px 14px;
   border-radius: 11px;
-  background: #141c1e;
+  background: #14171e;
   border: 1px solid #242935;
   font-size: 12px;
   margin-bottom: 14px;
@@ -6134,7 +6134,7 @@ details > p {
   color: #a0a6b4;
   padding: 9px 11px;
   border-radius: 9px;
-  background: #141c1e;
+  background: #14171e;
 }
 .detail-list li span {
   flex: 1;
@@ -6197,7 +6197,7 @@ details > p {
 .panel-heading input[type='date'] {
   flex-shrink: 0;
   width: 170px;
-  background: #10171a;
+  background: #10131a;
   border: 1px solid #282d39;
   border-radius: 9px;
   padding: 10px 12px;
@@ -6252,7 +6252,7 @@ details > p {
   border: 1px solid #282d39;
   border-radius: 12px;
   text-align: left;
-  background: #121a1c;
+  background: #12151c;
 }
 .channel-banner-picker button.selected {
   border-color: var(--lime);
@@ -6316,7 +6316,7 @@ details > p {
 }
 .my-wallet {
   width: 100%;
-  background: linear-gradient(110deg, #1e2533, #1b2427);
+  background: linear-gradient(110deg, #1e2533, #1b1f27);
   padding: 19px;
   border: 1px solid #363d4e;
   border-radius: 12px;
@@ -6396,7 +6396,7 @@ details > p {
   padding: 18px 15px 15px;
   border-radius: 13px;
   border: 1px solid #2a303d;
-  background: #1a2023;
+  background: #1a1d23;
   text-align: left;
   transition:
     border-color 0.2s,
@@ -6433,7 +6433,7 @@ details > p {
   padding: 3px 8px;
   border-radius: 999px;
   background: var(--lime);
-  color: #160f1b;
+  color: #0f131b;
   font-size: 10px;
   font-weight: 800;
 }
@@ -6611,7 +6611,7 @@ small.sale-value {
   padding: 20px 18px;
   border-radius: 14px;
   border: 1px solid #2c323f;
-  background: #1a2124;
+  background: #1a1d24;
   text-align: left;
   transition:
     border-color 0.2s,
@@ -6991,7 +6991,7 @@ small.sale-value {
   position: relative;
   border: 1px solid #292e3b;
   border-radius: 14px;
-  background: #182022;
+  background: #181b22;
 }
 .project-card .icon-button {
   position: absolute;
@@ -7034,7 +7034,7 @@ small.sale-value {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: #222b2e;
+  background: #22262e;
   color: #6b7283;
 }
 .project-poster img {
@@ -7257,7 +7257,7 @@ small.sale-value {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: #222b2e;
+  background: #22262e;
   color: #6b7283;
 }
 .cast-image img {
@@ -7345,7 +7345,7 @@ small.sale-value {
   aspect-ratio: 9 / 16;
   border-radius: 9px;
   overflow: hidden;
-  background: #1f272a;
+  background: #1f222a;
   display: grid;
   place-items: center;
   color: #6b7283;
@@ -7508,7 +7508,7 @@ small.sale-value {
   overflow: auto;
   padding: 10px;
   border-radius: 8px;
-  background: #0f1417;
+  background: #0f1117;
   margin: 10px 0;
 }
 .muted-row {
@@ -8449,7 +8449,7 @@ label.search-field {
     position: fixed;
     inset: 65px 0 0 0;
     z-index: 35;
-    background: #020608b3;
+    background: #040406b3;
     backdrop-filter: blur(3px);
   }
   .studio-menu-collapsed .management-layout > .app-shell {

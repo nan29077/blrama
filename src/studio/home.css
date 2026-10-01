@@ -37,7 +37,7 @@
   padding: 14px;
   border-radius: 20px;
   border: 1px solid #292f3e;
-  background: linear-gradient(180deg, #131b1a, #0f1516);
+  background: linear-gradient(180deg, #13151b, #0f1116);
   box-shadow:
     0 0 0 6px #afb3da08,
     0 24px 60px #00000060;
@@ -63,7 +63,7 @@
   font-size: 15px;
   line-height: 1.7;
   border-color: transparent;
-  background: #0b1113;
+  background: #0b0d13;
   resize: vertical;
 }
 .ai-start textarea:focus {
@@ -153,7 +153,7 @@
   max-height: 420px;
   border-radius: 14px;
   overflow: hidden;
-  background: #0b1012;
+  background: #0b0d12;
   display: grid;
   place-items: center;
   box-shadow: 0 10px 30px #00000055;
@@ -308,7 +308,7 @@
   color: #0e1119;
 }
 .ai-card.util {
-  background: #0b1113;
+  background: #0b0d13;
   border-style: dashed;
 }
 .ai-card-icon {

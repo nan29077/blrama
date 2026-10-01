@@ -5,15 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file-if-exists=.env server/index.mjs",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/precompress.mjs",
     "start": "node --env-file-if-exists=.env server/index.mjs --production",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs",
     "simulate": "node --no-warnings scripts/simulate.mjs",
-    "mobile:sync": "npm run build && cap sync",
+    "mobile:sync": "node scripts/require-api-origin.mjs && npm run build && cap sync",
     "mobile:android": "cap add android",
     "mobile:ios": "cap add ios",
     "worker": "node --env-file-if-exists=.env server/worker.mjs",
-    "test:pg": "node --test --test-concurrency=1 tests/*.test.mjs"
+    "test:pg": "node scripts/require-pg.mjs && node --test --test-concurrency=1 tests/*.test.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",
@@ -34,13 +34,12 @@
     "@capacitor/android": "^7.4.0",
     "@capacitor/cli": "^7.4.0",
     "@capacitor/ios": "^7.4.0",
-    "@playwright/test": "^1.55.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",
     "ffmpeg-static": "^5.2.0",
     "prettier": "^3.9.8",
-    "sharp": "^0.34.3",
+    "sharp": "^0.35.5",
     "typescript": "^5.9.2",
     "vite": "^7.1.3"
   },

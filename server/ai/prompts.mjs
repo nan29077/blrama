@@ -178,17 +178,27 @@ export const BL_VISUAL = 'Korean BL (boys love) drama; the romantic leads are tw
 // 인물 한 명을 그리는 이미지(기준 이미지·참고 포즈)에 붙이는 성인 조건
 export const ADULT_ONLY = 'the person is an adult (20 or older) with clearly adult facial features and body; every person shown is an adult';
 // 미성년으로 보이게 하는 표현(인물 외형·이미지·영상 지시문). BL 전용 서비스라 등장인물은 모두 성인으로 그립니다.
-const MINOR_KO = ['고등학생', '중학생', '초등학생', '고딩', '중딩', '초딩', '미성년', '10대', '십대', '교복'];
-const MINOR_EN = /\b(teens?|teenagers?|teenage|adolescents?|schoolboys?|schoolgirls?|school uniforms?|high ?school (?:students?|boys?|girls?)|middle ?school|junior high|underage|minors?(?= (?:boy|girl|student|character))|preteens?)\b/i;
+const MINOR_KO = ['고등학생', '중학생', '초등학생', '고딩', '중딩', '초딩', '미성년', '10대', '십대', '교복', '여고생', '남고생', '여중생', '남중생', '쇼타', '로리타'];
+// 한국어 나이·학년 표현: 1~18살/세(‘1세대’ 같은 말은 제외), 열한~열여덟 살, 중1~고3, 고교생
+const MINOR_KO_RE =
+  /(?<![0-9])(1[0-8]|[1-9])\s*(살|세)(?![가-힣])(?!\s*(차이|연상|연하|어린|많|위|아래|터울|고양이|강아지|된 (고양이|강아지)))|열(한|두|세|네|다섯|여섯|일곱|여덟)\s*살|(?<![가-힣])(중|고)\s?[1-3](?![0-9])|고교생/;
+const MINOR_EN =
+  /\b(teens?|teenagers?|teenage|adolescents?|schoolboys?|schoolgirls?|school uniforms?|high ?school(?:ers?| students?| boys?| girls?)|middle ?school(?:ers?)?|junior high|underage|minors?(?= (?:boy|girl|student|character))|preteens?|shota|shotacon|loli|lolicon|(?:1[0-8]|[1-9])\s*(?:yo|y\/o|-?years?[- ]old|-year-old)|(?:twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen)[- ]years?[- ]old|boys? of (?:1[0-8]|[1-9])|aged (?:1[0-8]|[1-9]))\b/i;
 const MINOR_CHILD_EN = /\b(child|children|kids?|little boy|young boy)\b/i;
-// strict: 인물 외형 칸처럼 어린이 표현까지 막아야 할 때
+// strict: 인물 외형 칸처럼 어린이 표현('소년' 포함)까지 막아야 할 때
 export function minorTerm(texts, { strict = false } = {}) {
   const hay = texts.filter(Boolean).join('\n');
   const ko = MINOR_KO.find((w) => hay.includes(w));
   if (ko) return ko;
-  const en = hay.match(MINOR_EN) || (strict ? hay.match(MINOR_CHILD_EN) || (hay.match(/어린이|아동/) ?? null) : null);
-  return en ? en[0] : null;
+  const re = hay.match(MINOR_KO_RE);
+  if (re) return re[0];
+  const en =
+    hay.match(MINOR_EN) || (strict ? hay.match(MINOR_CHILD_EN) || (hay.match(/어린이|아동|소년(?!미)/) ?? null) : null);
+  return en ? en[0].trim() : null;
 }
+// 인물 외형(이미지로 그려지는 칸)에서 미성년으로 보이는 표현을 찾습니다. 없으면 null.
+export const minorLook = (c = {}) => minorTerm([c.look, c.look_en, c.outfit, c.hair, c.body], { strict: true });
+export const MINOR_HINT = '회상 장면이나 과거 설정도 이미지에는 성인 모습으로 그려야 해요.';
 const MALE_KO = /(남성|남자|청년|아저씨|왕자|왕세자|세자|도령|형사|기사)/;
 const MALE_EN = /\b(man|men|male|guy|prince|gentleman)\b/i;
 // 기획 결과의 첫 두 인물(주인공 커플)이 성인 남성으로 적혀 있게 보정합니다.

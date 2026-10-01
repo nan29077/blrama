@@ -1,7 +1,7 @@
 import { actionNeed, can, ROLE_NAME, needText } from './team.mjs';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
-import { assistantPrompt, assistantSchema, assistantActionSchema, parseJson, ASSISTANT_ACTIONS } from './prompts.mjs';
+import { assistantPrompt, assistantSchema, assistantActionSchema, parseJson, ASSISTANT_ACTIONS, minorLook } from './prompts.mjs';
 import { DIRECTION, CAMERA_MOVES, ANGLE_IDS, LENS_IDS, STRENGTH_IDS, SHOT_EFFECTS, LIGHT_IDS, TONE_IDS, HEIGHT_IDS } from './direction.mjs';
 
 // AI 조수(작업 공간 채팅, 2026-09-24)
@@ -149,6 +149,9 @@ export function assistantRoutes({ app, db, fail, now, roles, engine, project, re
       const fields = {};
       for (const [k, v] of Object.entries(a.fields || {})) if (CHAR_FIELDS[k]) fields[k] = CHAR_FIELDS[k](v);
       if (!Object.keys(fields).length) return bad('바꿀 내용이 없어요.');
+      // BL 전용: 인물 외형은 성인으로만(미성년으로 보이는 표현은 계획 단계에서 막아요).
+      const minor = minorLook(fields);
+      if (minor) return bad(`등장인물은 모두 성인으로 그려야 해요. 외형에서 "${minor}" 표현을 빼 주세요.`);
       return { ...out, targetId: c.id, fields, what: c.name };
     }
     if (a.type === 'edit_episode') {

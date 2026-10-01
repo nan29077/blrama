@@ -236,6 +236,16 @@ test('subscription pool follows server-recorded plays by subscribers, not client
   assert.equal(again.status, 409);
   const [{ n: distributed }] = await testDb.all("SELECT SUM(gross) AS n FROM settlement_entries WHERE kind='subscription' AND period=?", [period]);
   assert.equal(Number(distributed), Number(pool));
+  // 마감 취소 후에는 다시 마감할 수 있고, 다시 마감해도 합계는 풀과 같다.
+  const reopened = await request('/admin/settlements/reopen', { method: 'POST', cookie: admin, body: { period } });
+  assert.equal(reopened.status, 200, JSON.stringify(reopened.data));
+  assert.equal(reopened.data.gross, Number(pool));
+  assert.equal((await request('/admin/settlements/reopen', { method: 'POST', cookie: admin, body: { period } })).status, 409);
+  const reclosed = await request('/admin/settlements/close', { method: 'POST', cookie: admin, body: { period } });
+  assert.equal(reclosed.status, 200, JSON.stringify(reclosed.data));
+  const [{ n: redistributed }] = await testDb.all("SELECT SUM(gross) AS n FROM settlement_entries WHERE kind='subscription' AND period=?", [period]);
+  assert.equal(Number(redistributed), Number(pool));
+  assert.equal((await request('/admin/settlements/reopen', { method: 'POST', cookie: pd, body: { period } })).status, 403);
   // 잘못된 기간 형식은 거절
   assert.equal((await request('/admin/settlements/close', { method: 'POST', cookie: admin, body: { period: '2025-13' } })).status, 400);
 });
@@ -262,6 +272,17 @@ test('PD dashboard orders do not reveal buyer ids or idempotency keys', async ()
     assert.equal(o.user_id, undefined);
     assert.equal(o.idempotency_key, undefined);
   }
+  assert.ok(r.data.order_count >= r.data.orders.length);
+  // 전체 주문 목록은 나눠 받는다(PD에게는 구매자 정보 없이, 합계는 서버가 계산).
+  const page = await request('/studio/orders?limit=2&offset=0', { cookie: pd });
+  assert.equal(page.status, 200);
+  assert.ok(page.data.rows.length <= 2);
+  assert.equal(page.data.total, r.data.order_count);
+  for (const o of page.data.rows) assert.equal(o.user_id, undefined);
+  const titles = await request('/studio/orders?kind=ping_title&limit=50', { cookie: pd });
+  assert.ok(titles.data.rows.every((o) => o.kind === 'ping_title'));
+  assert.equal((await request('/studio/orders?from=2099-01-01', { cookie: pd })).data.total, 0);
+  assert.equal((await request('/studio/orders?kind=bogus', { cookie: pd })).status, 400);
 });
 
 test('tax report groups by payment date in Korean time and accepts a year', async () => {

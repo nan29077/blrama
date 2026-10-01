@@ -74,14 +74,18 @@ const numeric = new Set(
     .filter(([, v]) => typeof v === 'number')
     .map(([k]) => k),
 );
-let cache = null;
+let cache = null,
+  cachedAt = 0;
+// 서버를 여러 대 띄우면 다른 서버에서 바꾼 설정(요금·수수료·AI 긴급 중지 등)이 늦어도 30초 안에 반영되도록 캐시를 짧게 둡니다.
+const SETTINGS_TTL_MS = 30_000;
 export async function loadSettings(db) {
-  if (cache) return cache;
+  if (cache && Date.now() - cachedAt < SETTINGS_TTL_MS) return cache;
   const rows = await db.all('SELECT key,value FROM platform_settings');
   const values = { ...settingDefaults };
   for (const row of rows)
     if (row.key in values) values[row.key] = numeric.has(row.key) ? Number(row.value) : row.value;
   cache = values;
+  cachedAt = Date.now();
   return values;
 }
 export async function saveSettings(db, patch, actorId) {

@@ -18,6 +18,11 @@ export default defineConfig({
         '**/*.sqlite*',
         '**/.ai-secret',
         '**/*.log',
+        '**/tests/**',
+        '**/scripts/**',
+        '**/*.md',
+        '**/*.bat',
+        '**/*.ps1',
       ],
     },
     watch: {

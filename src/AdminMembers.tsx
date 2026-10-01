@@ -32,10 +32,11 @@ import { Avatar } from './AccountSettings';
 import { downloadCsv } from './StudioPanels';
 import { payoutStatus } from './Settlement';
 import { SubscriptionOverrideEditor } from './AdminOps';
+import { useConfirm } from './confirm';
 
 const roleLabel: Record<string, string> = {
   admin: '슈퍼관리자',
-  pd: '업로더 (PD)',
+  pd: 'PD',
   viewer: '시청자',
 };
 const statusLabel: Record<string, string> = {
@@ -67,18 +68,50 @@ export default function AdminMembers({
     [editing, setEditing] = useState<Member | null>(null),
     [note, setNote] = useState(''),
     [busy, setBusy] = useState(false);
+  const [ask, confirmUi] = useConfirm();
+  // 회원 목록은 서버에서 탭·검색·정렬을 적용해 50명씩 받아 옵니다(회원이 많아도 화면이 느려지지 않게).
+  const PAGE = 50;
+  const [search, setSearch] = useState(''),
+    [total, setTotal] = useState(0),
+    [stats, setStats] = useState<Record<string, number>>({}),
+    [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+  const listQuery = useCallback(
+    (offset: number, limit: number) =>
+      '/admin/members?' + new URLSearchParams({ tab, sort, q: search, offset: String(offset), limit: String(limit) }).toString(),
+    [tab, sort, search],
+  );
+  type MemberPage = { members: Member[]; total: number; stats: Record<string, number> };
   const load = useCallback(async () => {
     try {
-      const r = await api<{ members: Member[] }>('/admin/members');
+      const r = await api<MemberPage>(listQuery(0, PAGE));
       setMembers(r.members);
+      setTotal(r.total);
+      setStats(r.stats || {});
       setError('');
     } catch (e) {
       setError((e as Error).message);
     }
-  }, []);
+  }, [listQuery]);
   useEffect(() => {
     void load();
   }, [load]);
+  const loadMore = async () => {
+    if (!members) return;
+    setLoadingMore(true);
+    try {
+      const r = await api<MemberPage>(listQuery(members.length, PAGE));
+      setMembers([...members, ...r.members.filter((m) => !members.some((x) => x.id === m.id))]);
+      setTotal(r.total);
+    } catch (e) {
+      notify((e as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
   const openDetail = async (id: string) => {
     try {
       setDetail(await api<MemberDetail>('/admin/members/' + id));
@@ -107,37 +140,18 @@ export default function AdminMembers({
         <span className="spinner" />
       </div>
     );
-  const matched = members
-    .filter((m) =>
-      tab === 'all'
-        ? true
-        : tab === 'suspended'
-          ? m.status !== 'active'
-          : m.role === tab && m.status === 'active',
-    )
-    .filter((m) => `${m.name} ${m.email} ${m.channel_name || ''}`.toLowerCase().includes(query.toLowerCase()))
-    .sort((a, b) =>
-      sort === 'spend'
-        ? b.spend - a.spend
-        : sort === 'name'
-          ? a.name.localeCompare(b.name)
-          : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
-  const tally = (id: string) =>
-    id === 'all'
-      ? members.length
-      : id === 'suspended'
-        ? members.filter((m) => m.status !== 'active').length
-        : members.filter((m) => m.role === id && m.status === 'active').length;
+  const matched = members;
+  const tally = (id: string) => Number(stats[id === 'all' ? 'all_count' : id] || 0);
   return (
     <>
+      {confirmUi}
       <div className="stats-grid">
         <div className="stat-card">
           <div>
             <UserRound size={18} />
             <span>전체 회원</span>
           </div>
-          <strong>{members.length}명</strong>
+          <strong>{tally('all')}명</strong>
           <small>시청자 {tally('viewer')}명 · PD {tally('pd')}명</small>
         </div>
         <div className="stat-card">
@@ -146,12 +160,7 @@ export default function AdminMembers({
             <span>구독 중</span>
           </div>
           <strong>
-            {
-              members.filter(
-                (m) => m.subscription_expires && new Date(m.subscription_expires) > new Date(),
-              ).length
-            }
-            명
+            {Number(stats.subscribed || 0)}명
           </strong>
           <small>B엘라마 패스 이용</small>
         </div>
@@ -160,7 +169,7 @@ export default function AdminMembers({
             <Wallet size={18} />
             <span>누적 결제</span>
           </div>
-          <strong>{won(members.reduce((n, m) => n + m.spend, 0))}</strong>
+          <strong>{won(Number(stats.spend || 0))}</strong>
           <small>테스트 결제 합계</small>
         </div>
         <div className="stat-card">
@@ -185,15 +194,24 @@ export default function AdminMembers({
         <div className="panel-heading">
           <div>
             <h3>{tabs.find((t) => t.id === tab)?.name}</h3>
-            <p>{matched.length}명</p>
+            <p>
+              {total}명{matched.length < total ? ` 중 ${matched.length}명 표시` : ''}
+            </p>
           </div>
           <button
             className="secondary compact"
             disabled={!matched.length}
-            onClick={() =>
+            onClick={async () => {
+              let all = matched;
+              try {
+                if (matched.length < total) all = (await api<MemberPage>(listQuery(0, 5000))).members;
+              } catch (e) {
+                notify((e as Error).message);
+                return;
+              }
               downloadCsv('B엘라마-회원.csv', [
                 ['이름', '이메일', '유형', '상태', '가입일', '최근 로그인', '결제 건수', '결제 금액', '소장', '찜', '작품', '방송국'],
-                ...matched.map((m) => [
+                ...all.map((m) => [
                   m.name,
                   m.email,
                   roleLabel[m.role],
@@ -207,8 +225,8 @@ export default function AdminMembers({
                   m.drama_count,
                   m.channel_name || '',
                 ]),
-              ])
-            }
+              ]);
+            }}
           >
             <Download size={16} />
             회원 CSV
@@ -295,12 +313,18 @@ export default function AdminMembers({
                 <button
                   className="secondary compact"
                   disabled={busy || m.id === user.id}
-                  onClick={() =>
-                    void act(
-                      () => api('/admin/members/' + m.id + '/logout', 'POST'),
-                      '모든 기기에서 로그아웃 처리했어요.',
+                  onClick={async () => {
+                    if (
+                      !(await ask({
+                        title: `${m.name}님의 세션을 종료할까요?`,
+                        text: '이 회원이 로그인한 모든 기기에서 즉시 로그아웃돼요.',
+                        ok: '세션 종료',
+                        danger: true,
+                      }))
                     )
-                  }
+                      return;
+                    void act(() => api('/admin/members/' + m.id + '/logout', 'POST'), '모든 기기에서 로그아웃 처리했어요.');
+                  }}
                 >
                   <LogOut size={13} />
                   세션 종료
@@ -314,6 +338,11 @@ export default function AdminMembers({
           ))
         ) : (
           <Empty title="해당 회원이 없어요" text="검색어나 탭을 변경해 보세요." />
+        )}
+        {matched.length < total && (
+          <button className="secondary full" disabled={loadingMore} onClick={() => void loadMore()}>
+            {loadingMore ? '불러오는 중…' : `회원 더 보기 (${total - matched.length}명 남음)`}
+          </button>
         )}
       </section>
 
@@ -639,7 +668,7 @@ export default function AdminMembers({
                 onChange={(e) => setEditing({ ...editing, role: e.target.value as Member['role'] })}
               >
                 <option value="viewer">시청자</option>
-                <option value="pd">업로더 (PD)</option>
+                <option value="pd">PD</option>
                 <option value="admin">슈퍼관리자</option>
               </select>
             </label>

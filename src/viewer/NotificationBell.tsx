@@ -124,6 +124,8 @@ export default function NotificationBell({
     };
     document.addEventListener('pointerdown', onDown);
     document.addEventListener('keydown', onKey);
+    // 열면 알림 목록으로 초점을 옮겨 키보드·스크린리더 사용자가 바로 읽을 수 있게 합니다.
+    root.current?.querySelector<HTMLElement>('.viewer-bell-panel')?.focus();
     return () => {
       document.removeEventListener('pointerdown', onDown);
       document.removeEventListener('keydown', onKey);
@@ -159,7 +161,6 @@ export default function NotificationBell({
       <button
         className="viewer-bell-button"
         aria-label={unread ? `알림 ${unread}개 읽지 않음` : '알림'}
-        aria-haspopup="dialog"
         aria-expanded={open}
         onClick={toggle}
       >
@@ -167,7 +168,7 @@ export default function NotificationBell({
         {unread > 0 && <span className="viewer-bell-badge">{unread > 99 ? '99+' : unread}</span>}
       </button>
       {open && (
-        <div className="viewer-bell-panel" role="dialog" aria-label="알림">
+        <div className="viewer-bell-panel" role="region" aria-label="알림 목록" tabIndex={-1}>
           <div className="viewer-bell-head">
             <strong>알림</strong>
             {unread > 0 && (

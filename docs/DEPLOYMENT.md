@@ -10,7 +10,9 @@ CloudFront/ALB(ACM TLS) → ECS Fargate Node.js 앱 → RDS PostgreSQL. 프런�
 
 - DB: RDS PostgreSQL, private subnet, 연결 TLS 검증, Secrets Manager의 DATABASE_URL.
 - 영상: 추후 private S3 multipart 업로드 → MediaConvert HLS → CloudFront signed cookie/URL. 현재 구현은 로컬 MP4이므로 이 저장소·트랜스코딩 어댑터 구현이 필요합니다. 현재 MP4 서버를 대규모 스트리밍으로 간주하지 마세요.
-- 업로드 영속성: 현재 `/app/uploads/bellama`를 영속 볼륨에 연결. Fargate 임시 디스크만 사용하면 재배포 시 잃습니다. 운영 확장 전 S3 전환 권장.
+- 업로드 영속성: Dockerfile은 `UPLOAD_DIR=/app/uploads/bellama`, `DATA_DIR=/app/data`와 볼륨(`/app/uploads`, `/app/data`)을 선언합니다. 실행 환경에서 이 두 경로를 영속 저장소(EFS 등)에 연결하세요. Fargate 임시 디스크만 사용하면 재배포 시 잃습니다. 운영 확장 전 S3 전환 권장.
+- 정적 파일: 빌드 산출물(`/assets`)은 1년 캐시 + 미리 압축한 brotli/gzip으로, API JSON은 2KB 이상이면 gzip으로 보냅니다. 앞단(CloudFront)에서도 압축을 켜도 됩니다.
+- 합성 worker 분리: 웹 서버를 `COMPOSE_WORKER=external`로 띄우고 같은 `DATABASE_URL`·`UPLOAD_DIR`로 `node server/worker.mjs`를 따로 실행합니다(`docker compose --profile app up`이 이 구성을 재현합니다). 여러 대를 띄워도 살아 있는 worker의 합성은 가로채지 않습니다(2분 생존 표시).
 - 관측: CloudWatch 로그·지표, RDS 백업/PITR, 알림, 에러 추적.
 - 다중 인스턴스 요청 제한: 현재 메모리 rate limit을 Redis 등 공유 저장소로 교체.
 - ALB 뒤에서는 실제 프록시 구성을 확인하고 `TRUST_PROXY_HOPS=1` 지정. 무조건 모든 프록시를 신뢰하지 않습니다.
@@ -23,10 +25,16 @@ APP_ORIGIN=https://your-confirmed-domain.example
 DATABASE_URL=postgresql://...confirmed-production-connection...
 ENABLE_DEMO=false
 UPLOAD_DIR=/app/uploads/bellama
+DATA_DIR=/app/data
 TRUST_PROXY_HOPS=1
 ANDROID_STORE_URL=
 IOS_STORE_URL=
-AI_SECRET_KEY=...32자-이상-임의-문자열(AI API 키 암호화 · 바꾸면 저장된 키를 다시 입력해야 함)...
+# 필수: 32자 이상. 없거나 짧으면 운영 서버가 시작하지 않습니다(계좌번호·AI 키·발송 비밀값 암호화). 바꾸면 저장된 키를 다시 입력해야 함
+AI_SECRET_KEY=...32자-이상-임의-문자열...
+# 선택: 비우면 DB에 한 번 만들어 모든 서버가 함께 씁니다
+MEDIA_TOKEN_SECRET=
+# 선택: 합성을 별도 worker로 돌릴 때
+COMPOSE_WORKER=external
 ```
 
 운영 도메인·비밀키는 실제 값 확정 후 비밀 관리 서비스로 주입하세요. `.env`를 Git에 올리지 않습니다. `DATABASE_URL`만 설정한다고 기존 SQLite 데이터가 자동 이전되지는 않습니다. 마이그레이션은 외래키 순서에 맞춘 별도 데이터 이관 및 검증이 필요합니다.
@@ -53,7 +61,7 @@ node --env-file=.env scripts/promote-admin.mjs confirmed-admin@example.com
 ## 외부 로그인·결제
 
 - 카카오·네이버·구글: 앱 등록, 클라이언트 식별자·시크릿, 허용 redirect URI, 서버 state/PKCE 검증, 신규/기존 계정 연결 정책, 탈퇴 흐름. 버튼은 현재 안내 기능입니다.
-- 이메일: 메일 인증, 비밀번호 재설정, SMTP/SES 연동, 비정상 로그인 방어 확장.
+- 이메일·문자: 비밀번호 재설정 메일과 휴대폰 인증 문자는 구현돼 있고, 관리자 '이메일 · 문자 발송'에서 웹훅(중계 서버 → SES·문자 업체)을 설정하면 실제로 나갑니다. 운영에서는 '기록만 남기기'를 쓸 수 없습니다.
 - 웹 결제: 계약한 PG사의 서버 승인 및 서명 검증 webhook을 연결하고 실제 주문 상태 머신·취소/환불/구독 자동 갱신을 구현합니다. 현재 checkout은 운영에서 503이며 테스트 주문만 생성합니다.
 - 정책·사업자 정보·콘텐츠 이용 권한·연령 정책은 정식 공개 전 확정. 현재 약관 모달은 확정된 법적 문서가 아닙니다.
 
@@ -75,7 +83,7 @@ npm run mobile:sync
 npx cap open ios
 ```
 
-**현재 네이티브 셸에 정적 파일만 넣으면 웹 API가 자동 연결되지 않습니다.** 앱 통합 단계에서 네이티브용 API base URL·인증/secure storage·CORS를 설계하거나 동일 출처의 호스팅 웹앱을 사용하는 배포 방식을 결정해야 합니다. 현재 세션 쿠키는 동일 출처 웹앱용입니다. 네이티브 API 연동을 완료했다고 주장하지 않습니다.
+앱은 `VITE_API_ORIGIN`(운영 서버 주소)으로 API를 부르고 Bearer 토큰·미디어 토큰(`?mt=`)으로 인증합니다(README '모바일 앱 연결' 참고). `npm run mobile:sync`는 이 값이 없으면 멈춥니다. 남은 일: 로그인 토큰을 Keychain/Keystore 기반 보안 저장소 플러그인으로 옮기기(현재 앱 안 localStorage), 상태바 플러그인, App Links/Universal Links 파일 배포.
 
 스토어 출시 전에는 플랫폼 로그인, 딥링크, 앱 아이콘·스플래시, 안전 영역, 푸시, 복원 가능한 인앱 구매 영수증 검증, 구독 복원, 개인정보 안내, 실제 기기 재생 검증이 필요합니다. 디지털 콘텐츠 결제 방식과 로그인·심사 요구사항은 출시 시점의 공식 정책을 다시 확인해야 합니다. 네이티브 인앱 결제 및 서명 패키지는 이번 로컬 개발 범위에 포함하지 않습니다.
 

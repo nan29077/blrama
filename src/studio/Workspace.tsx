@@ -1,13 +1,14 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazyRetry } from '../lazyRetry';
 import { AlertTriangle, ArrowLeft, Bot, Check, ChevronRight, Clapperboard, Cpu, Film, ListChecks, Loader2, Sparkles, Send, Wand2 } from 'lucide-react';
 import { api, lama, type AiFamily, type AiModelOption, type StudioEpisode, type StudioFeatures, type StudioProjectDetail } from '../api';
 import { Empty } from '../App';
 import { useConfirm } from '../confirm';
 import { loadChoices, loadMode, saveChoices, saveMode, useRunner, type Choices, type ModelMode } from './parts';
 // 모델 센터 · 작업/비용 · AI 조수는 열 때만 불러와요(첫 화면을 가볍게).
-const ModelHub = lazy(() => import('./ModelHub'));
-const JobCenter = lazy(() => import('./JobCenter'));
-const Assistant = lazy(() => import('./Assistant'));
+const ModelHub = lazyRetry(() => import('./ModelHub'));
+const JobCenter = lazyRetry(() => import('./JobCenter'));
+const Assistant = lazyRetry(() => import('./Assistant'));
 import PreviewPlayer from './Preview';
 import { TABS, type TabId, type WS } from './ws/shared';
 import PlanTab from './ws/PlanTab';

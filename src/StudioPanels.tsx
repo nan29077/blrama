@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, Download, Search } from 'lucide-react';
 import {
+  api,
   isPingSpend,
   orderKindLabel,
   orderRevenue,
@@ -128,53 +129,80 @@ export function StudioInsights({ data, admin = false }: { data: StudioData; admi
   );
 }
 
-export function StudioOrders({ orders, admin = false }: { orders: Order[]; admin?: boolean }) {
+const orderStatusLabel = (o: Order) =>
+  o.status === 'ping_paid' ? '핑 사용' : o.status === 'test_paid' ? '테스트 결제' : o.status === 'paid' ? '결제 완료' : o.status;
+type OrderPage = { rows: Order[]; total: number; revenue: number };
+// 주문 내역: 서버에서 조건(검색·유형·기간)에 맞는 주문을 15건씩 받아 옵니다. 주문이 많아도 화면이 느려지지 않아요.
+export function StudioOrders({ admin = false }: { orders?: Order[]; admin?: boolean }) {
   const [query, setQuery] = useState(''),
+    [search, setSearch] = useState(''),
     [kind, setKind] = useState('all'),
     [from, setFrom] = useState(''),
     [until, setUntil] = useState(''),
-    [page, setPage] = useState(0);
-  const filtered = orders.filter(
-    (o) =>
-      (kind === 'all' || kind === o.kind) &&
-      `${o.id} ${orderTitle(o)} ${orderKindLabel(o.kind)}`
-        .toLowerCase()
-        .includes(query.toLowerCase()) &&
-      (!from || localDay(new Date(o.created_at)) >= from) &&
-      (!until || localDay(new Date(o.created_at)) <= until),
-  );
-  const pages = Math.max(1, Math.ceil(filtered.length / 15)),
+    [page, setPage] = useState(0),
+    [data, setData] = useState<OrderPage | null>(null),
+    [error, setError] = useState(''),
+    [exporting, setExporting] = useState(false);
+  // 검색어는 입력을 멈춘 뒤 0.3초 후에 조회합니다.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+  const params = (offset: number, limit: number) => {
+    const p = new URLSearchParams({ kind, offset: String(offset), limit: String(limit) });
+    if (search) p.set('q', search);
+    if (from) p.set('from', from);
+    if (until) p.set('until', until);
+    return p.toString();
+  };
+  useEffect(() => {
+    let alive = true;
+    setError('');
+    api<OrderPage>('/studio/orders?' + params(page * 15, 15))
+      .then((r) => alive && setData(r))
+      .catch((e) => alive && setError((e as Error).message));
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, kind, from, until, page]);
+  const pages = Math.max(1, Math.ceil((data?.total || 0) / 15)),
     current = Math.min(page, pages - 1);
+  const rows = data?.rows || [];
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const all = await api<OrderPage>('/studio/orders?' + params(0, 5000));
+      downloadCsv('B엘라마-주문.csv', [
+        ['주문번호', '작품', '유형', '결제액(원)', '사용 핑', '판매액(원)', '주문일'],
+        ...all.rows.map((o) => [
+          o.id,
+          orderTitle(o),
+          orderKindLabel(o.kind),
+          o.amount,
+          isPingSpend(o) ? o.pings || 0 : '',
+          orderRevenue(o, false),
+          date(o.created_at),
+        ]),
+      ]);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
   return (
     <section className="management-panel">
       <div className="panel-heading">
         <div>
           <h3>주문 내역 조회</h3>
           <p>
-            {filtered.length}건 · {admin ? '결제 합계' : '판매 합계'}{' '}
-            {won(filtered.reduce((n, o) => n + orderRevenue(o, admin), 0))}
+            {data ? `${data.total}건 · ${admin ? '결제 합계' : '판매 합계'} ${won(data.revenue)}` : '불러오는 중…'}
           </p>
         </div>
-        <button
-          className="secondary compact"
-          disabled={!filtered.length}
-          onClick={() =>
-            downloadCsv('B엘라마-주문.csv', [
-              ['주문번호', '작품', '유형', '결제액(원)', '사용 핑', '판매액(원)', '주문일'],
-              ...filtered.map((o) => [
-                o.id,
-                orderTitle(o),
-                orderKindLabel(o.kind),
-                o.amount,
-                isPingSpend(o) ? o.pings || 0 : '',
-                orderRevenue(o, false),
-                date(o.created_at),
-              ]),
-            ])
-          }
-        >
+        <button className="secondary compact" disabled={!data?.total || exporting} onClick={() => void exportCsv()}>
           <Download size={16} />
-          CSV 내보내기
+          {exporting ? '내보내는 중…' : 'CSV 내보내기'}
         </button>
       </div>
       <div className="management-toolbar">
@@ -244,7 +272,16 @@ export function StudioOrders({ orders, admin = false }: { orders: Order[]; admin
           초기화
         </button>
       </div>
-      {filtered.length ? (
+      {error && (
+        <p className="review-alert" role="alert">
+          {error}
+        </p>
+      )}
+      {!data && !error ? (
+        <div className="loading">
+          <span className="spinner" />
+        </div>
+      ) : rows.length ? (
         <>
           <div className="table-scroll">
             <table className="management-table">
@@ -258,11 +295,11 @@ export function StudioOrders({ orders, admin = false }: { orders: Order[]; admin
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice(current * 15, current * 15 + 15).map((o) => (
+                {rows.map((o) => (
                   <tr key={o.id}>
                     <td>
                       <strong>{orderTitle(o)}</strong>
-                      <small>{o.id}</small>
+                      <small title={o.id}>주문번호 {o.id.slice(0, 8)}</small>
                     </td>
                     <td>{orderKindLabel(o.kind)}</td>
                     <td>{date(o.created_at)}</td>
@@ -277,7 +314,7 @@ export function StudioOrders({ orders, admin = false }: { orders: Order[]; admin
                       )}
                     </td>
                     <td>
-                      <span className="status-chip">테스트 완료</span>
+                      <span className="status-chip">{orderStatusLabel(o)}</span>
                     </td>
                   </tr>
                 ))}
@@ -297,13 +334,10 @@ export function StudioOrders({ orders, admin = false }: { orders: Order[]; admin
           </div>
         </>
       ) : (
-        <Empty
-          title="해당 주문이 없어요"
-          text="검색 조건을 변경하거나 시청자 계정으로 테스트 구매를 진행하세요."
-        />
+        <Empty title="해당 주문이 없어요" text="검색 조건을 바꿔 보세요." />
       )}
       <p className="panel-footnote">
-        CSV에는 현재 검색 조건에 맞는 전체 주문이 포함됩니다. 실제 결제·환불·정산은 결제사 연동 후
+        CSV에는 현재 검색 조건에 맞는 주문이 최대 5,000건까지 들어갑니다. 실제 결제·환불·정산은 결제사 연동 후
         제공됩니다.
       </p>
     </section>
@@ -318,6 +352,8 @@ export const actionLabel = (action: string) => {
     rejected: '작품 반려',
     'support:replied': '문의 답변 등록',
     'settlement:closed': '구독 매출 월 마감',
+    'settlement:reopened': '구독 매출 월 마감 취소',
+    'episode:published-now': '회차 예약 지우고 바로 공개',
     'payout:requested': '출금 신청',
     'payout:lama': '정산 수익 라마 전환',
     'user:sessions-cleared': '회원 강제 로그아웃',

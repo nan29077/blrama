@@ -1563,11 +1563,20 @@ test('business sellers are settled with VAT and appear in the tax register', asy
 });
 
 test('administrators manage member records, notes and forced logout', async () => {
-  const members = await request('/admin/members', { cookie: admin });
+  const members = await request('/admin/members?limit=5000', { cookie: admin });
   assert.equal(members.status, 200);
   assert.ok(members.data.members.length >= 4);
   const target = members.data.members.find((m) => m.id === 'demo-viewer');
   assert.ok(target.order_count >= 0);
+  // 서버에서 나눠 받기·검색·탭 필터
+  const paged = await request('/admin/members?limit=2', { cookie: admin });
+  assert.equal(paged.data.members.length, 2);
+  assert.ok(paged.data.total >= 4);
+  assert.ok(paged.data.stats.all_count >= 4);
+  const pds = await request('/admin/members?tab=pd&limit=500', { cookie: admin });
+  assert.ok(pds.data.members.every((m) => m.role === 'pd' && m.status === 'active'));
+  const found = await request('/admin/members?q=' + encodeURIComponent(target.email), { cookie: admin });
+  assert.ok(found.data.members.some((m) => m.id === 'demo-viewer'));
 
   const detail = await request('/admin/members/demo-viewer', { cookie: admin });
   assert.equal(detail.status, 200);
@@ -2447,7 +2456,20 @@ test('age rating: PD sets it, admin can correct it at review, viewers see it', a
 });
 
 test('dev server never serves the database, secrets, uploads or server source', async () => {
-  for (const p of ['/data/bellama.sqlite', '/data/.ai-secret', '/server/index.mjs', '/%64ata/x.sqlite', '/dev-server.out.log', '/CLAUDE.md'])
+  const root = process.cwd().replace(/\\/g, '/').replace(/^\/?/, '/');
+  for (const p of [
+    '/data/bellama.sqlite',
+    '/data/.ai-secret',
+    '/server/index.mjs',
+    '/%64ata/x.sqlite',
+    '/dev-server.out.log',
+    '/CLAUDE.md',
+    '/@id/server/index.mjs',
+    `/@fs${root}/server/bank-secret.mjs`,
+    `/@fs${root}/tests/api.test.mjs`,
+    '/src/%2e%2e/server/index.mjs',
+    '/%40id/server/index.mjs',
+  ])
     assert.equal((await fetch(base + p)).status, 404, p);
   // 화면 코드가 가져오는 공용 기준표는 그대로 열린다.
   assert.equal((await fetch(base + '/server/genres.json')).status, 200);

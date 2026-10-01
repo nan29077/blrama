@@ -34,15 +34,17 @@ export function studioRoutes({ app, db, fail, now, roles, requireAuth, checkMedi
   app.get('/api/channels', async (req, res) => {
     const rows = await db.all(
       channelSelect +
-        " WHERE c.status='active' ORDER BY c.featured DESC, c.featured_order ASC, views DESC",
+        " WHERE c.status='active' ORDER BY c.featured DESC, c.featured_order ASC, views DESC LIMIT 300",
     );
-    for (const row of rows)
-      row.posters = (
-        await db.all(
-          "SELECT image FROM dramas WHERE channel_id=? AND status='published' ORDER BY views DESC LIMIT 3",
-          [row.id],
+    // 방송국마다 대표 포스터 3장: 한 번의 조회로 모두 가져와 나눕니다(방송국 수만큼 쿼리하지 않게).
+    const ids = rows.map((r) => r.id);
+    const posters = ids.length
+      ? await db.all(
+          `SELECT channel_id, image, views FROM dramas WHERE status='published' AND channel_id IN (${ids.map(() => '?').join(',')}) ORDER BY views DESC`,
+          ids,
         )
-      ).map((d) => d.image);
+      : [];
+    for (const row of rows) row.posters = posters.filter((p) => p.channel_id === row.id).slice(0, 3).map((p) => p.image);
     res.json(rows.map(publicChannel));
   });
   app.get('/api/channels/:id', async (req, res) => {
@@ -59,7 +61,7 @@ export function studioRoutes({ app, db, fail, now, roles, requireAuth, checkMedi
       dramas: (
         await db.all(
           catalogSql +
-            " WHERE d.channel_id=? AND d.status='published' ORDER BY d.created_at DESC, d.views DESC",
+            " WHERE d.channel_id=? AND d.status='published' ORDER BY d.created_at DESC, d.views DESC LIMIT 500",
           [channel.id],
         )
       ).map(publicDrama),

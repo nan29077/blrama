@@ -10,7 +10,7 @@
   border-radius: 22px;
   background:
     radial-gradient(ellipse at 94% 2%, #4143593f, transparent 60%),
-    linear-gradient(125deg, #1b2a28, #151d23);
+    linear-gradient(125deg, #1b1f2a, #151d23);
   overflow: hidden;
 }
 .creator-welcome .eyebrow {
@@ -98,17 +98,17 @@
   padding: 23px;
   border: 1px solid #313643;
   border-radius: 16px;
-  background: linear-gradient(145deg, #1c2826, #172022);
+  background: linear-gradient(145deg, #1c2028, #171a22);
   color: #f1f3f6;
   transition:
     border-color 0.2s,
     transform 0.2s;
 }
 .creator-start-grid > button:nth-child(2) {
-  background: linear-gradient(145deg, #1b272f, #172022);
+  background: linear-gradient(145deg, #1b212f, #171a22);
 }
 .creator-start-grid > button:nth-child(3) {
-  background: linear-gradient(145deg, #292438, #172022);
+  background: linear-gradient(145deg, #292438, #171a22);
 }
 .creator-start-grid > button:hover {
   border-color: #b1b3ca;
@@ -168,7 +168,7 @@
   border: 1px solid #393e4b;
   border-radius: 12px;
   padding: 0 14px;
-  background: #121c1d;
+  background: #12151d;
   color: #a6acb9;
   min-width: 0;
   margin: 0;
@@ -199,7 +199,7 @@
   align-items: center;
   padding: 20px;
   border: 1px solid #313643;
-  background: #182221;
+  background: #181b22;
   border-radius: 13px;
   text-align: left;
 }
@@ -237,7 +237,7 @@
   align-items: center;
   gap: 12px;
   border: 1px solid transparent;
-  background: #162020;
+  background: #161920;
   text-align: left;
   padding: 15px 12px;
   border-radius: 10px;
@@ -268,7 +268,7 @@
 }
 .guide-lesson {
   border: 1px solid #343945;
-  background: #1a2425;
+  background: #1a1d25;
   border-radius: 18px;
   padding: 30px;
   min-height: 450px;
@@ -440,7 +440,7 @@
   border-radius: 16px;
   padding: 22px;
   margin: 18px 0;
-  background: linear-gradient(115deg, #222a3c, #182426);
+  background: linear-gradient(115deg, #222a3c, #181c26);
 }
 .coach-badge {
   background: #c4c7de14;
@@ -487,7 +487,7 @@
 }
 .creator-model-settings {
   margin: 16px 0;
-  background: #111a1c;
+  background: #11141c;
   border: 1px solid #313744;
   padding: 14px 16px;
   border-radius: 10px;
@@ -523,7 +523,7 @@
   border: 1px solid #313643;
   border-radius: 12px;
   margin: 16px 0;
-  background: #172121;
+  background: #171a21;
 }
 .episode-navigator-heading {
   width: 100%;
@@ -557,7 +557,7 @@
   text-align: left;
   gap: 12px;
   border: 1px solid #313848;
-  background: #131c1c;
+  background: #13161c;
   border-radius: 9px;
   padding: 12px;
   min-width: 0;
@@ -636,7 +636,7 @@
   padding: 18px;
   gap: 6px;
   min-width: 0;
-  background: linear-gradient(140deg, #222b2d, #1a2224);
+  background: linear-gradient(140deg, #22252d, #1a1d24);
   border-color: #ffffff12;
 }
 .studio-template-grid .template-card:hover,
@@ -715,7 +715,7 @@
   border: 1px solid #303748;
   border-radius: 13px;
   padding: 22px;
-  background: #192725;
+  background: #191d27;
   margin: 0;
 }
 .ai-quick-policies label > svg {
@@ -749,7 +749,7 @@
   padding: 19px;
   border: 1px solid #353c4c;
   border-radius: 12px;
-  background: #152120;
+  background: #151921;
 }
 .ai-setup-grid svg {
   flex-shrink: 0;
@@ -784,7 +784,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 18px 12px;
-  background: #152020;
+  background: #151820;
   border: 1px solid #333845;
   border-radius: 11px;
   text-align: left;
